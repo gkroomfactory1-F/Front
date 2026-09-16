@@ -1888,7 +1888,9 @@ service cloud.firestore {
         }
 
         function getNextRMId() {
-            return rmRecords.length > 0 ? Math.max(...rmRecords.map(i => Number(i.id) || 0)) + 1 : 1;
+            // ใช้เวลา + เลขสุ่ม แทน max+1 เพื่อกันชนกันเมื่อมีคนเพิ่มข้อมูลจากคนละเครื่องพร้อมกัน
+            const base = rmRecords.length > 0 ? Math.max(...rmRecords.map(i => Number(i.id) || 0)) : 0;
+            return Math.max(base + 1, Date.now() * 1000 + Math.floor(Math.random() * 1000));
         }
 
         // รูปส่งท่อเป็น optional field จึงไม่แตะรายการเก่าที่ไม่มีรูป
@@ -1981,6 +1983,7 @@ service cloud.firestore {
             if (val) calendarNotes[dateKey] = val;
             else delete calendarNotes[dateKey];
             saveCalendarNotes();
+            if (typeof pushCalendarNotesToCloud === 'function') pushCalendarNotesToCloud();
             renderGridCalendar();
             showToast('บันทึกโน้ตประจำวันแล้ว');
         }
@@ -2313,6 +2316,8 @@ service cloud.firestore {
             if (!specSnap.exists()) await pushPipeSpecsToCloud();
             const notesSnap = await getDoc(doc(fb.db, 'meta', 'calendarNotes'));
             if (!notesSnap.exists() && Object.keys(calendarNotes).length > 0) await pushCalendarNotesToCloud();
+            const factorySnap = await getDoc(doc(fb.db, 'meta', 'factoryData'));
+            if (!factorySnap.exists() && (downtimeLogs.length > 0 || manpowerLogs.length > 0)) await pushFactoryDataToCloud();
         }
 
         function attachCloudListeners() {
@@ -2359,6 +2364,18 @@ service cloud.firestore {
                 if (snap.exists()) {
                     calendarNotes = snap.data().notes || {};
                     localStorage.setItem('gekko_calendar_notes', JSON.stringify(calendarNotes));
+                }
+            }, err => console.error(err));
+
+            onSnapshot(doc(fb.db, 'meta', 'factoryData'), snap => {
+                if (snap.metadata.hasPendingWrites) return;
+                if (snap.exists()) {
+                    const d = snap.data();
+                    if (d.factorySettings) { factorySettings = d.factorySettings; localStorage.setItem('gekko_factory_settings', JSON.stringify(factorySettings)); }
+                    if (d.downtimeLogs) { downtimeLogs = d.downtimeLogs; localStorage.setItem('gekko_downtime_logs', JSON.stringify(downtimeLogs)); }
+                    if (d.manpowerLogs) { manpowerLogs = d.manpowerLogs; localStorage.setItem('gekko_manpower_logs', JSON.stringify(manpowerLogs)); }
+                    if (typeof renderFactoryLogs === 'function') renderFactoryLogs();
+                    if (typeof renderFactoryTower === 'function') renderFactoryTower();
                 }
             }, err => console.error(err));
         }
@@ -2424,6 +2441,12 @@ service cloud.firestore {
             catch (e) { console.error('pushCalendarNotesToCloud failed', e); }
         }
 
+        async function pushFactoryDataToCloud() {
+            if (!fb) return;
+            try { await fb.setDoc(fb.doc(fb.db, 'meta', 'factoryData'), { factorySettings, downtimeLogs, manpowerLogs }); }
+            catch (e) { console.error('pushFactoryDataToCloud failed', e); }
+        }
+
         function saveProjectsList() {
             localStorage.setItem('gekko_projects_list', JSON.stringify(projectsList));
             renderProjectOptions();
@@ -2460,6 +2483,10 @@ service cloud.firestore {
 
         function handleFormSubmit(e) {
             e.preventDefault();
+            // กันกดปุ่มบันทึกซ้ำเร็วๆ (double-click/double-tap) ที่ทำให้ข้อมูลเบิ้ล
+            if (window.__prodFormSubmitting) return;
+            window.__prodFormSubmitting = true;
+            setTimeout(() => { window.__prodFormSubmitting = false; }, 1200);
             const editId = document.getElementById('editing-item-id').value;
             const selectVal = document.getElementById('project-select').value;
             const projectName = getSelectedProjectName();
@@ -2583,7 +2610,7 @@ service cloud.firestore {
                     const qtyVal = morning + afternoon + ot;
 
                     if (itemSize && qtyVal > 0) {
-                        const newId = db.length > 0 ? Math.max(...db.map(i => i.id)) + 1 : 1;
+                        const newId = getNextDbId();
                         db.push({
                             id: newId,
                             project: projectName,
@@ -2843,7 +2870,7 @@ service cloud.firestore {
                 if (linked) linked.receivedDate = newDate;
             }
             saveRMRecords();
-            localStorage.setItem('gekko_production_db', JSON.stringify(db));
+            if (item.sourceDbId) saveDB(); else localStorage.setItem('gekko_production_db', JSON.stringify(db));
             const target = document.getElementById('quick-target-date');
             if (target && document.getElementById('day-detail-modal') && !document.getElementById('day-detail-modal').classList.contains('hidden')) {
                 renderDayDetailItemsList(target.value);
@@ -3000,7 +3027,9 @@ service cloud.firestore {
         }
 
         function getNextDbId() {
-            return db.length > 0 ? Math.max(...db.map(i => i.id)) + 1 : 1;
+            // ใช้เวลา + เลขสุ่ม แทน max+1 เพื่อกันชนกันเมื่อมีคนเพิ่มข้อมูลจากคนละเครื่องพร้อมกัน
+            const base = db.length > 0 ? Math.max(...db.map(i => Number(i.id) || 0)) : 0;
+            return Math.max(base + 1, Date.now() * 1000 + Math.floor(Math.random() * 1000));
         }
 
         // --- เพิ่มรายการเข้าคลัง FG เอง (สร้างเป็นงานผลิตสถานะ "รอจัดส่ง" ทันที ไม่ผ่านขั้นตอนกำลังผลิต) ---
@@ -4585,6 +4614,7 @@ service cloud.firestore {
             localStorage.setItem('gekko_factory_settings', JSON.stringify(factorySettings));
             localStorage.setItem('gekko_downtime_logs', JSON.stringify(downtimeLogs));
             localStorage.setItem('gekko_manpower_logs', JSON.stringify(manpowerLogs));
+            if (typeof pushFactoryDataToCloud === 'function') pushFactoryDataToCloud();
         }
         function getFactoryMetrics() {
             const totalQty = db.reduce((a,b)=>a + Number(b.qty||0),0);
@@ -4638,12 +4668,18 @@ service cloud.firestore {
         function resetFactorySettings(){ factorySettings={laborPerHour:0,otPerHour:0,electricPerHour:0,chemCostPerKg:0,chemKgPerPipe:4.2,truckCost:0,targetPerHour:0,targetTotal:0}; saveFactoryData(); openFactoryDataModal(); renderFactoryTower(); }
         function addDowntimeLog(e){
             e.preventDefault();
-            downtimeLogs.unshift({id:Date.now(),date:document.getElementById('dt-date').value,machine:document.getElementById('dt-machine').value.trim(),hours:Number(document.getElementById('dt-hours').value||0),reason:document.getElementById('dt-reason').value.trim(),output:Number(document.getElementById('dt-output').value||0),runtime:Number(document.getElementById('dt-runtime').value||0)});
+            if (window.__dtFormSubmitting) return;
+            window.__dtFormSubmitting = true;
+            setTimeout(() => { window.__dtFormSubmitting = false; }, 1200);
+            downtimeLogs.unshift({id:Date.now()+Math.floor(Math.random()*1000),date:document.getElementById('dt-date').value,machine:document.getElementById('dt-machine').value.trim(),hours:Number(document.getElementById('dt-hours').value||0),reason:document.getElementById('dt-reason').value.trim(),output:Number(document.getElementById('dt-output').value||0),runtime:Number(document.getElementById('dt-runtime').value||0)});
             saveFactoryData(); e.target.reset(); document.getElementById('dt-date').value=localDateKey(); renderFactoryLogs(); renderFactoryTower(); showToast('เพิ่ม Downtime สำเร็จ');
         }
         function addManpowerLog(e){
             e.preventDefault();
-            manpowerLogs.unshift({id:Date.now(),date:document.getElementById('mp-date').value,dept:document.getElementById('mp-dept').value.trim(),normal:Number(document.getElementById('mp-normal').value||0),ot:Number(document.getElementById('mp-ot').value||0),headcount:Number(document.getElementById('mp-headcount').value||0),output:Number(document.getElementById('mp-output').value||0)});
+            if (window.__mpFormSubmitting) return;
+            window.__mpFormSubmitting = true;
+            setTimeout(() => { window.__mpFormSubmitting = false; }, 1200);
+            manpowerLogs.unshift({id:Date.now()+Math.floor(Math.random()*1000),date:document.getElementById('mp-date').value,dept:document.getElementById('mp-dept').value.trim(),normal:Number(document.getElementById('mp-normal').value||0),ot:Number(document.getElementById('mp-ot').value||0),headcount:Number(document.getElementById('mp-headcount').value||0),output:Number(document.getElementById('mp-output').value||0)});
             saveFactoryData(); e.target.reset(); document.getElementById('mp-date').value=localDateKey(); renderFactoryLogs(); renderFactoryTower(); showToast('เพิ่มข้อมูลกำลังคนสำเร็จ');
         }
         function removeFactoryLog(type,id){
@@ -4719,6 +4755,7 @@ service cloud.firestore {
             // เพื่อป้องกันวงจร initApp() -> autoAdvanceProductionStatus() -> saveDB() -> initApp()
             if (changed > 0) {
                 localStorage.setItem('gekko_production_db', JSON.stringify(db));
+                if (typeof pushDbToCloud === 'function') pushDbToCloud();
                 showToast(`ย้ายงานที่ครบกำหนดผลิตแล้ว ${changed} รายการเข้าคลัง FG อัตโนมัติ (ประวัติในปฏิทินยังอยู่เหมือนเดิม)`);
             }
             return changed;
