@@ -1791,7 +1791,13 @@ service cloud.firestore {
         let fullCalendarYear = new Date().getFullYear();
         let fullCalendarMonth = new Date().getMonth();
         let timelineDaysCount = 14;
-        let timelineStartDate = (function () { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+        let timelineCenterDate = (function () { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+        // ช่วงวันที่แสดงในไทม์ไลน์จะคำนวณจากวันตรงกลาง (timelineCenterDate) เสมอ เพื่อให้วันปัจจุบัน/วันที่เลือกอยู่กึ่งกลางตาราง
+        function getTimelineStartDate() {
+            const d = new Date(timelineCenterDate);
+            d.setDate(d.getDate() - Math.floor(timelineDaysCount / 2));
+            return d;
+        }
 
         function parsePipeSizeToNumber(sizeStr) {
             if (!sizeStr) return 2;
@@ -4347,16 +4353,16 @@ service cloud.firestore {
         }
 
         function changeTimelineRange(dir) {
-            const d = new Date(timelineStartDate);
+            const d = new Date(timelineCenterDate);
             d.setDate(d.getDate() + dir * timelineDaysCount);
-            timelineStartDate = d;
+            timelineCenterDate = d;
             renderTimeline();
         }
 
         function goToTimelineToday() {
             const d = new Date();
             d.setHours(0, 0, 0, 0);
-            timelineStartDate = d;
+            timelineCenterDate = d;
             renderTimeline();
         }
 
@@ -4376,6 +4382,7 @@ service cloud.firestore {
             if (!table) return;
             const weekdayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
             const days = [];
+            const timelineStartDate = getTimelineStartDate();
             for (let i = 0; i < timelineDaysCount; i++) {
                 const d = new Date(timelineStartDate);
                 d.setDate(d.getDate() + i);
