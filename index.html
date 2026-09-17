@@ -88,6 +88,8 @@
         .fc-input { width: 100%; margin-top: 4px; padding: 8px 9px; border: 1px solid #cbd5e1; border-radius: 9px; background: white; color: #0f172a; font-size: 12px; outline: none; }
         .dark .fc-input { background: #0f172a; color: #e2e8f0; border-color: #334155; }
         .fc-input:focus { box-shadow: 0 0 0 2px rgba(245,158,11,.2); border-color: #f59e0b; }
+        html { color-scheme: light; }
+        html.dark { color-scheme: dark; }
 
         /* Quick View: ทำทางลัดให้ Timeline / ปฏิทินใหญ่เข้าถึงง่าย โดยไม่ลบ tab เดิม */
         .quick-view-btn {
@@ -2057,7 +2059,7 @@ service cloud.firestore {
                         <select onchange="onRowSizeSelectChange(this)" class="row-size-select text-xs w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 focus:ring-1 focus:ring-theme-500 dark:text-white">
                             ${getSizeSelectOptionsHtml(data ? data.size : '')}
                         </select>
-                        <input type="text" class="row-size-custom text-xs w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 mt-1 ${isCustomSize ? '' : 'hidden'}" placeholder="เช่น 28&quot;" value="${isCustomSize ? data.size : ''}">
+                        <input type="text" class="row-size-custom text-xs w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 mt-1 text-slate-900 dark:text-white ${isCustomSize ? '' : 'hidden'}" placeholder="เช่น 28&quot;" value="${isCustomSize ? data.size : ''}">
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">Jacket</label>
@@ -3422,7 +3424,7 @@ service cloud.firestore {
                             <div class="flex items-center gap-1.5 flex-wrap justify-end">
                                 ${item.receivedDate ? `<input type="date" value="${item.receivedDate}" onchange="updateLegacyReceiveDate(${item.id}, this.value)" class="fc-input !mt-0 !py-1 !px-2 text-[10px] font-bold w-[125px]" title="แก้วันรับท่อ">` : ''}
                                 ${getDispatchDate(item) ? `<input type="date" value="${getDispatchDate(item)}" onchange="updateFGDispatchDate(${item.id}, this.value)" class="fc-input !mt-0 !py-1 !px-2 text-[10px] font-bold w-[125px]" title="แก้วันส่งท่อ">` : ''}
-                                <select onchange="quickSetStatus(${item.id}, this.value)" class="text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 font-bold"><option value="กำลังผลิต" ${item.status==='กำลังผลิต'?'selected':''}>กำลังผลิต</option><option value="รอจัดส่ง" ${item.status==='รอจัดส่ง'?'selected':''}>คลัง FG / รอส่ง</option><option value="ส่งมอบแล้ว" ${item.status==='ส่งมอบแล้ว'?'selected':''}>ส่งมอบแล้ว</option></select>
+                                <select onchange="quickSetStatus(${item.id}, this.value)" class="text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 font-bold text-slate-900 dark:text-white"><option value="กำลังผลิต" ${item.status==='กำลังผลิต'?'selected':''}>กำลังผลิต</option><option value="รอจัดส่ง" ${item.status==='รอจัดส่ง'?'selected':''}>คลัง FG / รอส่ง</option><option value="ส่งมอบแล้ว" ${item.status==='ส่งมอบแล้ว'?'selected':''}>ส่งมอบแล้ว</option></select>
                                 <button onclick="editDayTask(${item.id})" class="px-2.5 py-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-bold hover:bg-amber-500/30">แก้ไข</button>
                                 <button onclick="deleteItem(${item.id})" class="px-2 py-1 bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-bold hover:bg-rose-500/30">✕</button>
                             </div>
@@ -4436,7 +4438,7 @@ service cloud.firestore {
                         <div class="text-[9px] truncate font-bold text-white opacity-90 leading-tight">${it.project || '-'}</div>
                         <div class="text-[10px] font-black text-white leading-tight">${it.size || '-'}${it.jacket && it.jacket !== 'ไม่ระบุ' ? ' ' + it.jacket : ''}</div>
                         <div class="text-[9px] text-white/85 leading-tight">รับเข้า = ${Number(it.qty || 0).toLocaleString('th-TH')} ท่อน</div>
-                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${it.receivedDate||''}" onchange="${it.id && it._timelineType==='rm' ? `updateRMReceiveDate(${it.id}, this.value)` : `updateLegacyReceiveDate(${it.id}, this.value)`}" class="w-full text-[9px] font-bold rounded px-1 py-0.5"></div>
+                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${it.receivedDate||''}" onchange="${it.id && it._timelineType==='rm' ? `updateRMReceiveDate(${it.id}, this.value)` : `updateLegacyReceiveDate(${it.id}, this.value)`}" class="w-full text-[9px] font-bold rounded px-1 py-0.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600"></div>
                     </div>
                 `;
             }
@@ -4461,7 +4463,7 @@ service cloud.firestore {
                         <div class="text-[9px] text-white/85 leading-tight">🚚 ส่ง = ${Number(it.qty || 0).toLocaleString('th-TH')} ท่อน</div>
                         <div class="text-[8px] text-white/75 leading-tight">FG กำหนดส่ง: ${getDispatchDate(it) || '-'}</div>
                         ${it.deliveryLocation ? `<div class="text-[8px] text-white/85 truncate">📍 ${it.deliveryLocation}</div>` : ''}
-                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${getDispatchDate(it)||''}" onchange="updateFGDispatchDate(${it.id}, this.value)" class="w-full text-[9px] font-bold rounded px-1 py-0.5"></div>
+                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${getDispatchDate(it)||''}" onchange="updateFGDispatchDate(${it.id}, this.value)" class="w-full text-[9px] font-bold rounded px-1 py-0.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600"></div>
                     </div>
                 `;
             }
