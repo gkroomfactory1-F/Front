@@ -217,6 +217,14 @@
         #full-calendar-modal > .grid.grid-cols-7 { flex-shrink: 0; }
         #full-calendar-grid { min-height: 0; overflow-y: auto; align-content: start; }
         @media (max-width: 768px) { #full-calendar-grid { grid-auto-rows: minmax(112px, auto); } }
+
+        /* ไฮไลต์ฟอร์มตอนถูกพาไปแก้ไขรายการจาก Smart Dashboard / BOM tab */
+        @keyframes gekkoEditFlash {
+            0%   { box-shadow: 0 0 0 0 rgba(245,158,11,.55); border-color: rgba(245,158,11,.9); }
+            60%  { box-shadow: 0 0 0 10px rgba(245,158,11,0); border-color: rgba(245,158,11,.9); }
+            100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+        }
+        .gekko-edit-flash { animation: gekkoEditFlash 1.1s ease-out 2; border-radius: 1rem; }
 </style>
     <style id="gq-brand-style">
         /* โลโก้บริษัทจริง (ฝังเป็น base64 ไม่พึ่งไฟล์ภายนอก) */
@@ -3660,9 +3668,9 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             resetForm();
         }
 
-        function editItem(id) {
+        function editItem(id, opts) {
             const item = db.find(i => i.id == id);
-            if (!item) return;
+            if (!item) { showToast('ไม่พบรายการนี้ (อาจถูกลบหรือแก้ไขไปแล้ว)', 'error'); return; }
 
             closeDayDetailModal();
 
@@ -3689,6 +3697,16 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('btn-submit-text').innerText = 'บันทึกการแก้ไข';
             document.getElementById('btn-reset').classList.remove('hidden');
             window.scrollTo({ top: document.getElementById('prod-form').offsetTop - 80, behavior: 'smooth' });
+
+            // ไฮไลต์ฟอร์มให้เห็นชัดว่ากำลังแก้ไขรายการนี้อยู่ (กันสับสนว่าเด้งกลับหน้าแรก)
+            const formPanel = document.getElementById('prod-form')?.closest('.rounded-2xl');
+            if (formPanel) {
+                formPanel.classList.add('gekko-edit-flash');
+                setTimeout(() => formPanel.classList.remove('gekko-edit-flash'), 2200);
+            }
+            if (opts && opts.toast !== false) {
+                showToast(`กำลังแก้ไขรายการ ${item.project || ''} • ${item.size || ''} (ID ${id}) — เลื่อนดูฟอร์มด้านบน`, 'success');
+            }
         }
 
         function deleteItem(id) {
