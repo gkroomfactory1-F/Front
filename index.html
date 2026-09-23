@@ -959,7 +959,7 @@
             <div class="kpi-clickable bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl shadow-sm lg:col-span-1">
                 <h3 onclick="openGQSection('gq-chem')" title="กดเพื่อดูรายละเอียด Jacket / BOM เคมี" class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4 cursor-pointer hover:text-theme-500 transition">
                     <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                    สัดส่วนชนิด Jacket
+                    สัดส่วนชนิด Jacket <span class="text-xs font-normal text-slate-400">(เฉพาะงานที่ยังไม่ส่ง)</span>
                 </h3>
                 <div class="relative h-64 flex justify-center items-center"><canvas id="jacketChart" class="cursor-pointer"></canvas></div>
             </div>
@@ -4918,7 +4918,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             });
 
             const jacketTotals = {};
-            chartRows.forEach(i => jacketTotals[i.jacket] = (jacketTotals[i.jacket] || 0) + Number(i.qty || 0));
+            chartRows.filter(i => i.status !== 'ส่งมอบแล้ว').forEach(i => jacketTotals[i.jacket] = (jacketTotals[i.jacket] || 0) + Number(i.qty || 0));
 
             if (jacketChartInstance) jacketChartInstance.destroy();
             const ctxJacket = document.getElementById('jacketChart').getContext('2d');
@@ -9221,6 +9221,280 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 })();
 </script>
 <!-- ================= END INSIGHTS PLUS ================= -->
+
+<!-- ================= MASTER DATA MANAGER (added block — extends Insights Plus; reuses app's own PIPE_SPECS extension mechanism, mirrors into GQ/SDX master where exposed on window; no existing code removed) ================= -->
+<style>
+.ip-tab-btn[data-ip-tab="master"]{}
+.ip-md-row{display:grid;grid-template-columns:1fr 90px 90px 90px 70px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed rgba(148,163,184,.2);font-size:12px}
+.ip-md-row input{width:100%;padding:5px 7px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:transparent;color:inherit;font-size:12px}
+.ip-md-head{display:grid;grid-template-columns:1fr 90px 90px 90px 70px;gap:8px;font-size:10px;font-weight:800;opacity:.6;padding-bottom:4px;border-bottom:1px solid rgba(148,163,184,.3)}
+.ip-md-save{background:#16a34a;color:#fff;border:none;border-radius:8px;padding:5px 8px;font-size:11px;font-weight:800;cursor:pointer}
+.ip-md-addform{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;margin-top:10px}
+.ip-md-addform input,.ip-md-addform select{padding:7px 9px;border-radius:8px;border:1px solid rgba(148,163,184,.35);background:transparent;color:inherit;font-size:12px}
+.ip-md-addbtn{background:#0ea5e9;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:800;font-size:12px;cursor:pointer}
+.ip-md-bomrow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px dashed rgba(148,163,184,.2);font-size:12px}
+.ip-md-del{background:none;border:none;color:#dc2626;font-weight:800;font-size:11px;cursor:pointer}
+.ip-md-note{font-size:11px;opacity:.65;margin:6px 0 12px 0;line-height:1.5}
+</style>
+<script>
+(function(){
+  'use strict';
+  // ---- Master Data Manager namespace (ipmd*) ----
+  const IPMD = {
+    esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
+    num(v){ const n=Number(v); return Number.isFinite(n)?n:0; },
+    bomKey(){ return 'gekko_bom_overrides'; },
+    getBomOverrides(){ try{ const r=JSON.parse(localStorage.getItem(this.bomKey())||'{}'); return (r&&typeof r==='object')?r:{}; }catch(_){ return {}; } },
+    saveBomOverrides(obj){ try{ localStorage.setItem(this.bomKey(), JSON.stringify(obj)); }catch(_){ } }
+  };
+
+  // Reads current effective FG weight list: standard sizes (from PIPE_SPECS, shared scope) if available, else best-effort from GQ master.
+  function ipmdGetSizeList(){
+    try{
+      if (typeof PIPE_SPECS !== 'undefined' && PIPE_SPECS && Object.keys(PIPE_SPECS).length){
+        return Object.keys(PIPE_SPECS).map(sz => ({
+          size: sz,
+          weight: IPMD.num(PIPE_SPECS[sz]?.weight),
+          casing: IPMD.num(PIPE_SPECS[sz]?.casing),
+          truck6: IPMD.num(PIPE_SPECS[sz]?.truck6Crane),
+          isCustom: (typeof customPipeSpecs !== 'undefined' && customPipeSpecs && !!customPipeSpecs[sz])
+        }));
+      }
+    }catch(_){ }
+    // fallback: read from window-exposed GQ master
+    try{
+      const bySize = window.__GEKKO_GQ_MASTER?.truck?.bySize || {};
+      return Object.keys(bySize).map(sz => ({ size: sz, weight: IPMD.num(bySize[sz].weightKg), casing: IPMD.num(bySize[sz].casingMm), truck6: IPMD.num(bySize[sz].truck6Crane), isCustom:false }));
+    }catch(_){ return []; }
+  }
+
+  // Applies a weight edit/add for one size to every master data store we can safely reach.
+  function ipmdSaveWeight(size, weightKg, casingMm, truck6Crane){
+    size = String(size||'').trim();
+    if(!size){ if(typeof showToast==='function') showToast('กรุณาระบุชื่อไซส์ท่อ','error'); return false; }
+    weightKg = IPMD.num(weightKg); casingMm = IPMD.num(casingMm); truck6Crane = IPMD.num(truck6Crane);
+    if(weightKg<=0){ if(typeof showToast==='function') showToast('น้ำหนักต้องมากกว่า 0','error'); return false; }
+
+    // 1) Official app mechanism: PIPE_SPECS / customPipeSpecs (drives the production form, old Smart Dashboard, and everywhere PIPE_SPECS is read)
+    try{
+      if (typeof customPipeSpecs !== 'undefined'){
+        customPipeSpecs[size] = { weight: weightKg, casing: casingMm, truck6Crane: truck6Crane, truck6Full:0, truck10Crane:0, truck10Full:0 };
+        if (typeof hiddenDefaultSizes !== 'undefined') hiddenDefaultSizes = hiddenDefaultSizes.filter(s=>s!==size);
+        if (typeof saveCustomPipeSpecs === 'function') saveCustomPipeSpecs();
+        if (typeof saveHiddenDefaultSizes === 'function') saveHiddenDefaultSizes();
+        if (typeof rebuildPipeSpecs === 'function') rebuildPipeSpecs();
+        if (typeof refreshAllSizeSelects === 'function') refreshAllSizeSelects();
+      }
+    }catch(err){ console.error('PIPE_SPECS update failed:', err); }
+
+    // 2) Mirror into GQ Smart Dashboard master (window-exposed) so the primary Smart Dashboard sees it too
+    try{
+      if (window.__GEKKO_GQ_MASTER?.truck?.bySize){
+        window.__GEKKO_GQ_MASTER.truck.bySize[size.replace(/"/g,'')] = {
+          weightKg: weightKg, casingMm: casingMm, truck6Crane: truck6Crane,
+          truck6Full: window.__GEKKO_GQ_MASTER.truck.bySize[size.replace(/"/g,'')]?.truck6Full || 0,
+          truck10Crane: window.__GEKKO_GQ_MASTER.truck.bySize[size.replace(/"/g,'')]?.truck10Crane || 0,
+          truck10Full: window.__GEKKO_GQ_MASTER.truck.bySize[size.replace(/"/g,'')]?.truck10Full || 0
+        };
+      }
+    }catch(err){ console.error('GQ_MASTER weight mirror failed:', err); }
+
+    // 3) Mirror into SDX V2 master (window-exposed)
+    try{
+      if (window.__GEKKO_SDX_MASTER?.truck?.bySize){
+        window.__GEKKO_SDX_MASTER.truck.bySize[size.replace(/"/g,'')] = { weightKg: weightKg, casingMm: casingMm, truck6Crane: truck6Crane, truck10Crane: window.__GEKKO_SDX_MASTER.truck.bySize[size.replace(/"/g,'')]?.truck10Crane || 0 };
+      }
+    }catch(err){ console.error('SDX_MASTER weight mirror failed:', err); }
+
+    if(typeof showToast==='function') showToast(`บันทึกน้ำหนักไซส์ "${size}" แล้ว`);
+    return true;
+  }
+
+  function ipmdRenderWeights(){
+    const el = document.getElementById('ip-md-weights');
+    if(!el) return;
+    const rows = ipmdGetSizeList().sort((a,b)=>String(a.size).localeCompare(String(b.size),'th',{numeric:true}));
+    el.innerHTML = `
+      <div class="ip-md-head"><span>ไซส์ท่อ</span><span>น้ำหนัก (kg)</span><span>Casing (mm)</span><span>รถ 6 ล้อ/เที่ยว</span><span></span></div>
+      ${rows.map((r,idx)=>`
+        <div class="ip-md-row">
+          <span>${IPMD.esc(r.size)} ${r.isCustom?'<span style="opacity:.6;font-size:10px">(แก้ไข/เพิ่มเอง)</span>':''}</span>
+          <input type="number" step="0.01" id="ip-md-w-${idx}" value="${r.weight||''}">
+          <input type="number" step="0.01" id="ip-md-c-${idx}" value="${r.casing||''}">
+          <input type="number" step="0.01" id="ip-md-t-${idx}" value="${r.truck6||''}">
+          <button class="ip-md-save" onclick="window.ipmdSaveRow('${r.size.replace(/'/g,"\\'")}', ${idx})">บันทึก</button>
+        </div>
+      `).join('') || '<div class="ip-empty">ยังไม่มีข้อมูลไซส์ท่อ</div>'}
+      <div class="ip-md-addform">
+        <input id="ip-md-new-size" placeholder='ไซส์ใหม่ เช่น 2-1/2"'>
+        <input id="ip-md-new-weight" type="number" step="0.01" placeholder="น้ำหนัก kg">
+        <input id="ip-md-new-casing" type="number" step="0.01" placeholder="Casing mm">
+        <input id="ip-md-new-truck6" type="number" step="0.01" placeholder="ท่อน/เที่ยว(6ล้อ)">
+        <button class="ip-md-addbtn" onclick="window.ipmdAddSize()">+ เพิ่ม/แก้ไข</button>
+      </div>
+    `;
+  }
+
+  window.ipmdSaveRow = function(size, idx){
+    const w = document.getElementById('ip-md-w-'+idx)?.value;
+    const c = document.getElementById('ip-md-c-'+idx)?.value;
+    const t = document.getElementById('ip-md-t-'+idx)?.value;
+    if (ipmdSaveWeight(size, w, c, t)) ipmdRenderWeights();
+  };
+
+  window.ipmdAddSize = function(){
+    const size = document.getElementById('ip-md-new-size')?.value;
+    const w = document.getElementById('ip-md-new-weight')?.value;
+    const c = document.getElementById('ip-md-new-casing')?.value;
+    const t = document.getElementById('ip-md-new-truck6')?.value;
+    if (ipmdSaveWeight(size, w, c, t)) ipmdRenderWeights();
+  };
+
+  // ----- BOM management -----
+  function ipmdRenderBom(){
+    const el = document.getElementById('ip-md-bom');
+    if(!el) return;
+    const overrides = IPMD.getBomOverrides();
+    const keys = Object.keys(overrides);
+    el.innerHTML = `
+      ${keys.length ? keys.map(k=>{
+        const b = overrides[k];
+        return `<div class="ip-md-bomrow"><span><strong>${IPMD.esc(k)}</strong> — ISO ${IPMD.esc(b.isoKgPerPipe)} kg • Polyol ${IPMD.esc(b.polyolKgPerPipe)} kg • รวม ${IPMD.esc(b.totalChemicalKgPerPipe)} kg/ท่อน</span><button class="ip-md-del" onclick="window.ipmdDeleteBom('${k.replace(/'/g,"\\'")}')">ลบ</button></div>`;
+      }).join('') : '<div class="ip-empty">ยังไม่มี BOM ที่เพิ่มเอง</div>'}
+      <div class="ip-md-addform" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr auto">
+        <select id="ip-md-bom-jacket"><option value="GI">GI</option><option value="SS">SS</option><option value="ALU">ALU</option><option value="HDPE">HDPE</option></select>
+        <input id="ip-md-bom-size" placeholder='ไซส์ เช่น 2-1/2"'>
+        <input id="ip-md-bom-iso" type="number" step="0.0001" placeholder="ISO kg/ท่อน">
+        <input id="ip-md-bom-poly" type="number" step="0.0001" placeholder="Polyol kg/ท่อน">
+        <input id="ip-md-bom-code" placeholder="รหัส BOM (ไม่บังคับ)">
+        <button class="ip-md-addbtn" onclick="window.ipmdAddBom()">+ เพิ่ม BOM</button>
+      </div>
+      <div class="ip-md-note">ค่า "รวม" คำนวณอัตโนมัติจาก ISO + Polyol และจะถูกใช้แทนที่ค่ามาตรฐานสำหรับคู่ Jacket + ไซส์นี้ ใน Smart Dashboard และ Smart Dashboard V2</div>
+    `;
+  }
+
+  window.ipmdAddBom = function(){
+    try{
+      const jacket = (document.getElementById('ip-md-bom-jacket')?.value||'').trim();
+      const size = (document.getElementById('ip-md-bom-size')?.value||'').trim();
+      const iso = IPMD.num(document.getElementById('ip-md-bom-iso')?.value);
+      const poly = IPMD.num(document.getElementById('ip-md-bom-poly')?.value);
+      const codeInput = (document.getElementById('ip-md-bom-code')?.value||'').trim();
+      if(!size || (iso<=0 && poly<=0)){ if(typeof showToast==='function') showToast('กรุณาระบุไซส์และค่าเคมีอย่างน้อยหนึ่งค่า','error'); return; }
+      const key = jacket + '|' + size;
+      const total = +(iso+poly).toFixed(6);
+      const code = codeInput || ('CUSTOM-'+jacket+'-'+size).replace(/["\s]/g,'');
+      const entry = { code, isoKgPerPipe: iso, polyolKgPerPipe: poly, totalChemicalKgPerPipe: total, materials:{} };
+
+      const overrides = IPMD.getBomOverrides();
+      overrides[key] = entry;
+      IPMD.saveBomOverrides(overrides);
+
+      // Mirror into GQ Smart Dashboard chemical master (window-exposed)
+      try{
+        if (window.__GEKKO_GQ_MASTER?.chemical){
+          if (!window.__GEKKO_GQ_MASTER.chemical.selected) window.__GEKKO_GQ_MASTER.chemical.selected = {};
+          window.__GEKKO_GQ_MASTER.chemical.selected[key] = { code, casingMm:0, pipeOdMm:0, thicknessMm:0, isoKgPerPipe: iso, polyolKgPerPipe: poly, totalChemicalKgPerPipe: total, materials:{} };
+          if (!window.__GEKKO_GQ_MASTER.chemical.byCode) window.__GEKKO_GQ_MASTER.chemical.byCode = {};
+          window.__GEKKO_GQ_MASTER.chemical.byCode[code] = window.__GEKKO_GQ_MASTER.chemical.selected[key];
+        }
+      }catch(err){ console.error('GQ_MASTER BOM mirror failed:', err); }
+
+      // Mirror into SDX V2 chemBOM (window-exposed)
+      try{
+        if (window.__GEKKO_SDX_MASTER?.chemBOM){
+          window.__GEKKO_SDX_MASTER.chemBOM[key] = { code, casingMm:0, pipeOdMm:0, thicknessMm:0, polyolKgPerPipe: poly, isoKgPerPipe: iso, totalChemicalKgPerPipe: total, materials:[] };
+        }
+      }catch(err){ console.error('SDX_MASTER BOM mirror failed:', err); }
+
+      if(typeof showToast==='function') showToast(`เพิ่ม BOM สำหรับ ${key} แล้ว`);
+      ipmdRenderBom();
+      document.getElementById('ip-md-bom-size').value='';
+      document.getElementById('ip-md-bom-iso').value='';
+      document.getElementById('ip-md-bom-poly').value='';
+      document.getElementById('ip-md-bom-code').value='';
+    }catch(err){ console.error('ipmdAddBom error:', err); if(typeof showToast==='function') showToast('เพิ่ม BOM ไม่สำเร็จ','error'); }
+  };
+
+  window.ipmdDeleteBom = function(key){
+    try{
+      const overrides = IPMD.getBomOverrides();
+      delete overrides[key];
+      IPMD.saveBomOverrides(overrides);
+      try{ if (window.__GEKKO_GQ_MASTER?.chemical?.selected) delete window.__GEKKO_GQ_MASTER.chemical.selected[key]; }catch(_){}
+      try{ if (window.__GEKKO_SDX_MASTER?.chemBOM) delete window.__GEKKO_SDX_MASTER.chemBOM[key]; }catch(_){}
+      ipmdRenderBom();
+      if(typeof showToast==='function') showToast('ลบ BOM แล้ว');
+    }catch(err){ console.error('ipmdDeleteBom error:', err); }
+  };
+
+  // Re-apply saved BOM overrides into master objects on every load (page refresh loses in-memory mutations)
+  function ipmdReapplyBomOverrides(){
+    try{
+      const overrides = IPMD.getBomOverrides();
+      Object.keys(overrides).forEach(key=>{
+        const b = overrides[key];
+        try{
+          if (window.__GEKKO_GQ_MASTER?.chemical){
+            if (!window.__GEKKO_GQ_MASTER.chemical.selected) window.__GEKKO_GQ_MASTER.chemical.selected = {};
+            window.__GEKKO_GQ_MASTER.chemical.selected[key] = { code:b.code, casingMm:0, pipeOdMm:0, thicknessMm:0, isoKgPerPipe:b.isoKgPerPipe, polyolKgPerPipe:b.polyolKgPerPipe, totalChemicalKgPerPipe:b.totalChemicalKgPerPipe, materials:{} };
+          }
+        }catch(_){}
+        try{
+          if (window.__GEKKO_SDX_MASTER?.chemBOM){
+            window.__GEKKO_SDX_MASTER.chemBOM[key] = { code:b.code, casingMm:0, pipeOdMm:0, thicknessMm:0, polyolKgPerPipe:b.polyolKgPerPipe, isoKgPerPipe:b.isoKgPerPipe, totalChemicalKgPerPipe:b.totalChemicalKgPerPipe, materials:[] };
+          }
+        }catch(_){}
+      });
+    }catch(err){ console.error('ipmdReapplyBomOverrides error:', err); }
+  }
+
+  // Hook a 4th tab into the existing Insights Plus tab bar without touching its code
+  function ipmdInjectTab(){
+    const tabs = document.getElementById('ip-tabs');
+    if(!tabs || document.querySelector('[data-ip-tab="master"]')) return;
+    const btn = document.createElement('button');
+    btn.className = 'ip-tab-btn';
+    btn.setAttribute('data-ip-tab','master');
+    btn.textContent = '🏭 Master Data';
+    btn.onclick = function(){ window.ipdSetMasterTab(); };
+    tabs.appendChild(btn);
+  }
+
+  window.ipdSetMasterTab = function(){
+    document.querySelectorAll('.ip-tab-btn').forEach(b=>b.classList.toggle('ip-active', b.getAttribute('data-ip-tab')==='master'));
+    const body = document.getElementById('ip-body');
+    if(!body) return;
+    body.innerHTML = `
+      <div class="ip-card" style="margin-bottom:14px">
+        <h3>⚖️ น้ำหนักท่อ FG ต่อไซส์ (แก้ไข/เพิ่มไซส์ใหม่)</h3>
+        <div class="ip-md-note">แก้ไขน้ำหนักที่นี่จะมีผลกับฟอร์มบันทึกผลิต, Smart Dashboard และ Smart Dashboard V2 ทันที</div>
+        <div id="ip-md-weights"></div>
+      </div>
+      <div class="ip-card">
+        <h3>🧪 BOM เคมีใหม่ (Jacket + ไซส์)</h3>
+        <div id="ip-md-bom"></div>
+      </div>
+    `;
+    ipmdRenderWeights();
+    ipmdRenderBom();
+  };
+
+  // Patch into the existing ipOpen so the tab appears every time Insights Plus opens (does not modify ipOpen's own code)
+  const _origIpOpen = window.ipOpen;
+  if (typeof _origIpOpen === 'function'){
+    window.ipOpen = function(){
+      _origIpOpen();
+      setTimeout(ipmdInjectTab, 0);
+    };
+  }
+
+  window.addEventListener('load', function(){
+    setTimeout(ipmdReapplyBomOverrides, 900);
+  });
+})();
+</script>
+<!-- ================= END MASTER DATA MANAGER ================= -->
 
 </body>
 </html>
