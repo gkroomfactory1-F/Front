@@ -775,9 +775,6 @@
                             <span>Supervisor: <strong class="text-slate-800 dark:text-amber-400 font-mono">Parin Sukmongkol</strong></span>
                         </div>
                         <div id="gq-greeting" class="text-[10px] text-theme-600 dark:text-theme-400 font-semibold mt-0.5"></div>
-                        <div class="gq-badge-row">
-                        <button onclick="openCloudSetupModal()" id="cloud-status-badge" class="mt-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 transition hover:opacity-80">💻 ทำงานในเครื่องนี้ (ยังไม่เชื่อมออนไลน์)</button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -809,6 +806,8 @@
                     <span>🔔</span>
                     <span id="gq-alert-count" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-extrabold flex items-center justify-center leading-none">0</span>
                 </button>
+
+                <button onclick="openCloudSetupModal()" id="cloud-status-badge" title="ทำงานในเครื่องนี้ (ยังไม่เชื่อมออนไลน์)" class="w-8 h-8 flex items-center justify-center text-xs rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 transition hover:opacity-80 hover:scale-105">💻</button>
 
                 <!-- One compact menu for secondary/admin controls. Existing IDs and handlers are preserved. -->
                 <div class="relative" id="extra-menu-wrapper">
@@ -1460,6 +1459,13 @@
                             <option value="ALUZ">ALUZ</option>
                         </select>
                     </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">ความหนา</label>
+                        <div class="flex gap-1">
+                            <input type="text" id="quick-thick" placeholder="เช่น 25mm (พิมพ์เลขเองได้)" class="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white">
+                            <button type="button" onclick="document.getElementById('quick-thick').value=''; document.getElementById('quick-thick').focus();" title="ไม่ระบุความหนา" class="shrink-0 text-[10px] font-semibold px-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">ไม่ระบุ</button>
+                        </div>
+                    </div>
 
                     <!-- แยก 3 ล็อต เช้า บ่าย OT -->
                     <div class="sm:col-span-2 grid grid-cols-4 gap-2 bg-slate-100 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -1600,6 +1606,13 @@
                     </select>
                 </div>
             </div>
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">ความหนา</label>
+                <div class="flex gap-1">
+                    <input type="text" id="fg-add-thick" placeholder="เช่น 25mm (พิมพ์เลขเองได้)" class="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white">
+                    <button type="button" onclick="document.getElementById('fg-add-thick').value=''; document.getElementById('fg-add-thick').focus();" title="ไม่ระบุความหนา" class="shrink-0 text-[10px] font-semibold px-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">ไม่ระบุ</button>
+                </div>
+            </div>
             <div class="grid grid-cols-2 gap-2.5">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">วันที่รับเข้า FG</label>
@@ -1660,6 +1673,13 @@
                 </div>
             </div>
             <div>
+                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">ความหนา</label>
+                <div class="flex gap-1">
+                    <input type="text" id="rm-add-thick" placeholder="เช่น 25mm (พิมพ์เลขเองได้)" class="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white">
+                    <button type="button" onclick="document.getElementById('rm-add-thick').value=''; document.getElementById('rm-add-thick').focus();" title="ไม่ระบุความหนา" class="shrink-0 text-[10px] font-semibold px-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">ไม่ระบุ</button>
+                </div>
+            </div>
+            <div>
                 <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">จำนวนรับเข้า (ท่อน)</label>
                 <input type="number" id="rm-add-qty" min="1" value="1" class="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white font-mono">
             </div>
@@ -1690,6 +1710,10 @@
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">จำนวนที่จะย้ายเข้าแผนผลิต</label>
                     <input type="number" id="rm-plan-total" min="1" readonly class="w-full text-xs bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white font-mono font-bold">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">กำหนดส่ง (ไม่บังคับ — เว้นว่างได้ ไปกำหนดที่คลัง FG ทีหลังก็ได้)</label>
+                    <input type="date" id="rm-plan-dispatch-date" class="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white">
                 </div>
             </div>
             <div class="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -2887,7 +2911,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                     </div>
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-0.5">ความหนา</label>
-                        <input type="text" class="row-thick text-xs w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white" placeholder="25mm" value="${data ? (data.thick || '') : '25mm'}">
+                        <div class="flex gap-1">
+                            <input type="text" class="row-thick text-xs w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white" placeholder="เช่น 25mm (พิมพ์เลขเองได้)" value="${data ? (data.thick || '') : ''}">
+                            <button type="button" onclick="this.previousElementSibling.value=''; this.previousElementSibling.focus();" title="ไม่ระบุความหนา" class="shrink-0 text-[10px] font-semibold px-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">ไม่ระบุ</button>
+                        </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -3101,13 +3128,13 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             const badge = document.getElementById('cloud-status-badge');
             const modalLine = document.getElementById('cloud-setup-status-line');
             const map = {
-                'not-configured': { text: '💻 ทำงานในเครื่องนี้ (ยังไม่เชื่อมออนไลน์)', cls: 'bg-slate-200 dark:bg-slate-800 text-slate-500' },
-                'connecting': { text: '🔄 กำลังเชื่อมต่อออนไลน์...', cls: 'bg-amber-500/20 text-amber-600 dark:text-amber-400' },
-                'online': { text: '☁️ ออนไลน์ • ข้อมูลซิงค์ทุกเครื่องแล้ว', cls: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' },
-                'error': { text: '⚠️ เชื่อมต่อออนไลน์ไม่สำเร็จ (ใช้ข้อมูลในเครื่องแทน)', cls: 'bg-rose-500/20 text-rose-600 dark:text-rose-400' }
+                'not-configured': { text: '💻 ทำงานในเครื่องนี้ (ยังไม่เชื่อมออนไลน์)', icon: '💻', cls: 'bg-slate-200 dark:bg-slate-800 text-slate-500' },
+                'connecting': { text: '🔄 กำลังเชื่อมต่อออนไลน์...', icon: '🔄', cls: 'bg-amber-500/20 text-amber-600 dark:text-amber-400' },
+                'online': { text: '☁️ ออนไลน์ • ข้อมูลซิงค์ทุกเครื่องแล้ว', icon: '☁️', cls: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' },
+                'error': { text: '⚠️ เชื่อมต่อออนไลน์ไม่สำเร็จ (ใช้ข้อมูลในเครื่องแทน)', icon: '⚠️', cls: 'bg-rose-500/20 text-rose-600 dark:text-rose-400' }
             };
             const s = map[state] || map['not-configured'];
-            if (badge) { badge.textContent = s.text; badge.className = `mt-1 text-[10px] font-bold px-2.5 py-1 rounded-full transition hover:opacity-80 ${s.cls}`; }
+            if (badge) { badge.textContent = s.icon; badge.title = s.text; badge.className = `w-8 h-8 flex items-center justify-center text-xs rounded-xl border border-slate-200 dark:border-slate-700 transition hover:opacity-80 hover:scale-105 ${s.cls}`; }
             if (modalLine) { modalLine.textContent = detail || s.text; modalLine.className = `text-xs px-3 py-2 rounded-xl ${s.cls}`; }
         }
 
@@ -3589,20 +3616,21 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                     const sv=row.querySelector('.row-size-select').value, cv=row.querySelector('.row-size-custom').value.trim();
                     const size=sv==='CUSTOM'?cv:sv, jacket=row.querySelector('.row-jacket').value;
                     const qty=parseInt(row.querySelector('.row-morning').value||0)+parseInt(row.querySelector('.row-afternoon').value||0)+parseInt(row.querySelector('.row-ot').value||0);
-                    if(size && qty>0) entries.push({size,jacket,qty});
+                    const thick=(row.querySelector('.row-thick')?.value||'').trim()||'ไม่ระบุ';
+                    if(size && qty>0) entries.push({size,jacket,qty,thick});
                 });
                 if(!entries.length){showToast('กรุณาระบุจำนวนรับเข้าอย่างน้อย 1 รายการ','error');return;}
                 pushUndoSnapshot(receiveType==='RM'?'รับ RM เข้าคลัง':'รับ FG เข้าคลัง');
                 let added=0, skipped=0;
                 entries.forEach(e=>{
                     if(receiveType==='RM'){
-                        const dup=rmRecords.some(i=>i.receivedDate===receivedDate&&i.project===projectName&&i.size===e.size&&i.jacket===e.jacket&&Number(i.qty||0)===e.qty);
+                        const dup=rmRecords.some(i=>i.receivedDate===receivedDate&&i.project===projectName&&i.size===e.size&&i.thick===e.thick&&i.jacket===e.jacket&&Number(i.originalQty ?? i.qty ?? 0)===e.qty);
                         if(dup){skipped++;return;}
-                        rmRecords.push({id:getNextRMId(),project:projectName,size:e.size,thick:'25mm',jacket:e.jacket,qty:e.qty,receivedDate,status:'รับเข้าแล้ว',stage:'RM',sourceDbId:null,createdAt:Date.now()});
+                        rmRecords.push({id:getNextRMId(),project:projectName,size:e.size,thick:e.thick,jacket:e.jacket,qty:e.qty,receivedDate,status:'รับเข้าแล้ว',stage:'RM',sourceDbId:null,createdAt:Date.now()});
                     }else{
                         const dup=db.some(i=>i.fgReceivedDate===receivedDate&&i.project===projectName&&i.size===e.size&&i.jacket===e.jacket&&Number(i.qty||0)===e.qty);
                         if(dup){skipped++;return;}
-                        db.push({id:getNextDbId(),project:projectName,size:e.size,thick:'25mm',jacket:e.jacket,morningQty:e.qty,afternoonQty:0,otQty:0,qty:e.qty,status:'รอจัดส่ง',qc:'Passed',date:'',receivedDate:'',fgReceivedDate:receivedDate,dispatchDate:'',deliveryLocation});
+                        db.push({id:getNextDbId(),project:projectName,size:e.size,thick:e.thick,jacket:e.jacket,morningQty:e.qty,afternoonQty:0,otQty:0,qty:e.qty,status:'รอจัดส่ง',qc:'Passed',date:'',receivedDate:'',fgReceivedDate:receivedDate,dispatchDate:'',deliveryLocation});
                     }
                     added++;
                 });
@@ -3625,10 +3653,11 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 const idx = db.findIndex(i => i.id == editId);
                 if (idx !== -1) {
                     db[idx] = {
+                        ...db[idx],
                         id: parseInt(editId),
                         project: projectName,
                         size: itemSize,
-                        thick: singleRow.querySelector('.row-thick').value.trim() || '25mm',
+                        thick: singleRow.querySelector('.row-thick').value.trim() || 'ไม่ระบุ',
                         jacket: singleRow.querySelector('.row-jacket').value,
                         morningQty: morning,
                         afternoonQty: afternoon,
@@ -3640,7 +3669,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         receivedDate: receivedDate,
                         dispatchDate: db[idx].dispatchDate || '',
                         deliveryLocation: deliveryLocation,
-                        bomCode: (singleRow.querySelector('.row-bomcode')?.value || '').trim()
+                        bomCode: (singleRow.querySelector('.row-bomcode')?.value || db[idx].bomCode || '').trim()
                     };
                     showToast('อัปเดตข้อมูลสำเร็จ');
                 }
@@ -3662,7 +3691,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                             id: newId,
                             project: projectName,
                             size: itemSize,
-                            thick: row.querySelector('.row-thick').value.trim() || '25mm',
+                            thick: row.querySelector('.row-thick').value.trim() || 'ไม่ระบุ',
                             jacket: row.querySelector('.row-jacket').value,
                             morningQty: morning,
                             afternoonQty: afternoon,
@@ -3678,6 +3707,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         addedCount++;
                     }
                 });
+                if (addedCount === 0) {
+                    showToast('กรุณาระบุไซส์และจำนวนท่อที่มากกว่า 0 อย่างน้อย 1 รายการ', 'error');
+                    return;
+                }
                 showToast(`บันทึกสำเร็จ ${addedCount} รายการลงโครงการ "${projectName}"`);
             }
 
@@ -3896,6 +3929,13 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             pushUndoSnapshot('แก้ไขวันส่งท่อใน FG');
             item.dispatchDate = newDate || '';
             if (item.__legacyDispatchDate === true) delete item.__legacyDispatchDate;
+            // แก้บัค: ถ้ารายการเคยถูกระบบ auto-advance ทำเครื่องหมาย "ส่งมอบแล้ว" ไปก่อนหน้า (เพราะกำหนดส่งเดิมเลยวันนี้)
+            // แล้วผู้ใช้มาเลื่อนกำหนดส่งเป็นวันนี้/อนาคต งานนั้นย่อมยังส่งจริงไม่ได้ ต้องดึงสถานะกลับเป็น "รอจัดส่ง"
+            // เพื่อให้กลับไปนับในกราฟ/รายงานที่กรอง "ยังไม่ส่งมอบ" ใหม่ — ไม่แตะรายการอื่น ไม่แตะกรณีที่ผู้ใช้ตั้งใจกดส่งมอบเองแล้วแก้วันที่ย้อนหลัง
+            const todayKeyForRevert = typeof localDateKey === 'function' ? localDateKey() : new Date().toISOString().slice(0, 10);
+            if (item.status === 'ส่งมอบแล้ว' && newDate && newDate >= todayKeyForRevert) {
+                item.status = 'รอจัดส่ง';
+            }
             // ถ้ากำหนดวันส่งย้อนหลัง ให้ตรวจสถานะทันที ไม่ต้องรอรอบ 5 นาที
             const autoMoved = typeof autoAdvanceProductionStatus === 'function' ? autoAdvanceProductionStatus() : 0;
             // Persist the new dispatch date even when no status transition happened.
@@ -4111,6 +4151,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             projSel.innerHTML = projectsList.map(p => `<option value="${p}">${p}</option>`).join('');
             document.getElementById('fg-add-size').innerHTML = getSizeSelectOptionsHtml();
             document.getElementById('fg-add-jacket').value = 'GI';
+            const fgThick = document.getElementById('fg-add-thick'); if (fgThick) fgThick.value = '';
             document.getElementById('fg-add-qty').value = 1;
             document.getElementById('fg-add-date').value = selectedReceiveDate ? '' : localDateKey();
             const fgRecv=document.getElementById('fg-add-received-date'); if(fgRecv) fgRecv.value=selectedReceiveDate||localDateKey();
@@ -4135,8 +4176,9 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             if (!size) { showToast('กรุณาเลือกขนาดท่อ'); return; }
             if (!qty || qty <= 0) { showToast('กรุณาระบุจำนวนให้ถูกต้อง'); return; }
             pushUndoSnapshot('เพิ่มรายการคลัง FG');
+            const fgThick = (document.getElementById('fg-add-thick')?.value || '').trim() || 'ไม่ระบุ';
             db.push({
-                id: getNextDbId(), project, size, thick: '', jacket,
+                id: getNextDbId(), project, size, thick: fgThick, jacket,
                 morningQty: qty, afternoonQty: 0, otQty: 0, qty,
                 status: 'รอจัดส่ง', qc: 'Passed', date: '', dispatchDate: date, receivedDate: '', fgReceivedDate: (document.getElementById('fg-add-received-date')?.value || ''), deliveryLocation
             });
@@ -4177,6 +4219,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('rm-add-size').innerHTML = getSizeSelectOptionsHtml();
             const sizeCustom=document.getElementById('rm-add-size-custom'); if(sizeCustom){sizeCustom.value='';sizeCustom.classList.add('hidden');sizeCustom.required=false;}
             document.getElementById('rm-add-jacket').value = 'GI';
+            const rmThick = document.getElementById('rm-add-thick'); if (rmThick) rmThick.value = '';
             document.getElementById('rm-add-qty').value = 1;
             document.getElementById('rm-add-date').value = selectedReceiveDate || localDateKey();
             document.getElementById('add-rm-modal').classList.remove('hidden');
@@ -4201,6 +4244,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 i.receivedDate === receivedDate &&
                 String(i.project||'').trim().toLowerCase() === project.toLowerCase() &&
                 String(i.size||'').trim().toLowerCase() === size.toLowerCase() &&
+                String(i.thick||'').trim().toLowerCase() === String(document.getElementById('rm-add-thick')?.value||'ไม่ระบุ').trim().toLowerCase() &&
                 String(i.jacket||'').trim().toLowerCase() === jacket.toLowerCase() &&
                 Number(i.originalQty ?? i.qty ?? 0) === qty
             );
@@ -4208,7 +4252,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
             pushUndoSnapshot('เพิ่มรายการคลัง RM');
             rmRecords.push({
-                id: getNextRMId(), project, size, thick: '25mm', jacket, qty, originalQty: qty, remainingQty: qty, allocatedQty: 0,
+                id: getNextRMId(), project, size, thick: ((document.getElementById('rm-add-thick')?.value || '').trim() || 'ไม่ระบุ'), jacket, qty, originalQty: qty, remainingQty: qty, allocatedQty: 0,
                 receivedDate, status: 'รับเข้าแล้ว', stage: 'RM', sourceDbId: null, createdAt: Date.now()
             });
             saveRMRecords();
@@ -4226,6 +4270,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             if(available<=0){showToast('RM รายการนี้ไม่มีคงเหลือให้ย้ายเข้าผลิตแล้ว','error');return;}
             document.getElementById('rm-plan-id').value=item.id;
             document.getElementById('rm-plan-date').value=defaultDate||localDateKey();
+            const rmPlanDispatchEl=document.getElementById('rm-plan-dispatch-date'); if(rmPlanDispatchEl) rmPlanDispatchEl.value='';
             document.getElementById('rm-plan-morning').value=0;
             document.getElementById('rm-plan-afternoon').value=0;
             document.getElementById('rm-plan-ot').value=0;
@@ -4246,12 +4291,16 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             const item=rmRecords.find(r=>Number(r.id)===rmId);
             if(!item)return;
             const targetDate=document.getElementById('rm-plan-date').value;
+            // ไม่บังคับกรอก: ถ้าเว้นว่างไว้ ระบบยังไปกำหนด "วันที่ส่ง" ที่คลัง FG ได้ทีหลังเหมือนเดิมทุกประการ
+            const dispatchDateInput=(document.getElementById('rm-plan-dispatch-date')?.value||'').trim();
             const morning=Math.max(0,Number(document.getElementById('rm-plan-morning').value||0));
             const afternoon=Math.max(0,Number(document.getElementById('rm-plan-afternoon').value||0));
             const ot=Math.max(0,Number(document.getElementById('rm-plan-ot').value||0));
             const total=morning+afternoon+ot;
             const available=Math.max(0,Number(item.remainingQty ?? item.qty ?? 0));
             if(!targetDate||!isReasonableDate(targetDate)){showToast('กรุณาระบุวันผลิตที่ถูกต้อง','error');return;}
+            if(dispatchDateInput && !isReasonableDate(dispatchDateInput)){showToast('วันที่ส่งดูผิดปกติ กรุณาตรวจสอบอีกครั้ง','error');return;}
+            if(dispatchDateInput && dispatchDateInput < targetDate){showToast('กำหนดส่งต้องไม่ก่อนวันผลิต','error');return;}
             if(total<=0){showToast('กรุณาระบุจำนวนอย่างน้อย 1 ท่อน','error');return;}
             if(total>available){showToast(`จำนวนที่จะย้าย (${total}) มากกว่าคงเหลือ RM (${available})`,'error');return;}
             if(targetDate < item.receivedDate){showToast('วันผลิตต้องไม่ก่อนวันรับท่อ','error');return;}
@@ -4260,9 +4309,9 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             // สร้างรายการผลิตใหม่ 1 รายการต่อการย้ายหนึ่งครั้ง พร้อม sourceRMId เพื่อ trace ย้อนกลับได้
             pushUndoSnapshot('ย้าย RM เข้าแผนผลิต');
             db.push({
-                id:getNextDbId(), project:item.project, size:item.size, thick:item.thick||'25mm', jacket:item.jacket||'ไม่ระบุ',
+                id:getNextDbId(), project:item.project, size:item.size, thick:item.thick||'ไม่ระบุ', jacket:item.jacket||'ไม่ระบุ',
                 morningQty:morning, afternoonQty:afternoon, otQty:ot, qty:total, status:'กำลังผลิต', qc:'Passed', date:targetDate,
-                receivedDate:'', dispatchDate:'', fgReceivedDate:'', deliveryLocation:item.deliveryLocation||'', sourceRMId:item.id, sourceRMQty:total, plannedFromRM:true
+                receivedDate:'', dispatchDate:dispatchDateInput, fgReceivedDate:'', deliveryLocation:item.deliveryLocation||'', sourceRMId:item.id, sourceRMQty:total, plannedFromRM:true
             });
             item.allocatedQty=Number(item.allocatedQty||0)+total;
             item.remainingQty=available-total;
@@ -4273,7 +4322,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             closeRMProductionPlanModal();
             renderRMWarehouse();
             renderActiveView();
-            showToastWithUndo(`ย้าย RM ${total.toLocaleString('th-TH')} ท่อนเข้าแผนผลิตวันที่ ${targetDate} แล้ว • คงเหลือ RM ${item.remainingQty.toLocaleString('th-TH')} ท่อน`);
+            showToastWithUndo(`ย้าย RM ${total.toLocaleString('th-TH')} ท่อนเข้าแผนผลิตวันที่ ${targetDate} แล้ว${dispatchDateInput?` • กำหนดส่ง ${dispatchDateInput}`:''} • คงเหลือ RM ${item.remainingQty.toLocaleString('th-TH')} ท่อน`);
         }
 
         // ===================== Quick View Navigation =====================
@@ -4445,6 +4494,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('quick-afternoon').value = 0;
             document.getElementById('quick-ot').value = 0;
             document.getElementById('quick-qty').value = 0;
+            const qThick = document.getElementById('quick-thick'); if (qThick) qThick.value = '';
             document.getElementById('quick-form-mode-title').innerText = 'เพิ่มงานใหม่ในวันนี้ (แยก 3 ล็อต)';
             document.getElementById('quick-btn-cancel').classList.add('hidden');
             document.getElementById('quick-project-custom').classList.add('hidden');
@@ -4473,6 +4523,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('quick-qty').value = item.qty;
             document.getElementById('quick-status').value = item.status;
             document.getElementById('quick-jacket').value = item.jacket || 'GI';
+            const quickThickEl = document.getElementById('quick-thick'); if (quickThickEl) quickThickEl.value = (item.thick && item.thick !== 'ไม่ระบุ') ? item.thick : '';
 
             const projSel = document.getElementById('quick-project');
             const projCustom = document.getElementById('quick-project-custom');
@@ -4507,6 +4558,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             const pipeSize = getSelectedQuickSizeName();
             if (document.getElementById('quick-size').value === 'CUSTOM' && pipeSize && !PIPE_SPECS[pipeSize]) addPipeSizeToSystem(pipeSize, 0, 0);
             const jacket = document.getElementById('quick-jacket').value;
+            const thick = (document.getElementById('quick-thick')?.value || '').trim() || 'ไม่ระบุ';
             const morning = parseInt(document.getElementById('quick-morning').value || 0);
             const afternoon = parseInt(document.getElementById('quick-afternoon').value || 0);
             const ot = parseInt(document.getElementById('quick-ot').value || 0);
@@ -4541,6 +4593,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         project: projectName,
                         size: pipeSize,
                         jacket: jacket,
+                        thick: thick,
                         morningQty: morning,
                         afternoonQty: afternoon,
                         otQty: ot,
@@ -4556,7 +4609,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                     id: newId,
                     project: projectName,
                     size: pipeSize,
-                    thick: '25mm',
+                    thick: thick,
                     jacket: jacket,
                     morningQty: morning,
                     afternoonQty: afternoon,
@@ -4643,12 +4696,15 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         <td class="p-3 text-center">
                             <span class="font-bold font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">${item.size}</span>
                             <span class="text-[11px] text-slate-500 font-semibold">(${item.jacket})</span>
-                            <div class="text-[10px] text-slate-400">หนา ${item.thick || '25mm'}</div>
+                            <div class="text-[10px] text-slate-400">หนา ${item.thick || 'ไม่ระบุ'}</div>
                         </td>
                         <td class="p-3 text-center text-xs font-mono">
                             <div><span class="text-slate-400">รับ:</span> ${item.receivedDate || '-'}</div>
                             <div><span class="text-slate-400">ผลิต:</span> ${item.date || '-'}</div>
-                            <div><span class="text-slate-400">ส่ง:</span> ${getDispatchDate(item) || '-'}</div>
+                            <div class="flex items-center justify-center gap-1 mt-0.5">
+                                <span class="text-slate-400">ส่ง:</span>
+                                <input type="date" value="${getDispatchDate(item)||''}" onchange="updateFGDispatchDate(${item.id}, this.value)" title="กำหนด/แก้วันที่ส่ง — แก้ได้ทุกสถานะ ไม่ต้องรอเข้าคลัง FG ก่อน" class="text-[10px] !py-0.5 !px-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded dark:text-white">
+                            </div>
                         </td>
                         <td class="p-3 text-center font-mono text-xs">
                             <span class="text-amber-600 dark:text-amber-400 font-bold">${item.morningQty || 0}</span> / 
@@ -4698,10 +4754,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                             <span class="text-xs font-extrabold font-mono text-slate-900 dark:text-white">${item.qty} ท่อน</span>
                         </div>
                         <div class="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            ไซส์: <span class="font-mono font-bold">${item.size}</span> (${item.jacket}) - ${item.thick || '25mm'}
+                            ไซส์: <span class="font-mono font-bold">${item.size}</span> (${item.jacket}) - ${item.thick || 'ไม่ระบุ'}
                         </div>
                         <div class="text-[10px] text-slate-400 flex justify-between border-t border-slate-100 dark:border-slate-800 pt-1.5">
-                            <span>📅 ส่ง: ${(item.status === 'กำลังผลิต' ? (item.date || '-') : ((typeof getDispatchDate === 'function' ? getDispatchDate(item) : '') || item.date || '-'))}</span>
+                            <span>📅 ${item.status === 'กำลังผลิต' && !getDispatchDate(item) ? `ผลิต: ${item.date || '-'}` : `ส่ง: ${(typeof getDispatchDate === 'function' ? getDispatchDate(item) : '') || item.date || '-'}`}</span>
                             <button onclick="editItem(${item.id})" class="text-amber-500 font-bold hover:underline">แก้ไข</button>
                         </div>
                     </div>
@@ -4837,12 +4893,16 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         function updateKPIs() {
-            const totalQty = db.reduce((a, b) => a + b.qty, 0);
-            const uniqueProjects = new Set(db.map(i => i.project)).size;
+            // ใช้ข้อมูลกรองรายการซ้ำแบบเดียวกับกราฟด้านล่างทั้งหมด (updateCharts ฯลฯ)
+            // เพื่อไม่ให้การ์ด KPI บนสุดโชว์ตัวเลขสูงกว่ากราฟ/รายงานอื่นเวลามีข้อมูลซ้ำเกิดขึ้นจริง
+            const kpiRows = (window.__GEKKO_SAFE_DUPES && typeof window.__GEKKO_SAFE_DUPES.uniqueProduction === 'function')
+                ? window.__GEKKO_SAFE_DUPES.uniqueProduction(db).rows : db;
+            const totalQty = kpiRows.reduce((a, b) => a + b.qty, 0);
+            const uniqueProjects = new Set(kpiRows.map(i => i.project)).size;
 
             let totalWeightKg = 0;
             let totalTruckLoads = 0;
-            db.forEach(i => {
+            kpiRows.forEach(i => {
                 const w = getUnitWeight(i.size) * i.qty;
                 totalWeightKg += w;
                 // เที่ยวรถ = เฉพาะงานที่ "ยังไม่ส่งมอบ" เท่านั้น (ของที่ส่งไปแล้วไม่ต้องวางแผนรถอีก) — ยังนับน้ำหนัก/ยอดผลิตรวมสะสมทุกสถานะไว้เป็นประวัติเหมือนเดิม
@@ -4856,8 +4916,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             const totalChem = (totalQty * 4.2).toFixed(0);
             const chemDrums = (totalChem / 200).toFixed(1);
 
-            const passedCount = db.filter(i => (i.qc || 'Passed') === 'Passed').length;
-            const qcRate = db.length > 0 ? ((passedCount / db.length) * 100).toFixed(0) : 100;
+            const passedCount = kpiRows.filter(i => (i.qc || 'Passed') === 'Passed').length;
+            const qcRate = kpiRows.length > 0 ? ((passedCount / kpiRows.length) * 100).toFixed(0) : 100;
 
             document.getElementById('kpi-total-qty').innerText = totalQty.toLocaleString();
             document.getElementById('kpi-project-count').innerText = `จาก ${uniqueProjects} โครงการ`;
@@ -4867,7 +4927,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('kpi-total-chem').innerText = Number(totalChem).toLocaleString();
             document.getElementById('kpi-chem-drums').innerText = `~${chemDrums} ถัง (200L)`;
             document.getElementById('kpi-qc-pass-rate').innerText = `${qcRate}%`;
-            document.getElementById('kpi-qc-count').innerText = `(${passedCount}/${db.length})`;
+            document.getElementById('kpi-qc-count').innerText = `(${passedCount}/${kpiRows.length})`;
         }
 
         function updateCharts() {
@@ -5472,7 +5532,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         function exportToCSV() {
             let csv = "\uFEFFID,โครงการ,ขนาดท่อ,ความหนา,Jacket,เช้า,บ่าย,OT,รวม,สถานะ,QC,วันที่ส่ง,วันที่รับ,สถานที่จัดส่ง\n";
             db.forEach(i => {
-                csv += `"${i.id}","${i.project}","${i.size}","${i.thick || '25mm'}","${i.jacket}",${i.morningQty || 0},${i.afternoonQty || 0},${i.otQty || 0},${i.qty},"${i.status}","${i.qc || 'Passed'}","${i.date || ''}","${i.receivedDate || ''}","${i.deliveryLocation || ''}"\n`;
+                csv += `"${i.id}","${i.project}","${i.size}","${i.thick || 'ไม่ระบุ'}","${i.jacket}",${i.morningQty || 0},${i.afternoonQty || 0},${i.otQty || 0},${i.qty},"${i.status}","${i.qc || 'Passed'}","${i.date || ''}","${i.receivedDate || ''}","${i.deliveryLocation || ''}"\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -5487,7 +5547,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             if (!item) return;
             document.getElementById('qr-code-id').innerText = `LOT-2026-${String(item.id).padStart(3, '0')}`;
             document.getElementById('qr-modal-project').innerText = item.project;
-            document.getElementById('qr-modal-spec').innerText = `${item.size} (${item.jacket}) - ${item.thick || '25mm'}`;
+            document.getElementById('qr-modal-spec').innerText = `${item.size} (${item.jacket}) - ${item.thick || 'ไม่ระบุ'}`;
             document.getElementById('qr-modal-qty').innerText = `${item.qty} ท่อน (~${Math.round(getUnitWeight(item.size) * item.qty)} kg)`;
             document.getElementById('qr-modal').classList.remove('hidden');
         }
@@ -5529,7 +5589,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         <td class="p-1 border text-center">${idx + 1}</td>
                         <td class="p-1 border font-bold">${item.project}</td>
                         <td class="p-1 border text-center">${item.receivedDate || '-'} / ${item.date || '-'}</td>
-                        <td class="p-1 border text-center font-bold">${item.size} (${item.thick || '25mm'})</td>
+                        <td class="p-1 border text-center font-bold">${item.size} (${item.thick || 'ไม่ระบุ'})</td>
                         <td class="p-1 border text-center">${item.jacket}</td>
                         <td class="p-1 border text-center">${item.morningQty || 0}/${item.afternoonQty || 0}/${item.otQty || 0}</td>
                         <td class="p-1 border text-center font-bold">${item.qty}</td>
@@ -6024,7 +6084,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         function saveBackupSnapshot(force = false) {
-            const todayKey = new Date().toISOString().slice(0, 10);
+            const todayKey = (typeof localDateKey === 'function') ? localDateKey() : (() => {
+                const d = new Date();
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            })();
             let history = getBackupHistory();
 
             const alreadyToday = history.some(h => h.date === todayKey);
@@ -6406,6 +6469,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             return changed;
         }
 
+        let gekkoAutoAdvanceIntervalId = null;
+
         function initApp() {
             setThemeColor(currentThemeColor);
             applyDarkMode();
@@ -6420,7 +6485,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             renderActiveView();
             autoBackupCheck();
             // เผื่อเปิดแอปทิ้งไว้ข้ามวัน เช็คซ้ำทุก 5 นาทีแบบไม่รบกวนผู้ใช้ (ถ้าไม่มีรายการเข้าเงื่อนไข จะไม่มีอะไรเกิดขึ้น)
-            setInterval(autoAdvanceProductionStatus, 5 * 60 * 1000);
+            // กัน timer ซ้ำ: saveDB() เรียก initApp() เพื่อ refresh UI ได้ แต่ไม่ควรสร้าง setInterval ใหม่ทุกครั้ง
+            if (!gekkoAutoAdvanceIntervalId) {
+                gekkoAutoAdvanceIntervalId = setInterval(autoAdvanceProductionStatus, 5 * 60 * 1000);
+            }
         }
 
         window.onload = function () { initApp(); initCloudSync(); };
@@ -8934,7 +9002,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
   function destroyCharts(){ Object.values(IP_STATE.charts).forEach(c=>{ try{ c.destroy(); }catch(_){ } }); IP_STATE.charts={}; }
 
   function computeModel(){
-    const db = IP.getDb();
+    const db = (window.__GEKKO_SAFE_DUPES && typeof window.__GEKKO_SAFE_DUPES.uniqueProduction === 'function')
+      ? window.__GEKKO_SAFE_DUPES.uniqueProduction(IP.getDb()).rows : IP.getDb();
     const dt = IP.getDowntime();
     const today = IP.today();
 
@@ -9496,5 +9565,1311 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 </script>
 <!-- ================= END MASTER DATA MANAGER ================= -->
 
+<!-- ================= INSIGHTS PLUS: TRENDS (added block — new tab, sparklines on KPI cards, all read-only, no existing code removed) ================= -->
+<style>
+.ip-hm-grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto;padding-bottom:6px}
+.ip-hm-cell{width:13px;height:13px;border-radius:3px;background:rgba(148,163,184,.18)}
+.ip-hm-legend{display:flex;align-items:center;gap:4px;font-size:10px;opacity:.6;margin-top:6px}
+.ip-hm-legend .ip-hm-cell{width:10px;height:10px}
+.ip-th-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed rgba(148,163,184,.2);font-size:12px}
+.ip-th-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:7px;flex-shrink:0}
+.ip-kpi-spark-wrap{position:relative;width:100%;height:28px;margin-top:4px;overflow:hidden}
+.ip-kpi-spark{position:absolute;inset:0;width:100% !important;height:100% !important}
+</style>
+<script>
+(function(){
+  'use strict';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function num(v){ const n=Number(v); return Number.isFinite(n)?n:0; }
+  function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function addDays(k,n){ try{ const d=new Date(k+'T00:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }catch(_){ return k; } }
+  function getDb(){ try{ if(Array.isArray(window.__gekkoDbMirror)) return window.__gekkoDbMirror; const raw=JSON.parse(localStorage.getItem('gekko_production_db')||'[]'); return Array.isArray(raw)?raw:[]; }catch(_){ return []; } }
+  function isoWeekKey(dateStr){
+    try{
+      const d = new Date(dateStr+'T00:00:00');
+      const day = (d.getDay()+6)%7; // Mon=0
+      d.setDate(d.getDate()-day+3);
+      const firstThu = new Date(d.getFullYear(),0,4);
+      const week = 1 + Math.round(((d-firstThu)/86400000 - 3 + ((firstThu.getDay()+6)%7))/7);
+      return d.getFullYear()+'-W'+String(week).padStart(2,'0');
+    }catch(_){ return dateStr; }
+  }
+
+  let trendCharts = {};
+  function destroyTrendCharts(){ Object.values(trendCharts).forEach(c=>{ try{c.destroy();}catch(_){} }); trendCharts={}; }
+
+  function computeTrendsModel(){
+    const db = (window.__GEKKO_SAFE_DUPES && typeof window.__GEKKO_SAFE_DUPES.uniqueProduction === 'function')
+      ? window.__GEKKO_SAFE_DUPES.uniqueProduction(getDb()).rows : getDb();
+    const todayK = today();
+
+    // 8-week QC fail-rate trend (only counting items where qc was recorded)
+    const weekKeys = [];
+    for(let i=7;i>=0;i--) weekKeys.push(isoWeekKey(addDays(todayK, -i*7)));
+    const uniqWeeks = [...new Set(weekKeys)];
+    const wkTested = {}, wkFail = {};
+    uniqWeeks.forEach(w=>{ wkTested[w]=0; wkFail[w]=0; });
+    db.forEach(it=>{
+      const d = it && typeof it.date==='string' ? it.date : '';
+      if(!d) return;
+      const wk = isoWeekKey(d);
+      if(!Object.prototype.hasOwnProperty.call(wkTested,wk)) return;
+      if(!it.qc) return;
+      wkTested[wk]++;
+      if(it.qc !== 'Passed') wkFail[wk]++;
+    });
+    const failRateSeries = uniqWeeks.map(w => wkTested[w] > 0 ? +(wkFail[w]/wkTested[w]*100).toFixed(1) : 0);
+
+    // 70-day production heatmap (10 weeks x 7 days, Mon-start)
+    const days = [];
+    for(let i=69;i>=0;i--) days.push(addDays(todayK,-i));
+    const dayQty = {};
+    days.forEach(d=>dayQty[d]=0);
+    db.forEach(it=>{ const d = it && it.date; if(d && Object.prototype.hasOwnProperty.call(dayQty,d)) dayQty[d]+=num(it.qty); });
+    const maxDay = Math.max(1, ...Object.values(dayQty));
+
+    // 8-week produced vs dispatched
+    const wkProduced = {}, wkDispatched = {};
+    uniqWeeks.forEach(w=>{ wkProduced[w]=0; wkDispatched[w]=0; });
+    db.forEach(it=>{
+      const d = it && it.date;
+      if(d){ const wk=isoWeekKey(d); if(Object.prototype.hasOwnProperty.call(wkProduced,wk)) wkProduced[wk]+=num(it.qty); }
+      const dd = it && typeof it.dispatchDate==='string' ? it.dispatchDate.trim() : '';
+      if(dd){ const wk=isoWeekKey(dd); if(Object.prototype.hasOwnProperty.call(wkDispatched,wk)) wkDispatched[wk]+=num(it.qty); }
+    });
+
+    // Project health (traffic light): red=overdue, amber=qc fail present, green=ok
+    const projMap = {};
+    db.forEach(it=>{
+      const p = (it && it.project) ? String(it.project) : 'ไม่ระบุโครงการ';
+      if(!projMap[p]) projMap[p] = { project:p, qty:0, overdue:0, qcFail:0 };
+      projMap[p].qty += num(it.qty);
+      const dd = it && typeof it.dispatchDate==='string' ? it.dispatchDate.trim() : '';
+      if(it.status !== 'ส่งมอบแล้ว' && dd && dd < todayK) projMap[p].overdue++;
+      if(it.qc && it.qc !== 'Passed') projMap[p].qcFail++;
+    });
+    const projRows = Object.values(projMap).sort((a,b)=>b.qty-a.qty).slice(0,12);
+
+    // 14-day sparkline data for two KPI cards
+    const spark14 = [];
+    for(let i=13;i>=0;i--) spark14.push(addDays(todayK,-i));
+    const sparkQty = spark14.map(d => db.filter(it=>it && it.date===d).reduce((s,it)=>s+num(it.qty),0));
+    const sparkQcRate = spark14.map(d => {
+      const items = db.filter(it=>it && it.date===d && it.qc);
+      if(!items.length) return null;
+      const pass = items.filter(it=>it.qc==='Passed').length;
+      return +(pass/items.length*100).toFixed(1);
+    });
+
+    return { uniqWeeks, failRateSeries, days, dayQty, maxDay, wkProduced, wkDispatched, projRows, spark14, sparkQty, sparkQcRate };
+  }
+
+  function heatColor(v, max){
+    if(v<=0) return 'rgba(148,163,184,.18)';
+    const ratio = Math.min(1, v/max);
+    const alpha = 0.25 + ratio*0.65;
+    return `rgba(14,165,233,${alpha.toFixed(2)})`;
+  }
+
+  function renderTrendsTab(){
+    const body = document.getElementById('ip-body');
+    if(!body) return;
+    const m = computeTrendsModel();
+
+    body.innerHTML = `
+      <div class="ip-card" style="margin-bottom:14px">
+        <h3>🧪 อัตรา QC ไม่ผ่าน รายสัปดาห์ (8 สัปดาห์ล่าสุด)</h3>
+        <canvas id="ip-tr-qcfail" style="max-height:200px"></canvas>
+      </div>
+      <div class="ip-card" style="margin-bottom:14px">
+        <h3>📅 Heatmap ยอดผลิตรายวัน (70 วันล่าสุด)</h3>
+        <div class="ip-hm-grid" id="ip-tr-heatmap"></div>
+        <div class="ip-hm-legend"><span>น้อย</span><span class="ip-hm-cell" style="background:rgba(14,165,233,.25)"></span><span class="ip-hm-cell" style="background:rgba(14,165,233,.5)"></span><span class="ip-hm-cell" style="background:rgba(14,165,233,.75)"></span><span class="ip-hm-cell" style="background:rgba(14,165,233,.9)"></span><span>มาก</span></div>
+      </div>
+      <div class="ip-card" style="margin-bottom:14px">
+        <h3>📦 ผลิต vs จัดส่ง รายสัปดาห์</h3>
+        <canvas id="ip-tr-prodship" style="max-height:220px"></canvas>
+      </div>
+      <div class="ip-card">
+        <h3>🚦 สถานะโครงการ (ไฟจราจร)</h3>
+        <div class="ip-md-note" style="margin-top:0">🔴 มีงานเลยกำหนดส่ง • 🟡 มี QC ไม่ผ่าน • 🟢 ปกติ</div>
+        ${m.projRows.length ? m.projRows.map(p=>{
+          const color = p.overdue>0 ? '#dc2626' : (p.qcFail>0 ? '#d97706' : '#16a34a');
+          return `<div class="ip-th-row"><span><span class="ip-th-dot" style="background:${color}"></span>${esc(p.project)} — ${p.qty.toLocaleString('th-TH')} ท่อน</span><span style="opacity:.7">${p.overdue>0?`เลยกำหนด ${p.overdue}`:(p.qcFail>0?`QC ไม่ผ่าน ${p.qcFail}`:'ปกติ')}</span></div>`;
+        }).join('') : '<div class="ip-empty">ไม่มีข้อมูลโครงการ</div>'}
+      </div>
+    `;
+
+    if (typeof Chart === 'undefined') return;
+    destroyTrendCharts();
+
+    const c1 = document.getElementById('ip-tr-qcfail');
+    if(c1) trendCharts.qcfail = new Chart(c1, {
+      type:'line',
+      data:{ labels:m.uniqWeeks, datasets:[{ label:'% ไม่ผ่าน', data:m.failRateSeries, borderColor:'#dc2626', backgroundColor:'rgba(220,38,38,.15)', fill:true, tension:.3, pointRadius:3 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, max:100 } } }
+    });
+
+    const hm = document.getElementById('ip-tr-heatmap');
+    if(hm){
+      hm.innerHTML = m.days.map(d => `<div class="ip-hm-cell" title="${d}: ${m.dayQty[d]} ท่อน" style="background:${heatColor(m.dayQty[d], m.maxDay)}"></div>`).join('');
+    }
+
+    const c3 = document.getElementById('ip-tr-prodship');
+    if(c3) trendCharts.prodship = new Chart(c3, {
+      type:'bar',
+      data:{ labels:m.uniqWeeks, datasets:[
+        { label:'ผลิต', data:m.uniqWeeks.map(w=>m.wkProduced[w]), backgroundColor:'#0ea5e9' },
+        { label:'จัดส่ง', data:m.uniqWeeks.map(w=>m.wkDispatched[w]), backgroundColor:'#16a34a' }
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
+    });
+  }
+
+  function injectTrendsTab(){
+    const tabs = document.getElementById('ip-tabs');
+    if(!tabs || document.querySelector('[data-ip-tab="trends"]')) return;
+    const btn = document.createElement('button');
+    btn.className = 'ip-tab-btn';
+    btn.setAttribute('data-ip-tab','trends');
+    btn.textContent = '📅 เทรนด์';
+    btn.onclick = function(){
+      document.querySelectorAll('.ip-tab-btn').forEach(b=>b.classList.toggle('ip-active', b===btn));
+      renderTrendsTab();
+    };
+    tabs.appendChild(btn);
+  }
+
+  const _prevIpOpen = window.ipOpen;
+  if (typeof _prevIpOpen === 'function'){
+    window.ipOpen = function(){
+      _prevIpOpen();
+      setTimeout(injectTrendsTab, 0);
+    };
+  }
+
+  // ---- Sparklines on homepage KPI cards (additive only; safe if cards are absent) ----
+  let sparkCharts = {};
+  function renderSparkline(canvasId, data, color){
+    const el = document.getElementById(canvasId);
+    if(!el || typeof Chart === 'undefined') return;
+    try{ sparkCharts[canvasId]?.destroy(); }catch(_){}
+    sparkCharts[canvasId] = new Chart(el, {
+      type:'line',
+      data:{ labels: data.map((_,i)=>i), datasets:[{ data: data, borderColor: color, borderWidth: 1.5, pointRadius: 0, fill: false, spanGaps: true, tension:.3 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{enabled:false}}, scales:{ x:{display:false}, y:{display:false} }, elements:{line:{borderJoinStyle:'round'}} }
+    });
+  }
+
+  function injectKpiSparklines(){
+    try{
+      const qtyCard = document.getElementById('kpi-total-qty')?.closest('.kpi-clickable');
+      const qcCard = document.getElementById('kpi-qc-pass-rate')?.closest('.kpi-clickable');
+      if(qtyCard && !document.getElementById('ip-spark-qty')){
+        const wrap = document.createElement('div'); wrap.className='ip-kpi-spark-wrap';
+        const c = document.createElement('canvas'); c.id='ip-spark-qty'; c.className='ip-kpi-spark';
+        wrap.appendChild(c); qtyCard.appendChild(wrap);
+      }
+      if(qcCard && !document.getElementById('ip-spark-qc')){
+        const wrap = document.createElement('div'); wrap.className='ip-kpi-spark-wrap';
+        const c = document.createElement('canvas'); c.id='ip-spark-qc'; c.className='ip-kpi-spark';
+        wrap.appendChild(c); qcCard.appendChild(wrap);
+      }
+      const m = computeTrendsModel();
+      renderSparkline('ip-spark-qty', m.sparkQty, '#0ea5e9');
+      renderSparkline('ip-spark-qc', m.sparkQcRate, '#10b981');
+    }catch(err){ console.error('KPI sparkline injection failed:', err); }
+  }
+
+  window.addEventListener('load', function(){
+    // KPI-card sparklines disabled per request — trend charts remain available inside Insights Plus → เทรนด์ tab.
+  });
+})();
+</script>
+<!-- ================= END INSIGHTS PLUS: TRENDS ================= -->
+
+
+<!-- ================= GEKKO V67 — COMMAND CENTER / SAFE UX + CHARTS ================= -->
+<style id="gekko-v67-command-center-style">
+  #gk-v67-center{margin-top:18px;border:1px solid rgba(148,163,184,.28);border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(248,250,252,.94));box-shadow:0 12px 35px rgba(15,23,42,.08);overflow:hidden}
+  html.dark #gk-v67-center{background:linear-gradient(135deg,rgba(15,23,42,.98),rgba(2,6,23,.96));border-color:rgba(71,85,105,.55);box-shadow:0 18px 45px rgba(0,0,0,.22)}
+  .gk-v67-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(148,163,184,.18)}
+  .gk-v67-title{font-size:15px;font-weight:900;letter-spacing:-.01em;display:flex;align-items:center;gap:9px}
+  .gk-v67-sub{font-size:10px;color:#64748b;margin-top:2px}
+  html.dark .gk-v67-sub{color:#94a3b8}
+  .gk-v67-live{font-size:10px;font-weight:900;padding:6px 9px;border-radius:999px;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;white-space:nowrap}
+  html.dark .gk-v67-live{background:rgba(16,185,129,.12);color:#6ee7b7;border-color:rgba(16,185,129,.35)}
+  .gk-v67-actions{display:flex;flex-wrap:wrap;gap:7px;padding:11px 14px;background:rgba(148,163,184,.05);border-bottom:1px solid rgba(148,163,184,.14)}
+  .gk-v67-btn{border:1px solid #cbd5e1;background:white;color:#334155;border-radius:10px;padding:7px 10px;font-size:10px;font-weight:800;cursor:pointer;transition:.16s ease}
+  .gk-v67-btn:hover{transform:translateY(-1px);border-color:#94a3b8;box-shadow:0 5px 14px rgba(15,23,42,.08)}
+  html.dark .gk-v67-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}
+  .gk-v67-btn.primary{background:var(--color-500);border-color:var(--color-500);color:#0f172a}
+  .gk-v67-btn.danger{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+  html.dark .gk-v67-btn.danger{background:rgba(244,63,94,.10);border-color:rgba(244,63,94,.28);color:#fda4af}
+  .gk-v67-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:12px 14px}
+  .gk-v67-kpi{min-width:0;padding:10px 11px;border:1px solid rgba(148,163,184,.18);border-radius:13px;background:rgba(255,255,255,.7)}
+  html.dark .gk-v67-kpi{background:rgba(15,23,42,.65)}
+  .gk-v67-kpi .l{font-size:9px;color:#64748b;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html.dark .gk-v67-kpi .l{color:#94a3b8}
+  .gk-v67-kpi .v{font:900 18px/1.15 ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:4px;white-space:nowrap}
+  .gk-v67-kpi .s{font-size:8px;color:#94a3b8;margin-top:3px}
+  .gk-v67-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,1fr);gap:10px;padding:0 14px 14px}
+  .gk-v67-card{border:1px solid rgba(148,163,184,.18);border-radius:15px;padding:12px;background:rgba(255,255,255,.65);min-width:0}
+  html.dark .gk-v67-card{background:rgba(15,23,42,.55)}
+  .gk-v67-cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .gk-v67-cardtitle{font-size:11px;font-weight:900}
+  .gk-v67-note{font-size:9px;color:#64748b}
+  html.dark .gk-v67-note{color:#94a3b8}
+  .gk-v67-chart{height:205px;position:relative}
+  .gk-v67-alerts{display:grid;grid-template-columns:1fr;gap:6px}
+  .gk-v67-alert{display:flex;align-items:flex-start;gap:8px;padding:8px 9px;border-radius:11px;border:1px solid rgba(148,163,184,.18);background:rgba(248,250,252,.72);font-size:9px}
+  html.dark .gk-v67-alert{background:rgba(15,23,42,.64)}
+  .gk-v67-alert .n{font-weight:900;font-size:10px}
+  .gk-v67-alert.warn{border-color:#fde68a;background:#fffbeb;color:#92400e}
+  html.dark .gk-v67-alert.warn{border-color:rgba(245,158,11,.25);background:rgba(120,53,15,.12);color:#fcd34d}
+  .gk-v67-alert.bad{border-color:#fecdd3;background:#fff1f2;color:#9f1239}
+  html.dark .gk-v67-alert.bad{border-color:rgba(244,63,94,.25);background:rgba(127,29,29,.12);color:#fda4af}
+  .gk-v67-alert.good{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+  html.dark .gk-v67-alert.good{border-color:rgba(34,197,94,.25);background:rgba(20,83,45,.12);color:#86efac}
+  .gk-v67-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 14px 14px;font-size:9px;color:#94a3b8}
+  .gk-v67-toggle{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:3px 5px;border-radius:7px}
+  .gk-v67-collapsed .gk-v67-body{display:none}
+  @media(max-width:1100px){.gk-v67-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.gk-v67-grid{grid-template-columns:1fr}}
+  @media(max-width:640px){.gk-v67-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.gk-v67-head{align-items:flex-start}.gk-v67-actions{overflow-x:auto;flex-wrap:nowrap}.gk-v67-btn{flex:0 0 auto}.gk-v67-chart{height:180px}}
+</style>
+<script id="gekko-v67-command-center">
+(function(){
+  'use strict';
+  const V='GEKKO_V67';
+  const S=window.__gekkoV67State||(window.__gekkoV67State={charts:{},wrapped:false});
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const n=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
+  const dateKey=()=>{try{if(typeof localDateKey==='function')return localDateKey()}catch(_){}const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  const addDays=(key,delta)=>{const d=new Date(key+'T00:00:00');d.setDate(d.getDate()+delta);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  const fmt=(v,d=0)=>n(v).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const db=()=>{try{if(Array.isArray(window.__GEKKO_DATA?.db))return window.__GEKKO_DATA.db; if(Array.isArray(window.__gekkoDbMirror))return window.__gekkoDbMirror;return []}catch(_){return []}};
+  const rm=()=>{try{if(Array.isArray(window.__GEKKO_DATA?.rmRecords))return window.__GEKKO_DATA.rmRecords;return []}catch(_){return []}};
+  const getDispatch=i=>{try{if(typeof getDispatchDate==='function')return getDispatchDate(i)||''}catch(_){}return String(i?.dispatchDate||i?.fgDispatchDate||'').slice(0,10)};
+  const isValidDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''));
+  const truckCap=size=>{try{const f=window.getTruckCapacity;if(typeof f==='function'){const x=n(f(size));return x>0?x:0}}catch(_){}return 0};
+  function model(){
+    const today=dateKey(), rows=db();
+    const days=[...Array(14)].map((_,i)=>addDays(today,-(13-i)));
+    const dayMap={}; days.forEach(d=>dayMap[d]={production:0,dispatch:0,received:0});
+    let todayProd=0,todayRecv=0,todayShip=0,overdue=0,due3=0,missingDispatch=0,plannedTrips=0,tripUnknownQty=0;
+    let qcPassed=0,qcFailed=0,qcUnknown=0,weightKg=0,weightUnknownQty=0;
+    const projectMap={};
+    // รับ RM วันนี้ต้องอ่านจากทะเบียน RM โดยตรง ไม่ปนกับ receivedDate ของรายการผลิต
+    let rmToday=0;
+    try{ for(const r of rm()){ const rq=n(r?.originalQty ?? r?.qty); const rd=isValidDate(r?.receivedDate)?r.receivedDate:''; if(rd===today) rmToday+=rq; } }catch(_){}
+    for(const it of rows){
+      const q=n(it?.qty); if(q<=0) continue;
+      const date=isValidDate(it?.date)?it.date:'';
+      const rec=isValidDate(it?.receivedDate)?it.receivedDate:'';
+      const dd=getDispatch(it);
+      if(date&&dayMap[date]) dayMap[date].production+=q;
+      if(rec&&dayMap[rec]) dayMap[rec].received+=q;
+      if(dd&&dayMap[dd]) dayMap[dd].dispatch+=q;
+      if(date===today) todayProd+=q;
+      if(rec===today) todayRecv+=q;
+      if(dd===today) todayShip+=q;
+      if(it.status!=='ส่งมอบแล้ว'){
+        if(dd&&dd<today) overdue++;
+        if(dd&&dd>=today&&dd<=addDays(today,2)) due3++;
+        if(it.status==='รอจัดส่ง'&&!dd) missingDispatch++;
+        const cap=truckCap(it.size);
+        if(cap>0) plannedTrips+=Math.ceil(q/cap); else tripUnknownQty+=q;
+      }
+      const qc=String(it.qc||'').trim().toLowerCase();
+      if(['passed','pass','ผ่าน','ผ่าน qc'].includes(qc)||(!qc)) {if(qc)qcPassed+=q; else qcUnknown+=q}
+      else if(['failed','fail','ไม่ผ่าน','ng'].includes(qc)) qcFailed+=q; else qcUnknown+=q;
+      if(it.status!=='ส่งมอบแล้ว'){ const p=String(it.project||'ไม่ระบุ');projectMap[p]=(projectMap[p]||0)+q; }
+      try{const resolver=typeof window.gqWeightResolveForAlerts==='function'?window.gqWeightResolveForAlerts:(typeof window.gqWeightResolve==='function'?window.gqWeightResolve:null);if(resolver){const w=resolver(it.size);if(w?.source==='verified')weightKg+=n(w.kg)*q;else weightUnknownQty+=q}else if(typeof PIPE_SPECS!=='undefined'&&PIPE_SPECS[it.size]?.weight>0)weightKg+=n(PIPE_SPECS[it.size].weight)*q;else weightUnknownQty+=q}catch(_){weightUnknownQty+=q}
+    }
+    const dt=[];try{dt.push(...(Array.isArray(window.__GEKKO_DATA?.downtimeLogs)?window.__GEKKO_DATA.downtimeLogs:[]))}catch(_){}
+    if(!dt.length){try{const x=JSON.parse(localStorage.getItem('gekko_downtime_logs')||'[]');if(Array.isArray(x))dt.push(...x)}catch(_){}
+    }
+    const reasonMap={}; dt.forEach(x=>{const r=String(x?.reason||'ไม่ระบุ');reasonMap[r]=(reasonMap[r]||0)+Math.max(0,n(x?.hours))});
+    const issueCount=(typeof window.acAlertsBuild==='function'?(()=>{try{return window.acAlertsBuild().length}catch(_){return 0}})():0);
+    return {today,todayProd,todayRecv,todayShip,rmToday,overdue,due3,missingDispatch,plannedTrips,tripUnknownQty,qcPassed,qcFailed,qcUnknown,qcRate:(qcPassed+qcFailed)>0?qcPassed/(qcPassed+qcFailed)*100:null,weightKg,weightUnknownQty,days,dayMap,projectMap,reasonMap,issueCount};
+  }
+  function destroyCharts(){Object.values(S.charts).forEach(c=>{try{c.destroy()}catch(_){}});S.charts={};}
+  function ensure(){
+    if(document.getElementById('gk-v67-center')) return document.getElementById('gk-v67-center');
+    const anchor=document.querySelector('#barChart')?.closest('.grid.grid-cols-1.lg\\:grid-cols-4')||document.querySelector('#barChart')?.closest('.grid');
+    if(!anchor) return null;
+    const host=document.createElement('section');host.id='gk-v67-center';
+    host.innerHTML=`<div class="gk-v67-head"><div><div class="gk-v67-title">⚡ Daily Command Center <span class="gk-v67-live" id="gk-v67-live">LIVE</span></div><div class="gk-v67-sub">สรุปงานที่ต้องใช้ทันที • อ่านจากข้อมูลเดิม • ไม่สร้าง/ลบข้อมูล</div></div><button class="gk-v67-toggle" id="gk-v67-toggle" type="button" aria-expanded="true">ย่อ ▲</button></div><div class="gk-v67-body"><div class="gk-v67-actions"><button class="gk-v67-btn primary" type="button" onclick="openAddRMModal()">📥 รับ RM วันนี้</button><button class="gk-v67-btn" type="button" onclick="openTimelineQuick()">📊 Timeline</button><button class="gk-v67-btn" type="button" onclick="openFullCalendar()">🗓️ ปฏิทินเต็ม</button><button class="gk-v67-btn" type="button" onclick="gqOpen()">🧠 Smart Dashboard</button><button class="gk-v67-btn" type="button" onclick="openFactoryControlTower()">🎛️ Control Tower</button><button class="gk-v67-btn" type="button" onclick="openAlertCenterQuick()">🔔 Alerts</button></div><div class="gk-v67-kpis"><div class="gk-v67-kpi"><div class="l">ผลิตวันนี้</div><div class="v" id="gk-v67-today-prod">—</div><div class="s">ท่อน</div></div><div class="gk-v67-kpi"><div class="l">รับ RM วันนี้</div><div class="v" id="gk-v67-today-rm">—</div><div class="s">ท่อน</div></div><div class="gk-v67-kpi"><div class="l">ส่ง FG วันนี้</div><div class="v" id="gk-v67-today-ship">—</div><div class="s">ท่อน</div></div><div class="gk-v67-kpi"><div class="l">ครบกำหนด 3 วัน</div><div class="v" id="gk-v67-due3">—</div><div class="s">รายการ</div></div><div class="gk-v67-kpi"><div class="l">เลยกำหนด</div><div class="v" id="gk-v67-overdue">—</div><div class="s">รายการ</div></div><div class="gk-v67-kpi"><div class="l">รถ 6 ล้อ (แผน)</div><div class="v" id="gk-v67-trips">—</div><div class="s" id="gk-v67-trips-note">เที่ยว</div></div></div><div class="gk-v67-grid"><div class="gk-v67-card"><div class="gk-v67-cardhead"><div><div class="gk-v67-cardtitle">📈 ผลิต vs ส่ง ย้อนหลัง 14 วัน</div><div class="gk-v67-note">ใช้วันผลิตและวันส่งจริงที่มีในรายการ</div></div><span class="gk-v67-note" id="gk-v67-refresh-time">—</span></div><div class="gk-v67-chart"><canvas id="gk-v67-trend-chart"></canvas></div></div><div class="gk-v67-card"><div class="gk-v67-cardhead"><div><div class="gk-v67-cardtitle">🛡️ สิ่งที่ควรเช็กก่อนเริ่มงาน</div><div class="gk-v67-note">ตรวจเร็วจากข้อมูลปัจจุบัน</div></div></div><div class="gk-v67-alerts" id="gk-v67-alerts"></div></div></div><div class="gk-v67-grid"><div class="gk-v67-card"><div class="gk-v67-cardhead"><div><div class="gk-v67-cardtitle">🏗️ ภาระงานตามโครงการ</div><div class="gk-v67-note">เรียงตามจำนวนท่อนเพื่อช่วยเปิดงานที่ต้องทำก่อน</div></div></div><div id="gk-v67-project-bars"></div></div><div class="gk-v67-card"><div class="gk-v67-cardhead"><div><div class="gk-v67-cardtitle">🕒 Downtime 5 อันดับ</div><div class="gk-v67-note">ชั่วโมงสูญเสียจาก log ที่มีอยู่</div></div></div><div class="gk-v67-chart" style="height:190px"><canvas id="gk-v67-dt-chart"></canvas></div></div></div></div><div class="gk-v67-foot"><span id="gk-v67-integrity">กำลังตรวจข้อมูล…</span><span>V67 additive layer • ข้อมูลเดิมยังอยู่ครบ</span></div>`;
+    anchor.insertAdjacentElement('afterend',host);
+    const t=document.getElementById('gk-v67-toggle');
+    if(t)t.onclick=()=>{const c=document.getElementById('gk-v67-center');if(!c)return;const collapsed=c.classList.toggle('gk-v67-collapsed');t.textContent=collapsed?'ขยาย ▼':'ย่อ ▲';t.setAttribute('aria-expanded',String(!collapsed))};
+    return host;
+  }
+  function render(){
+    try{
+      const host=ensure(); if(!host)return;
+      const m=model();
+      const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val};
+      set('gk-v67-live','LIVE • '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}));
+      set('gk-v67-today-prod',fmt(m.todayProd));set('gk-v67-today-rm',fmt(m.rmToday));set('gk-v67-today-ship',fmt(m.todayShip));set('gk-v67-due3',fmt(m.due3));set('gk-v67-overdue',fmt(m.overdue));set('gk-v67-trips',fmt(m.plannedTrips));set('gk-v67-trips-note',m.tripUnknownQty?`เที่ยว • ยังไม่มีความจุ ${fmt(m.tripUnknownQty)} ท่อน`:'เที่ยว • Master ครบ');set('gk-v67-refresh-time','อัปเดต '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}));
+      const alerts=[];
+      if(m.overdue) alerts.push(`<div class="gk-v67-alert bad"><span>🔴</span><div><div class="n">มีงานเลยกำหนด ${fmt(m.overdue)} รายการ</div><div>เปิด Alerts/Timeline เพื่อตรวจวันส่งก่อน</div></div></div>`);
+      if(m.due3) alerts.push(`<div class="gk-v67-alert warn"><span>🟠</span><div><div class="n">ครบกำหนดใน 3 วัน ${fmt(m.due3)} รายการ</div><div>เช็กรถ พื้นที่ FG และลำดับโหลดล่วงหน้า</div></div></div>`);
+      if(m.missingDispatch) alerts.push(`<div class="gk-v67-alert warn"><span>🟡</span><div><div class="n">รอส่งแต่ไม่มีวันส่ง ${fmt(m.missingDispatch)} รายการ</div><div>กำหนดวันส่งที่คลัง FG เพื่อให้แผนสมบูรณ์</div></div></div>`);
+      if(m.tripUnknownQty) alerts.push(`<div class="gk-v67-alert warn"><span>🚚</span><div><div class="n">ยังคำนวณรถไม่ได้ ${fmt(m.tripUnknownQty)} ท่อน</div><div>ระบบไม่เดา capacity แทน Master</div></div></div>`);
+      if(m.qcUnknown) alerts.push(`<div class="gk-v67-alert warn"><span>🧾</span><div><div class="n">QC ยังไม่ระบุ ${fmt(m.qcUnknown)} ท่อน</div><div>ยังไม่รวมใน Pass Rate</div></div></div>`);
+      if(!alerts.length) alerts.push(`<div class="gk-v67-alert good"><span>✅</span><div><div class="n">ไม่พบสัญญาณเร่งด่วน</div><div>ข้อมูลปัจจุบันผ่านกติกา Command Center</div></div></div>`);
+      const ae=document.getElementById('gk-v67-alerts');if(ae)ae.innerHTML=alerts.join('');
+      const p=Object.entries(m.projectMap).sort((a,b)=>b[1]-a[1]).slice(0,7),max=p[0]?.[1]||1;
+      const pe=document.getElementById('gk-v67-project-bars');if(pe)pe.innerHTML=p.map(([name,q])=>`<div style="display:flex;align-items:center;gap:8px;margin:7px 0"><div style="width:140px;min-width:0;font-size:9px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(name)}">${esc(name)}</div><div style="height:8px;flex:1;background:rgba(148,163,184,.16);border-radius:999px;overflow:hidden"><div style="height:100%;width:${Math.max(4,q/max*100)}%;background:var(--color-500);border-radius:999px"></div></div><div style="width:72px;text-align:right;font:800 9px ui-monospace,monospace">${fmt(q)}</div></div>`).join('')||'<div class="gk-v67-note">ยังไม่มีข้อมูลโครงการ</div>';
+      set('gk-v67-integrity',`QC Pass ${m.qcRate===null?'—':m.qcRate.toFixed(1)+'%'} • น้ำหนัก Master ${fmt(m.weightKg/1000,2)} ตัน • ขาดน้ำหนัก ${fmt(m.weightUnknownQty)} ท่อน`);
+      if(typeof Chart!=='undefined'){
+        try{S.charts.trend?.destroy();const ctx=document.getElementById('gk-v67-trend-chart');if(ctx)S.charts.trend=new Chart(ctx,{data:{labels:m.days.map(d=>d.slice(5)),datasets:[{type:'bar',label:'ผลิต',data:m.days.map(d=>m.dayMap[d].production),borderRadius:5},{type:'line',label:'ส่ง',data:m.days.map(d=>m.dayMap[d].dispatch),tension:.3,pointRadius:2}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:9}}}},scales:{x:{ticks:{font:{size:8},maxRotation:0}},y:{beginAtZero:true,ticks:{font:{size:8}}}}}})}catch(e){console.error(V+' trend chart failed',e)}
+        try{S.charts.dt?.destroy();const c2=document.getElementById('gk-v67-dt-chart');const reasons=Object.entries(m.reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5);if(c2&&reasons.length)S.charts.dt=new Chart(c2,{type:'bar',data:{labels:reasons.map(([r])=>r.length>16?r.slice(0,15)+'…':r),datasets:[{label:'ชั่วโมง',data:reasons.map(([,h])=>+h.toFixed(1)),borderRadius:5}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:8}}},y:{ticks:{font:{size:8}}}}}})}catch(e){console.error(V+' downtime chart failed',e)}
+      }
+    }catch(e){console.error(V+' render failed',e)}
+  }
+  function schedule(){clearTimeout(S.timer);S.timer=setTimeout(render,80)}
+  window.gekkoV67Refresh=render; window.gekkoV67State=S;
+  const onReady=()=>{schedule()};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',onReady,{once:true});else onReady();
+  // Re-render after any normal save without replacing the original saveDB behavior.
+  if(!S.wrapped&&typeof window.saveDB==='function'){
+    const originalSaveDB=window.saveDB;
+    window.saveDB=function(){const result=originalSaveDB.apply(this,arguments);schedule();return result};
+    S.wrapped=true;
+  }
+  window.addEventListener('load',()=>{schedule();setTimeout(schedule,900)});
+  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='k'){e.preventDefault();render();document.getElementById('gk-v67-center')?.scrollIntoView({behavior:'smooth',block:'start'})}});
+})();
+</script>
+<!-- ================= END GEKKO V67 ================= -->
+
+
+<!-- ================= GEKKO V68 — DRILL-DOWN / BUTTON ROUTING SAFE LAYER ================= -->
+<style id="gekko-v68-drilldown-style">
+  #gk-v67-center .gk-v67-kpi.is-actionable,
+  #gk-v67-center .gk-v67-project-row.is-actionable,
+  #gk-v67-center .gk-v67-alert.is-actionable { cursor:pointer; }
+  #gk-v67-center .gk-v67-kpi.is-actionable:hover,
+  #gk-v67-center .gk-v67-project-row.is-actionable:hover,
+  #gk-v67-center .gk-v67-alert.is-actionable:hover { transform:translateY(-1px); box-shadow:0 7px 18px rgba(15,23,42,.09); border-color:var(--color-500); }
+  #gk-v67-center .gk-v67-kpi.is-actionable:focus-visible,
+  #gk-v67-center .gk-v67-project-row.is-actionable:focus-visible,
+  #gk-v67-center .gk-v67-alert.is-actionable:focus-visible { outline:2px solid var(--color-500); outline-offset:2px; }
+  #gk-v68-route-toast{position:fixed;right:18px;bottom:18px;z-index:99999;pointer-events:none;font-size:11px;font-weight:800;padding:9px 12px;border-radius:12px;background:#0f172a;color:#fff;box-shadow:0 10px 25px rgba(15,23,42,.18);opacity:0;transform:translateY(8px);transition:.2s ease}
+  #gk-v68-route-toast.show{opacity:1;transform:translateY(0)}
+  html.dark #gk-v68-route-toast{background:#e2e8f0;color:#0f172a}
+</style>
+<script id="gekko-v68-drilldown">
+(function(){
+  'use strict';
+  const S=window.__gekkoV68State||(window.__gekkoV68State={bound:false,trendBound:false,dtBound:false});
+  const fmt=v=>{try{return Number(v||0).toLocaleString('th-TH')}catch(_){return String(v??'0')}};
+  const todayKey=()=>{try{if(typeof localDateKey==='function')return localDateKey()}catch(_){}const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+  const addDays=(k,n)=>{const d=new Date(k+'T00:00:00');d.setDate(d.getDate()+n);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+  function toast(msg){
+    let el=document.getElementById('gk-v68-route-toast');
+    if(!el){el=document.createElement('div');el.id='gk-v68-route-toast';document.body.appendChild(el)}
+    el.textContent='↗ '+msg;el.classList.add('show');clearTimeout(S.toastTimer);S.toastTimer=setTimeout(()=>el.classList.remove('show'),1200);
+  }
+  function openDay(kind){
+    const d=todayKey();
+    try{
+      if(typeof openDayDetailModal==='function'){openDayDetailModal(d);toast(kind==='rm'?'เปิดรายละเอียด RM วันนี้':kind==='ship'?'เปิดรายละเอียดการส่งวันนี้':'เปิดรายละเอียดงานวันนี้');return}
+      if(typeof openGridCalendarQuick==='function')openGridCalendarQuick();
+    }catch(e){console.error('V68 openDay failed',e)}
+  }
+  function openAlertTab(tab){
+    try{
+      if(typeof openAlertCenterQuick!=='function')return;
+      openAlertCenterQuick();
+      if(typeof window.acSetTab==='function')window.acSetTab(tab);
+      toast(tab==='overdue'?'เปิดรายการเลยกำหนด': 'เปิดรายการใกล้ครบกำหนด');
+    }catch(e){console.error('V68 openAlertTab failed',e)}
+  }
+  function openGQ(section,opts,msg){
+    try{if(typeof openGQSection==='function')openGQSection(section,opts);else if(typeof gqOpen==='function')gqOpen();if(msg)toast(msg)}catch(e){console.error('V68 openGQ failed',e)}
+  }
+  function openLoss(){
+    try{
+      if(typeof openFactoryControlTower==='function'){
+        openFactoryControlTower();
+        setTimeout(()=>document.getElementById('tower-loss-list')?.scrollIntoView({behavior:'smooth',block:'center'}),100);
+        toast('เปิดรายละเอียด Downtime / Loss');
+      } else if(typeof openFactoryAnalyticsModal==='function'){openFactoryAnalyticsModal();toast('เปิด Factory Analytics')}
+    }catch(e){console.error('V68 openLoss failed',e)}
+  }
+  function bindKpis(){
+    const root=document.getElementById('gk-v67-center');if(!root)return;
+    const cards=[...root.querySelectorAll('.gk-v67-kpi')];
+    if(cards.length<6)return;
+    const routes=[
+      ()=>openDay('prod'),
+      ()=>openDay('rm'),
+      ()=>openDay('ship'),
+      ()=>openAlertTab('duesoon'),
+      ()=>openAlertTab('overdue'),
+      ()=>openGQ('gq-logistics',null,'เปิดรายละเอียดเที่ยวรถ / Logistics')
+    ];
+    cards.forEach((card,idx)=>{
+      if(card.dataset.gkV68Bound==='1')return;
+      card.dataset.gkV68Bound='1';card.classList.add('is-actionable');card.title='กดเพื่อดูรายละเอียด';card.tabIndex=0;card.setAttribute('role','button');
+      card.addEventListener('click',()=>routes[idx]?.());
+      card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();routes[idx]?.()}});
+    });
+  }
+  function bindProjectRows(){
+    const root=document.getElementById('gk-v67-center');if(!root)return;
+    [...root.querySelectorAll('#gk-v67-project-bars > div')].forEach(row=>{
+      if(row.dataset.gkV68Bound==='1')return;
+      const label=row.querySelector('div[title]');
+      if(!label)return;
+      const project=label.getAttribute('title')||label.textContent.trim();
+      if(!project)return;
+      row.dataset.gkV68Bound='1';row.classList.add('gk-v67-project-row','is-actionable');row.title='กดเพื่อดูรายละเอียดโครงการ';row.tabIndex=0;row.setAttribute('role','button');
+      const go=()=>openGQ('gq-production',{project},`เปิดรายละเอียดโครงการ: ${project}`);
+      row.addEventListener('click',go);row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+    });
+  }
+  function bindAlerts(){
+    const root=document.getElementById('gk-v67-center');if(!root)return;
+    [...root.querySelectorAll('#gk-v67-alerts .gk-v67-alert')].forEach(a=>{
+      if(a.dataset.gkV68Bound==='1')return;
+      a.dataset.gkV68Bound='1';a.classList.add('is-actionable');a.title='กดเพื่อเปิดรายการที่เกี่ยวข้อง';
+      const text=(a.innerText||'').toLowerCase();
+      let go=null;
+      if(text.includes('เลยกำหนด'))go=()=>openAlertTab('overdue');
+      else if(text.includes('ครบกำหนดใน 3 วัน'))go=()=>openAlertTab('duesoon');
+      else if(text.includes('qc'))go=()=>openGQ('gq-quality',null,'เปิดรายละเอียด QC');
+      else if(text.includes('รถ'))go=()=>openGQ('gq-logistics',null,'เปิดรายละเอียดรถ / Logistics');
+      else if(text.includes('ส่งแต่ไม่มีวันส่ง'))go=()=>openAlertTab('nodate');
+      if(go){a.addEventListener('click',go);a.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});a.tabIndex=0;a.setAttribute('role','button')}
+    });
+  }
+  function bindCharts(){
+    try{
+      const tc=document.getElementById('gk-v67-trend-chart');
+      if(tc&&!S.trendBound){
+        tc.style.cursor='pointer';tc.title='กดจุด/แท่งเพื่อดูรายละเอียดของวัน';
+        tc.addEventListener('click',e=>{
+          try{
+            const trend=window.__gekkoV67State?.charts?.trend;
+            if(!trend)return;
+            const hits=trend.getElementsAtEventForMode(e,'index',{intersect:false},true);
+            if(!hits.length)return;
+            const idx=hits[0].index;
+            if(typeof openDayDetailModal==='function'){
+              openDayDetailModal(addDays(todayKey(),-(13-idx)));toast('เปิดรายละเอียดวันที่เลือก');
+            }
+          }catch(err){console.error('V68 trend click failed',err)}
+        });S.trendBound=true;
+      }
+      const dc=document.getElementById('gk-v67-dt-chart');
+      if(dc&&!S.dtBound){
+        dc.style.cursor='pointer';dc.title='กดแท่งเพื่อดูรายการ Downtime / Loss';
+        dc.addEventListener('click',()=>openLoss());S.dtBound=true;
+      }
+    }catch(e){console.error('V68 bindCharts failed',e)}
+  }
+  function enhance(){bindKpis();bindProjectRows();bindAlerts();bindCharts();}
+  function schedule(){clearTimeout(S.timer);S.timer=setTimeout(enhance,120)}
+  S.enhance=enhance;
+  const oldRefresh=window.gekkoV67Refresh;
+  if(!S.wrapped && typeof oldRefresh==='function'){
+    window.gekkoV67Refresh=function(){const r=oldRefresh.apply(this,arguments);schedule();return r};S.wrapped=true;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
+  window.addEventListener('load',()=>{schedule();setTimeout(schedule,1100)});
+})();
+</script>
+<!-- ================= END GEKKO V68 ================= -->
+
+
+<!-- ================= GEKKO V69 — COMMAND CENTER OFF-HOME + SAFE UX LAYER ================= -->
+<style id="gekko-v69-command-center-style">
+  /* V69: The existing V67/V68 Command Center is kept intact, but moved off the homepage into a dedicated modal. */
+  main > #gk-v67-center{display:none !important;}
+  #gk-command-center-body > #gk-v67-center{display:block !important;}
+  #gk-v67-center.gk-v69-detached{
+    margin:0 !important;
+    width:100% !important;
+    max-width:none !important;
+    box-shadow:none !important;
+    border-radius:18px !important;
+  }
+  #gk-command-center-modal{
+    position:fixed; inset:0; z-index:9998; display:none;
+    align-items:center; justify-content:center;
+    padding:18px;
+    background:rgba(15,23,42,.58);
+    backdrop-filter:blur(5px);
+  }
+  #gk-command-center-modal.is-open{display:flex;}
+  html.dark #gk-command-center-modal{background:rgba(2,6,23,.72)}
+  #gk-command-center-panel{
+    width:min(1500px,96vw);
+    height:min(900px,92vh);
+    min-height:0;
+    display:flex; flex-direction:column;
+    background:#f8fafc;
+    border:1px solid #cbd5e1;
+    border-radius:22px;
+    box-shadow:0 28px 90px rgba(15,23,42,.28);
+    overflow:hidden;
+  }
+  html.dark #gk-command-center-panel{background:#020617;border-color:#334155;box-shadow:0 30px 90px rgba(0,0,0,.45)}
+  .gk-v69-modal-head{
+    flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:11px 14px; border-bottom:1px solid #e2e8f0; background:rgba(255,255,255,.96);
+  }
+  html.dark .gk-v69-modal-head{border-bottom-color:#1e293b;background:rgba(15,23,42,.96)}
+  .gk-v69-modal-title{font-size:13px;font-weight:900;display:flex;align-items:center;gap:8px}
+  .gk-v69-modal-sub{font-size:9px;color:#64748b;margin-top:1px}
+  html.dark .gk-v69-modal-sub{color:#94a3b8}
+  .gk-v69-modal-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+  .gk-v69-modal-btn{
+    border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:10px;padding:7px 10px;
+    font-size:10px;font-weight:800;cursor:pointer;transition:.15s ease;white-space:nowrap
+  }
+  .gk-v69-modal-btn:hover{transform:translateY(-1px);border-color:#94a3b8;box-shadow:0 4px 12px rgba(15,23,42,.08)}
+  html.dark .gk-v69-modal-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}
+  .gk-v69-modal-btn.primary{background:var(--color-500);border-color:var(--color-500);color:#0f172a}
+  #gk-command-center-body{min-height:0;flex:1 1 auto;overflow:auto;padding:14px}
+  #gk-command-center-body > #gk-v67-center{margin:0 !important}
+  #gk-command-center-body .gk-v67-actions{position:sticky;top:0;z-index:2}
+  .gk-v69-menu-item{font-weight:800 !important}
+  .gk-v69-menu-item .gk-v69-menu-badge{font-size:9px;padding:3px 6px;border-radius:999px;background:rgba(245,158,11,.12);color:#b45309;border:1px solid rgba(245,158,11,.28)}
+  html.dark .gk-v69-menu-item .gk-v69-menu-badge{background:rgba(245,158,11,.10);color:#fbbf24;border-color:rgba(245,158,11,.28)}
+  @media(max-width:640px){
+    #gk-command-center-modal{padding:8px}
+    #gk-command-center-panel{width:100%;height:96vh;border-radius:16px}
+    .gk-v69-modal-head{align-items:flex-start;padding:9px 10px}
+    .gk-v69-modal-sub{display:none}
+    .gk-v69-modal-btn span.gk-v69-hide-sm{display:none}
+    #gk-command-center-body{padding:8px}
+  }
+</style>
+<script id="gekko-v69-command-center">
+(function(){
+  'use strict';
+  const S=window.__gekkoV69State||(window.__gekkoV69State={moved:false,bound:false,wrapped:false});
+
+  function findCenter(){ return document.getElementById('gk-v67-center'); }
+
+  function ensureModal(){
+    let modal=document.getElementById('gk-command-center-modal');
+    if(modal) return modal;
+    modal=document.createElement('div');
+    modal.id='gk-command-center-modal';
+    modal.setAttribute('role','dialog');
+    modal.setAttribute('aria-modal','true');
+    modal.setAttribute('aria-labelledby','gk-command-center-modal-title');
+    modal.innerHTML=`
+      <div id="gk-command-center-panel" role="document">
+        <div class="gk-v69-modal-head">
+          <div>
+            <div class="gk-v69-modal-title" id="gk-command-center-modal-title">⚡ Daily Command Center</div>
+            <div class="gk-v69-modal-sub">ศูนย์รวมงานสำคัญสำหรับตรวจงานประจำวัน • ข้อมูลอ่านจากระบบเดิม</div>
+          </div>
+          <div class="gk-v69-modal-actions">
+            <button type="button" class="gk-v69-modal-btn primary" onclick="gekkoV69RefreshCC()">↻ <span class="gk-v69-hide-sm">รีเฟรช</span></button>
+            <button type="button" class="gk-v69-modal-btn" onclick="closeGekkoV69CC()" aria-label="ปิด Daily Command Center">✕ <span class="gk-v69-hide-sm">ปิด</span></button>
+          </div>
+        </div>
+        <div id="gk-command-center-body"></div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click',function(e){ if(e.target===modal) closeGekkoV69CC(); });
+    return modal;
+  }
+
+  function moveCenterIntoModal(){
+    const center=findCenter();
+    const modal=ensureModal();
+    const body=document.getElementById('gk-command-center-body');
+    if(!center||!body)return false;
+    if(center.parentElement!==body){
+      body.appendChild(center);
+      center.classList.add('gk-v69-detached');
+    }
+    S.moved=true;
+    return true;
+  }
+
+  function tryCreateAndMove(){
+    try{
+      if(typeof window.gekkoV67Refresh==='function') window.gekkoV67Refresh();
+    }catch(e){ console.error('V69 refresh/move failed:',e); }
+    return moveCenterIntoModal();
+  }
+
+  function open(){
+    const modal=ensureModal();
+    if(!moveCenterIntoModal()){
+      setTimeout(()=>{ if(!moveCenterIntoModal()) tryCreateAndMove(); },80);
+    }
+    modal.classList.add('is-open');
+    document.body.dataset.gkV69Modal='open';
+    document.body.style.overflow='hidden';
+    
+    try{ if(typeof window.gekkoV67Refresh==='function') window.gekkoV67Refresh(); }catch(_){ }
+  }
+
+  function close(){
+    const modal=document.getElementById('gk-command-center-modal');
+    if(modal)modal.classList.remove('is-open');
+    document.body.dataset.gkV69Modal='closed';
+    document.body.style.overflow='';
+  }
+
+  function refresh(){
+    try{
+      moveCenterIntoModal();
+      if(typeof window.gekkoV67Refresh==='function') window.gekkoV67Refresh();
+      setTimeout(moveCenterIntoModal,120);
+    }catch(e){console.error('V69 command center refresh failed:',e)}
+  }
+
+  function injectMenuItem(){
+    const dd=document.getElementById('extra-menu-dropdown');
+    if(!dd || document.getElementById('gk-v69-command-center-menu'))return;
+    const anchor=[...dd.querySelectorAll('button')].find(b=>b.textContent.includes('Factory Control Tower'));
+    if(!anchor)return;
+    const btn=document.createElement('button');
+    btn.id='gk-v69-command-center-menu';
+    btn.type='button';
+    btn.className='w-full text-left px-3 py-2.5 text-xs hover:bg-amber-50 dark:hover:bg-slate-800 flex items-center gap-2 gk-v69-menu-item';
+    btn.innerHTML='<span>⚡</span><span class="flex-1">Daily Command Center</span><span class="gk-v69-menu-badge">งานประจำวัน</span>';
+    btn.onclick=function(){
+      try{if(typeof closeExtraMenu==='function')closeExtraMenu();}catch(_){ }
+      open();
+    };
+    dd.insertBefore(btn,anchor);
+  }
+
+  window.openGekkoV69CC=open;
+  window.closeGekkoV69CC=close;
+  window.gekkoV69RefreshCC=refresh;
+
+  function bind(){
+    if(S.bound)return;
+    S.bound=true;
+    injectMenuItem();
+    [250,900,1600].forEach(ms=>setTimeout(()=>{injectMenuItem();moveCenterIntoModal();},ms));
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape' && document.getElementById('gk-command-center-modal')?.classList.contains('is-open')){e.preventDefault();close();}
+    },true);
+  }
+
+  const oldRefresh=window.gekkoV67Refresh;
+  if(!S.wrapped && typeof oldRefresh==='function'){
+    window.gekkoV67Refresh=function(){
+      const result=oldRefresh.apply(this,arguments);
+      setTimeout(()=>{moveCenterIntoModal();injectMenuItem();},120);
+      return result;
+    };
+    S.wrapped=true;
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+  window.addEventListener('load',()=>{injectMenuItem();moveCenterIntoModal();});
+})();
+</script>
+<!-- ================= END GEKKO V69 ================= -->
+<!-- ================= GEKKO V70 SAFE ONLINE / DATA INTEGRITY LAYER ================= -->
+<style id="gk-v70-safe-online-style">
+  #gk-v70-health-modal{position:fixed;inset:0;z-index:120;background:rgba(2,6,23,.78);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:18px}
+  #gk-v70-health-modal.is-open{display:flex}
+  #gk-v70-health-modal .gk-v70-panel{width:min(1180px,96vw);height:min(86vh,900px);overflow:hidden;background:#fff;border:1px solid #e2e8f0;border-radius:22px;box-shadow:0 25px 80px rgba(15,23,42,.28);display:flex;flex-direction:column}
+  .dark #gk-v70-health-modal .gk-v70-panel{background:#0f172a;border-color:#334155;box-shadow:0 25px 80px rgba(0,0,0,.45)}
+  .gk-v70-head{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #e2e8f0;flex:0 0 auto}
+  .dark .gk-v70-head{border-color:#1e293b}
+  .gk-v70-title{font-weight:800;font-size:16px}.gk-v70-sub{font-size:10px;color:#64748b;margin-top:2px}.dark .gk-v70-sub{color:#94a3b8}
+  .gk-v70-body{padding:14px;overflow:auto;min-height:0;flex:1}
+  .gk-v70-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.gk-v70-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+  .gk-v70-card{border:1px solid #e2e8f0;border-radius:15px;padding:12px;background:#f8fafc}.dark .gk-v70-card{border-color:#334155;background:#0b1220}
+  .gk-v70-label{font-size:10px;font-weight:700;color:#64748b}.dark .gk-v70-label{color:#94a3b8}.gk-v70-value{font-size:20px;font-weight:800;margin-top:3px}.gk-v70-note{font-size:10px;color:#64748b;margin-top:3px}.dark .gk-v70-note{color:#94a3b8}
+  .gk-v70-table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}.gk-v70-table th,.gk-v70-table td{padding:7px 8px;border-bottom:1px solid #e2e8f0;text-align:left;vertical-align:top}.dark .gk-v70-table th,.dark .gk-v70-table td{border-color:#1e293b}.gk-v70-table th{font-size:9px;color:#64748b;position:sticky;top:0;background:#f8fafc;z-index:1}.dark .gk-v70-table th{background:#0b1220;color:#94a3b8}
+  .gk-v70-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:800}.gk-v70-ok{background:#dcfce7;color:#166534}.gk-v70-warn{background:#fef3c7;color:#92400e}.gk-v70-bad{background:#fee2e2;color:#991b1b}.dark .gk-v70-ok{background:rgba(34,197,94,.14);color:#86efac}.dark .gk-v70-warn{background:rgba(234,179,8,.14);color:#fde68a}.dark .gk-v70-bad{background:rgba(244,63,94,.14);color:#fda4af}
+  .gk-v70-actions{display:flex;gap:7px;flex-wrap:wrap}.gk-v70-btn{border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:10px;padding:7px 10px;font-size:10px;font-weight:800;cursor:pointer}.gk-v70-btn:hover{background:#f1f5f9}.dark .gk-v70-btn{border-color:#475569;background:#0f172a;color:#e2e8f0}.dark .gk-v70-btn:hover{background:#1e293b}.gk-v70-btn.primary{background:#f59e0b;border-color:#f59e0b;color:#0f172a}.gk-v70-btn.danger{background:#fff1f2;border-color:#fecdd3;color:#be123c}.dark .gk-v70-btn.danger{background:rgba(244,63,94,.10);border-color:#7f1d1d;color:#fda4af}
+  .gk-v70-section-title{font-size:12px;font-weight:800;margin-bottom:8px}.gk-v70-empty{padding:18px;text-align:center;color:#64748b;font-size:11px}.dark .gk-v70-empty{color:#94a3b8}
+  @media(max-width:900px){.gk-v70-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gk-v70-grid2{grid-template-columns:1fr}}
+  @media(max-width:560px){#gk-v70-health-modal{padding:8px}.gk-v70-grid{grid-template-columns:1fr}.gk-v70-panel{height:92vh!important}.gk-v70-head{padding:11px}.gk-v70-body{padding:10px}}
+</style>
+<script>
+(function(){
+  'use strict';
+  const V='V70';
+  const STATE = window.__gkV70 = window.__gkV70 || {
+    deviceId: localStorage.getItem('gekko_device_id') || (crypto.randomUUID ? crypto.randomUUID() : ('dev-'+Date.now()+'-'+Math.random().toString(16).slice(2))),
+    dbShadow:new Map(), rmShadow:new Map(), dtShadow:new Map(), mpShadow:new Map(),
+    dbMeta:new Map(), rmMeta:new Map(), dtMeta:new Map(), mpMeta:new Map(),
+    projectsShadow:[], projectsVersion:0, notesShadow:{}, notesVersion:0, specsShadow:{}, factoryShadow:{},
+    firstDb:true, firstRm:true, firstDt:true, firstMp:true, cloudReady:false, pending:0, lastSync:0, conflicts:[],
+    dbPendingDeletes:new Set(), rmPendingDeletes:new Set(), dtPendingDeletes:new Set(), mpPendingDeletes:new Set(),
+    dbTombstones:new Set(), rmTombstones:new Set(), dtTombstones:new Set(), mpTombstones:new Set(),
+    lastError:'', unsub:[], authBound:false, writeChains:new Map()
+  };
+  localStorage.setItem('gekko_device_id',STATE.deviceId);
+
+  function now(){return Date.now()}
+  function clone(x){try{return JSON.parse(JSON.stringify(x));}catch(_){return x}}
+  function canon(x){
+    if(x===undefined)return null;
+    if(x===null||typeof x!=='object')return x;
+    if(Array.isArray(x))return x.map(canon);
+    const o={};Object.keys(x).sort().forEach(k=>{ if(k!=='_sync') o[k]=canon(x[k]); });return o;
+  }
+  function equal(a,b){try{return JSON.stringify(canon(a))===JSON.stringify(canon(b));}catch(_){return false}}
+  function strip(data){const x=clone(data)||{};if(x&&typeof x==='object')delete x._sync;return x}
+  function makeMeta(version){return {version:Number(version||0),updatedAt:now(),updatedBy:STATE.deviceId,user:(fb?.auth?.currentUser?.email||'')};}
+  function setBadge(detail){try{setCloudStatus('online',detail||`☁️ ออนไลน์ • ซิงค์แล้ว • เครื่อง ${STATE.deviceId.slice(0,8)}`);}catch(_){} }
+  function conflict(kind,id,local,remote,reason){
+    const item={id:String(id),kind,reason,local:clone(local),remote:clone(remote),at:now(),deviceId:STATE.deviceId};
+    const key=kind+':'+String(id)+':'+JSON.stringify(canon(local))+':'+JSON.stringify(canon(remote));
+    if(!STATE.conflicts.some(x=>x.__key===key)){item.__key=key;STATE.conflicts.push(item);}
+    localStorage.setItem('gekko_sync_conflicts',JSON.stringify(STATE.conflicts.slice(-100)));
+  }
+  try{STATE.conflicts=JSON.parse(localStorage.getItem('gekko_sync_conflicts')||'[]')||[];}catch(_){STATE.conflicts=[]}
+
+  function isDemoSeed(rows){
+    if(!Array.isArray(rows)||rows.length!==4)return false;
+    const sig=rows.map(r=>`${r.id}|${r.project}|${r.size}|${r.qty}|${r.date}|${r.receivedDate}`).sort().join('||');
+    return sig===[
+      '1|Central Festival Phuket 2|2"|150|2026-09-15|2026-09-10',
+      '2|Central Festival Phuket 2|4"|280|2026-09-18|2026-09-10',
+      '3|Terra North Building|3"|320|2026-09-20|2026-09-12',
+      '4|Seacon Square Renovation|1.5"|210|2026-09-22|2026-09-15'
+    ].sort().join('||');
+  }
+
+  function removeUnsubs(){STATE.unsub.splice(0).forEach(fn=>{try{fn&&fn()}catch(_){}})}
+
+  async function writeRecordCore(collectionName,id,data,metaMap,shadowMap,kind){
+    if(!fb||!fb.auth?.currentUser||fb.auth.currentUser.isAnonymous)return {ok:false,reason:'read-only'};
+    const ref=fb.doc(fb.db,collectionName,String(id));
+    STATE.pending++;
+    try{
+      const expected=Number(metaMap.get(String(id))?.version||0);
+      let result;
+      await fb.runTransaction(fb.db,async(tx)=>{
+        const snap=await tx.get(ref);
+        const current=snap.exists()?snap.data():null;
+        const currentVersion=Number(current?._sync?.version||0);
+        if(current && expected!==currentVersion){
+          const err=new Error('SYNC_CONFLICT');err.code='gk/sync-conflict';err.current=current;err.expected=expected;throw err;
+        }
+        const version=Math.max(expected,currentVersion)+1;
+        const payload=clone(data)||{};
+        payload._sync=makeMeta(version);payload._sync.version=version;
+        tx.set(ref,payload);
+        result=payload;
+      });
+      const clean=strip(result);shadowMap.set(String(id),clone(clean));metaMap.set(String(id),{version:Number(result._sync.version),updatedAt:Number(result._sync.updatedAt||now()),updatedBy:result._sync.updatedBy||''});
+      STATE.lastSync=now();return {ok:true};
+    }catch(e){
+      if(e.code==='gk/sync-conflict'){
+        const server=e.current?strip(e.current):null;
+        conflict(kind,id,data,server,'มีเครื่องอื่นแก้รายการนี้ก่อนหน้า จึงไม่เขียนทับอัตโนมัติ');
+        showToast?.(`⚠️ รายการ ${id} มีการแก้จากเครื่องอื่น — ระบบไม่เขียนทับ เพื่อความปลอดภัย`,'error');
+      } else {
+        STATE.lastError=String(e?.message||e);console.error('V70 writeRecord failed',collectionName,id,e);setCloudStatus('error',`⚠️ ซิงค์รายการ ${id} ไม่สำเร็จ: ${e?.message||e}`);
+      }
+      return {ok:false,error:e};
+    }finally{STATE.pending=Math.max(0,STATE.pending-1);}
+  }
+
+  function enqueueDocTask(collectionName,id,task){
+    const key=`${collectionName}:${String(id)}`;
+    const prev=STATE.writeChains.get(key)||Promise.resolve();
+    const run=prev.catch(()=>{}).then(task);
+    STATE.writeChains.set(key,run);
+    return run.finally(()=>{if(STATE.writeChains.get(key)===run)STATE.writeChains.delete(key);});
+  }
+  async function writeRecord(collectionName,id,data,metaMap,shadowMap,kind){
+    return enqueueDocTask(collectionName,id,()=>writeRecordCore(collectionName,id,data,metaMap,shadowMap,kind));
+  }
+
+  async function deleteRecordCore(collectionName,id,metaMap,shadowMap,kind){
+    if(!fb||!fb.auth?.currentUser||fb.auth.currentUser.isAnonymous)return {ok:false,reason:'read-only'};
+    const ref=fb.doc(fb.db,collectionName,String(id));
+    STATE.pending++;
+    try{
+      const expected=Number(metaMap.get(String(id))?.version||0);
+      await fb.runTransaction(fb.db,async tx=>{
+        const snap=await tx.get(ref); if(!snap.exists()){return;}
+        const current=snap.data(); const currentVersion=Number(current?._sync?.version||0);
+        if(currentVersion!==expected){const err=new Error('SYNC_CONFLICT');err.code='gk/sync-conflict';err.current=current;throw err;}
+        tx.delete(ref);
+      });
+      shadowMap.delete(String(id));metaMap.delete(String(id));
+      const pendingMap=kind==='production'?STATE.dbPendingDeletes:kind==='rm'?STATE.rmPendingDeletes:kind==='downtime'?STATE.dtPendingDeletes:STATE.mpPendingDeletes;
+      pendingMap.delete(String(id));STATE.lastSync=now();return {ok:true};
+    }catch(e){
+      if(e.code==='gk/sync-conflict'){
+        conflict(kind,id,{id},e.current?strip(e.current):null,'คำขอลบชนกับการแก้ไขจากอีกเครื่อง — ระบบไม่ลบอัตโนมัติ');
+        showToast?.(`⚠️ ลบรายการ ${id} ไม่สำเร็จเพราะมีการแก้จากเครื่องอื่น`,'error');
+      } else {console.error('V70 deleteRecord failed',e);setCloudStatus('error');}
+      return {ok:false,error:e};
+    }finally{STATE.pending=Math.max(0,STATE.pending-1);}
+  }
+
+  async function deleteRecord(collectionName,id,metaMap,shadowMap,kind){
+    return enqueueDocTask(collectionName,id,()=>deleteRecordCore(collectionName,id,metaMap,shadowMap,kind));
+  }
+
+  async function syncCollection(kind,collectionName,rows,shadowMap,metaMap){
+    if(!fb||!STATE.cloudReady||!fb.auth?.currentUser||fb.auth.currentUser.isAnonymous)return;
+    const current=new Map((rows||[]).map(r=>[String(r.id),r]));
+    const pendingDeletes=kind==='production'?STATE.dbPendingDeletes:kind==='rm'?STATE.rmPendingDeletes:kind==='downtime'?STATE.dtPendingDeletes:STATE.mpPendingDeletes;
+    const tombstones=kind==='production'?STATE.dbTombstones:kind==='rm'?STATE.rmTombstones:kind==='downtime'?STATE.dtTombstones:STATE.mpTombstones;
+    const jobs=[];
+    for(const [id,row] of current){
+      const shadow=shadowMap.get(id);
+      if(!shadow || !equal(shadow,row)) jobs.push(['set',id,row]);
+    }
+    for(const [id] of shadowMap){
+      if(!current.has(id)){ pendingDeletes.add(id); tombstones.add(id); jobs.push(['delete',id]); }
+    }
+    if(!jobs.length)return;
+    for(const [type,id,row] of jobs){
+      if(type==='set') await writeRecord(collectionName,id,row,metaMap,shadowMap,kind);
+      else await deleteRecord(collectionName,id,metaMap,shadowMap,kind);
+    }
+    setBadge(`☁️ ออนไลน์ • ซิงค์แล้ว ${jobs.length} รายการ • ${new Date().toLocaleTimeString('th-TH')}`);
+  }
+
+  async function mergeIncoming(kind,docs,localRows,shadowMap,metaMap,isFirst){
+    const remoteMap=new Map(docs.map(d=>[String(d.id),{data:strip(d.data()),version:Number(d.data()?._sync?.version||0)}]));
+    const localMap=new Map((localRows||[]).map(r=>[String(r.id),r]));
+    const merged=[];const localOnly=[];const localChangedRows=[];
+    const pendingDeletes=kind==='production'?STATE.dbPendingDeletes:kind==='rm'?STATE.rmPendingDeletes:kind==='downtime'?STATE.dtPendingDeletes:STATE.mpPendingDeletes;
+    const tombstones=kind==='production'?STATE.dbTombstones:kind==='rm'?STATE.rmTombstones:kind==='downtime'?STATE.dtTombstones:STATE.mpTombstones;
+    // A delete is considered confirmed only when a real server snapshot no longer contains the document.
+    for(const id of [...tombstones]){
+      if(!remoteMap.has(id)){tombstones.delete(id);pendingDeletes.delete(id);shadowMap.delete(id);metaMap.delete(id);}
+    }
+    if(isFirst && kind==='production' && isDemoSeed(localRows) && remoteMap.size>0){ localMap.clear(); }
+    for(const [id,row] of localMap){
+      const entry=remoteMap.get(id);const remote=entry?.data;const remoteVersion=Number(entry?.version||0);const knownVersion=Number(metaMap.get(id)?.version||0);
+      if(remote===undefined){
+        // If this id was previously acknowledged in shadow but disappeared from the server,
+        // another device deleted it. Do not re-upload the stale local row.
+        if(tombstones.has(id)) continue;
+        const shadow=shadowMap.get(id);
+        if(shadow){
+          if(!equal(row,shadow)) conflict(kind,id,row,null,'รายการถูกลบจาก cloud ขณะที่เครื่องนี้มีการแก้ไขอยู่ — ไม่สร้างกลับอัตโนมัติ');
+          shadowMap.delete(id);metaMap.delete(id);
+          continue;
+        }
+        localOnly.push(row); continue;
+      }
+      if(tombstones.has(id)) continue;
+      // Ignore a server snapshot that is older than the last acknowledged local cloud version.
+      if(remoteVersion < knownVersion){
+        // Server snapshot is older than the last acknowledged local version.
+        // Keep the latest local row visible; do not regress UI state or write it back.
+        merged.push(row);
+        continue;
+      }
+      const shadow=shadowMap.get(id);
+      if(!shadow){
+        if(equal(row,remote)) merged.push(remote);
+        else { conflict(kind,id,row,remote,'ข้อมูล local และ cloud มีค่าไม่เหมือนกันในการเชื่อมต่อครั้งแรก — ใช้ cloud เป็นค่าหลักและเก็บ local ไว้ใน Conflict Center'); merged.push(remote); }
+        continue;
+      }
+      const localChanged=!equal(row,shadow);
+      const remoteChanged=!equal(remote,shadow);
+      if(localChanged && !remoteChanged){
+        // Remote snapshot is still the old acknowledged version. Never let it erase a local edit.
+        merged.push(row);localChangedRows.push(row);continue;
+      }
+      if(localChanged && remoteChanged && !equal(row,remote)){
+        conflict(kind,id,row,remote,'local และ cloud เปลี่ยนพร้อมกัน จึงไม่เขียนทับกัน');
+      }
+      merged.push(remote);
+    }
+    // Always refresh shadow/meta from the newest non-stale remote snapshot, even when the local row also exists.
+    for(const [id,entry] of remoteMap){
+      const row=entry.data;const v=Number(entry.version||0);const knownVersion=Number(metaMap.get(id)?.version||0);
+      if(v < knownVersion) continue;
+      metaMap.set(id,{version:v,updatedAt:Number(entry.data?._sync?.updatedAt||0),updatedBy:entry.data?._sync?.updatedBy||''});
+      shadowMap.set(id,clone(row));
+      if(localMap.has(id) || tombstones.has(id)) continue;
+      merged.push(row);
+    }
+    for(const row of localOnly) merged.push(row);
+    merged.sort((a,b)=>Number(a.id)-Number(b.id));
+    return {merged,localOnly,localChanged:localChangedRows};
+  }
+
+  function mergeKeyedObject(kind,localObj,shadowObj,remoteObj){
+    const local=localObj&&typeof localObj==='object'?localObj:{};
+    const shadow=shadowObj&&typeof shadowObj==='object'?shadowObj:{};
+    const remote=remoteObj&&typeof remoteObj==='object'?remoteObj:{};
+    const out={};
+    const keys=new Set([...Object.keys(shadow),...Object.keys(local),...Object.keys(remote)]);
+    for(const k of keys){
+      const lv=local[k],sv=shadow[k],rv=remote[k];
+      const lc=!equal(lv,sv), rc=!equal(rv,sv);
+      if(lc&&!rc){ if(lv!==undefined)out[k]=clone(lv); continue; }
+      if(lc&&rc&&!equal(lv,rv)){ conflict(kind,k,lv,rv,'ข้อมูลเมทาดาทาชุดเดียวกันถูกแก้จากสองเครื่อง — ใช้ cloud เป็นค่าหลักและเก็บ local ไว้ใน Conflict Center'); if(rv!==undefined)out[k]=clone(rv); continue; }
+      if(rv!==undefined)out[k]=clone(rv);
+    }
+    return out;
+  }
+
+  function mergeProjectList(localList,shadowList,remoteList){
+    const local=Array.isArray(localList)?localList:[], shadow=Array.isArray(shadowList)?shadowList:[], remote=Array.isArray(remoteList)?remoteList:[];
+    const ls=new Set(local), ss=new Set(shadow), rs=new Set(remote);
+    const out=new Set(remote);
+    // Preserve local-only additions/removals when the remote side has not changed that item.
+    for(const x of new Set([...ls,...ss,...rs])){
+      const lc=ls.has(x)!==ss.has(x), rc=rs.has(x)!==ss.has(x);
+      if(lc&&!rc){ if(ls.has(x))out.add(x); else out.delete(x); }
+      else if(lc&&rc&&ls.has(x)!==rs.has(x)){ conflict('projects',x,ls.has(x),rs.has(x),'โครงการเดียวกันถูกเพิ่ม/ลบจากสองเครื่อง'); }
+    }
+    return [...out];
+  }
+
+  async function attachSafeListeners(){
+    removeUnsubs(); if(!fb)return;
+    const {collection,doc,onSnapshot}=fb;
+    let dbChain=Promise.resolve();
+    let rmChain=Promise.resolve();
+    STATE.unsub.push(onSnapshot(collection(fb.db,'production_db'),snap=>{
+      dbChain=dbChain.then(async()=>{
+        const docs=snap.docs;const result=await mergeIncoming('production',docs,db,STATE.dbShadow,STATE.dbMeta,STATE.firstDb);
+        db=result.merged;localStorage.setItem('gekko_production_db',JSON.stringify(db));
+        STATE.firstDb=false;renderActiveView?.();initApp?.();
+        const toPush=[...(result.localOnly||[]),...(result.localChanged||[])];
+        if(toPush.length){for(const row of toPush)await writeRecord('production_db',row.id,row,STATE.dbMeta,STATE.dbShadow,'production');}
+        if(STATE.dbPendingDeletes.size){for(const id of [...STATE.dbPendingDeletes])await deleteRecord('production_db',id,STATE.dbMeta,STATE.dbShadow,'production');}
+        setBadge(`☁️ ออนไลน์ • Production ${docs.length.toLocaleString('th-TH')} รายการ • ${new Date().toLocaleTimeString('th-TH')}`);
+      }).catch(err=>{console.error(err);setCloudStatus('error','⚠️ อ่าน Production ไม่สำเร็จ — ตรวจ Rules / อินเทอร์เน็ต');});
+    },err=>{console.error(err);setCloudStatus('error','⚠️ อ่าน Production ไม่สำเร็จ — ตรวจ Rules / อินเทอร์เน็ต');}));
+
+    STATE.unsub.push(onSnapshot(collection(fb.db,'rm_records'),snap=>{
+      rmChain=rmChain.then(async()=>{
+        const result=await mergeIncoming('rm',snap.docs,rmRecords,STATE.rmShadow,STATE.rmMeta,STATE.firstRm);
+        rmRecords=result.merged;localStorage.setItem('gekko_rm_records',JSON.stringify(rmRecords));STATE.firstRm=false;normalizeRMRecords?.();renderRMWarehouse?.();renderActiveView?.();
+        const toPush=[...(result.localOnly||[]),...(result.localChanged||[])];
+        if(toPush.length){for(const row of toPush)await writeRecord('rm_records',row.id,row,STATE.rmMeta,STATE.rmShadow,'rm');}
+        if(STATE.rmPendingDeletes.size){for(const id of [...STATE.rmPendingDeletes])await deleteRecord('rm_records',id,STATE.rmMeta,STATE.rmShadow,'rm');}
+      }).catch(err=>console.error(err));
+    },err=>console.error(err)));
+
+    STATE.unsub.push(onSnapshot(doc(fb.db,'meta','projects'),snap=>{
+      if(!snap.exists())return;const d=snap.data();const remoteList=Array.isArray(d.list)?d.list:[];const merged=mergeProjectList(projectsList,STATE.projectsShadow,remoteList);const localChanged=!equal(projectsList,STATE.projectsShadow);const remoteChanged=!equal(remoteList,STATE.projectsShadow);projectsList=merged;STATE.projectsShadow=remoteList.slice();STATE.projectsVersion=Number(d._sync?.version||0);if(localChanged&&!remoteChanged)Promise.resolve(safeProjectsWrite()).catch(()=>{});localStorage.setItem('gekko_projects_list',JSON.stringify(projectsList));renderProjectOptions?.();},err=>console.error(err)));
+    STATE.unsub.push(onSnapshot(doc(fb.db,'meta','pipeSpecs'),snap=>{
+      if(!snap.exists())return;const d=snap.data();const remote={customPipeSpecs:clone(d.customPipeSpecs||{}),hiddenDefaultSizes:clone(d.hiddenDefaultSizes||[])};const local={customPipeSpecs:clone(customPipeSpecs||{}),hiddenDefaultSizes:clone(hiddenDefaultSizes||[])};const mergedCustom=mergeKeyedObject('pipeSpecs',local.customPipeSpecs,STATE.specsShadow?.customPipeSpecs||{},remote.customPipeSpecs);const shadowHidden=Array.isArray(STATE.specsShadow?.hiddenDefaultSizes)?STATE.specsShadow.hiddenDefaultSizes:[];const localHidden=Array.isArray(local.hiddenDefaultSizes)?local.hiddenDefaultSizes:[];const remoteHidden=Array.isArray(remote.hiddenDefaultSizes)?remote.hiddenDefaultSizes:[];const mergedHidden=[...new Set(remoteHidden)];for(const x of shadowHidden){const lc=!localHidden.includes(x),rc=!remoteHidden.includes(x);if(lc&&!rc)mergedHidden.splice(mergedHidden.indexOf(x),1);else if(lc&&rc&&localHidden.includes(x)!==remoteHidden.includes(x))conflict('pipeSpecs',x,localHidden.includes(x),remoteHidden.includes(x),'ขนาดท่อถูกซ่อน/แสดงจากสองเครื่อง');}for(const x of localHidden){if(!shadowHidden.includes(x)&&!mergedHidden.includes(x))mergedHidden.push(x);}customPipeSpecs=mergedCustom;hiddenDefaultSizes=mergedHidden;STATE.specsShadow=remote;rebuildPipeSpecs?.();refreshAllSizeSelects?.();},err=>console.error(err)));
+    STATE.unsub.push(onSnapshot(doc(fb.db,'meta','calendarNotes'),snap=>{
+      if(!snap.exists())return;const d=snap.data();const remote=clone(d.notes||{});const merged=mergeKeyedObject('calendarNotes',calendarNotes||{},STATE.notesShadow||{},remote);const localChanged=!equal(calendarNotes||{},STATE.notesShadow||{});const remoteChanged=!equal(remote,STATE.notesShadow||{});calendarNotes=merged;STATE.notesShadow=remote;STATE.notesVersion=Number(d._sync?.version||0);if(localChanged&&!remoteChanged)Promise.resolve(safeNotesWrite()).catch(()=>{});localStorage.setItem('gekko_calendar_notes',JSON.stringify(calendarNotes));const tl=document.getElementById('timeline-modal');if(tl&&!tl.classList.contains('hidden'))renderTimeline?.();},err=>console.error(err)));
+    STATE.unsub.push(onSnapshot(doc(fb.db,'meta','factoryData'),snap=>{
+      if(!snap.exists())return;const d=snap.data();const remote=clone(d.factorySettings||{});const merged=mergeKeyedObject('factoryData',factorySettings||{},STATE.factoryShadow||{},remote);const localChanged=!equal(factorySettings||{},STATE.factoryShadow||{});const remoteChanged=!equal(remote,STATE.factoryShadow||{});factorySettings=merged;STATE.factoryShadow=remote;if(localChanged&&!remoteChanged)Promise.resolve(safeFactoryWrite()).catch(()=>{});localStorage.setItem('gekko_factory_settings',JSON.stringify(factorySettings));renderFactoryTower?.();},err=>console.error(err)));
+    STATE.unsub.push(onSnapshot(collection(fb.db,'downtime_logs'),snap=>{
+      STATE.dtChain=(STATE.dtChain||Promise.resolve()).then(async()=>{
+        const result=await mergeIncoming('downtime',snap.docs,downtimeLogs,STATE.dtShadow,STATE.dtMeta,STATE.firstDt);
+        downtimeLogs=result.merged;localStorage.setItem('gekko_downtime_logs',JSON.stringify(downtimeLogs));STATE.firstDt=false;knownRemoteDowntimeIds=new Set(snap.docs.map(d=>d.id));renderFactoryLogs?.();renderFactoryTower?.();
+        for(const row of [...(result.localOnly||[]),...(result.localChanged||[])]) await writeRecord('downtime_logs',row.id,row,STATE.dtMeta,STATE.dtShadow,'downtime');
+        for(const id of [...STATE.dtPendingDeletes]) await deleteRecord('downtime_logs',id,STATE.dtMeta,STATE.dtShadow,'downtime');
+      }).catch(err=>{console.error('V70 downtime listener',err);});
+    },err=>console.error(err)));
+    STATE.unsub.push(onSnapshot(collection(fb.db,'manpower_logs'),snap=>{
+      STATE.mpChain=(STATE.mpChain||Promise.resolve()).then(async()=>{
+        const result=await mergeIncoming('manpower',snap.docs,manpowerLogs,STATE.mpShadow,STATE.mpMeta,STATE.firstMp);
+        manpowerLogs=result.merged;localStorage.setItem('gekko_manpower_logs',JSON.stringify(manpowerLogs));STATE.firstMp=false;knownRemoteManpowerIds=new Set(snap.docs.map(d=>d.id));renderFactoryLogs?.();renderFactoryTower?.();
+        for(const row of [...(result.localOnly||[]),...(result.localChanged||[])]) await writeRecord('manpower_logs',row.id,row,STATE.mpMeta,STATE.mpShadow,'manpower');
+        for(const id of [...STATE.mpPendingDeletes]) await deleteRecord('manpower_logs',id,STATE.mpMeta,STATE.mpShadow,'manpower');
+      }).catch(err=>{console.error('V70 manpower listener',err);});
+    },err=>console.error(err)));
+  }
+
+  async function seedSafe(){
+    if(!fb)return;
+    // View-only/anonymous sessions must NEVER attempt to seed or write data.
+    if(!fb.auth?.currentUser || fb.auth.currentUser.isAnonymous)return;
+    try{
+      const [p,r,pr,ps,nt,fd,dt,mp]=await Promise.all([
+        fb.getDocs(fb.collection(fb.db,'production_db')),
+        fb.getDocs(fb.collection(fb.db,'rm_records')),
+        fb.getDoc(fb.doc(fb.db,'meta','projects')),
+        fb.getDoc(fb.doc(fb.db,'meta','pipeSpecs')),
+        fb.getDoc(fb.doc(fb.db,'meta','calendarNotes')),
+        fb.getDoc(fb.doc(fb.db,'meta','factoryData')),
+        fb.getDocs(fb.collection(fb.db,'downtime_logs')),
+        fb.getDocs(fb.collection(fb.db,'manpower_logs'))
+      ]);
+      if(p.empty && db.length){for(const row of db)await writeRecord('production_db',row.id,row,STATE.dbMeta,STATE.dbShadow,'production');}
+      if(r.empty && rmRecords.length){for(const row of rmRecords)await writeRecord('rm_records',row.id,row,STATE.rmMeta,STATE.rmShadow,'rm');}
+      if(!pr.exists() && projectsList.length)await safeProjectsWrite();
+      if(!ps.exists())await safePipeSpecsWrite();
+      if(!nt.exists() && Object.keys(calendarNotes||{}).length)await safeNotesWrite();
+      if(!fd.exists())await safeFactoryWrite();
+      if(dt.empty&&downtimeLogs.length)for(const row of downtimeLogs)await writeRecord('downtime_logs',row.id,row,STATE.dtMeta,STATE.dtShadow,'downtime');
+      if(mp.empty&&manpowerLogs.length)for(const row of manpowerLogs)await writeRecord('manpower_logs',row.id,row,STATE.mpMeta,STATE.mpShadow,'manpower');
+    }catch(e){console.error('V70 seedSafe failed',e);throw e;}
+  }
+
+  async function safeProjectsWrite(){
+    if(!fb||!STATE.cloudReady||!fb.auth?.currentUser||fb.auth.currentUser.isAnonymous)return;const ref=fb.doc(fb.db,'meta','projects');try{let finalList=null;await fb.runTransaction(fb.db,async tx=>{const s=await tx.get(ref);const cur=s.exists()&&Array.isArray(s.data().list)?s.data().list:[];const curSet=new Set(cur);const shadowSet=new Set(STATE.projectsShadow||[]);(projectsList||[]).forEach(x=>curSet.add(x));shadowSet.forEach(x=>{if(!(projectsList||[]).includes(x)&&cur.includes(x))curSet.delete(x)});finalList=[...curSet];tx.set(ref,{list:finalList,_sync:makeMeta(Number(s.data()?._sync?.version||0)+1)},{merge:false});});if(finalList){projectsList=finalList.slice();STATE.projectsShadow=finalList.slice();localStorage.setItem('gekko_projects_list',JSON.stringify(projectsList));renderProjectOptions?.();}}
+    catch(e){console.error('safeProjectsWrite',e)}
+  }
+  async function safePipeSpecsWrite(){if(!fb||!STATE.cloudReady||!fb.auth?.currentUser||fb.auth.currentUser.isAnonymous)return;const ref=fb.doc(fb.db,'meta','pipeSpecs');try{let final=null;await fb.runTransaction(fb.db,async tx=>{const s=await tx.get(ref);const cur=s.exists()?s.data():{};const shadow=STATE.specsShadow||{};const next=clone(cur)||{};const curCustom=clone(cur.customPipeSpecs||{});const localCustom=clone(customPipeSpecs||{});const shadowCustom=clone(shadow.customPipeSpecs||{});for(const k of new Set([...Object.keys(shadowCustom),...Object.keys(localCustom)])){if(!equal(localCustom[k],shadowCustom[k])){if(localCustom[k]===undefined)delete curCustom[k];else curCustom[k]=localCustom[k];}}const curHidden=[...(cur.hiddenDefaultSizes||[])];const localHidden=[...(hiddenDefaultSizes||[])];const shadowHidden=new Set(shadow.hiddenDefaultSizes||[]);const localHiddenSet=new Set(localHidden);shadowHidden.forEach(x=>{if(!localHiddenSet.has(x))curHidden.splice(curHidden.indexOf(x),1)});localHidden.forEach(x=>{if(!shadowHidden.has(x)&&!curHidden.includes(x))curHidden.push(x)});next.customPipeSpecs=curCustom;next.hiddenDefaultSizes=curHidden;next._sync=makeMeta(Number(cur?._sync?.version||0)+1);final={customPipeSpecs:clone(curCustom),hiddenDefaultSizes:curHidden.slice()};tx.set(ref,next);});if(final){customPipeSpecs=final.customPipeSpecs;hiddenDefaultSizes=final.hiddenDefaultSizes;STATE.specsShadow=clone(final);localStorage.setItem('gekko_custom_pipe_specs',JSON.stringify(customPipeSpecs));localStorage.setItem('gekko_hidden_default_sizes',JSON.stringify(hiddenDefaultSizes));rebuildPipeSpecs?.();refreshAllSizeSelects?.();}}catch(e){console.error('safePipeSpecsWrite',e)}}
+  async function safeNotesWrite(){if(!fb||!STATE.cloudReady||!fb.auth?.currentUser||fb.auth.currentUser.isAnonymous)return;const ref=fb.doc(fb.db,'meta','calendarNotes');try{let finalNotes=null;await fb.runTransaction(fb.db,async tx=>{const s=await tx.get(ref);const cur=s.exists()&&s.data().notes?s.data().notes:{};const next=clone(cur)||{};const shadow=STATE.notesShadow||{};const keys=new Set([...Object.keys(shadow),...Object.keys(calendarNotes||{})]);keys.forEach(k=>{if((calendarNotes||{})[k]===undefined){if(shadow[k]!==undefined)delete next[k];}else if((calendarNotes||{})[k]!==shadow[k])next[k]=calendarNotes[k];});finalNotes=next;tx.set(ref,{notes:next,_sync:makeMeta(Number(s.data()?._sync?.version||0)+1)});});if(finalNotes){calendarNotes=clone(finalNotes);STATE.notesShadow=clone(finalNotes);localStorage.setItem('gekko_calendar_notes',JSON.stringify(calendarNotes));}}catch(e){console.error('safeNotesWrite',e)}}
+  async function safeFactoryWrite(){if(!fb||!STATE.cloudReady||!fb.auth?.currentUser||fb.auth.currentUser.isAnonymous)return;const ref=fb.doc(fb.db,'meta','factoryData');try{let finalSettings=null;await fb.runTransaction(fb.db,async tx=>{const s=await tx.get(ref);const cur=s.exists()&&s.data().factorySettings?s.data().factorySettings:{};const next=clone(cur)||{};const shadow=STATE.factoryShadow||{};Object.keys(factorySettings||{}).forEach(k=>{if(!equal(factorySettings[k],shadow[k]))next[k]=clone(factorySettings[k])});Object.keys(shadow).forEach(k=>{if(!(factorySettings||{}).hasOwnProperty(k)&&Object.prototype.hasOwnProperty.call(cur,k)&&equal(shadow[k],cur[k]))delete next[k]});finalSettings=next;tx.set(ref,{factorySettings:next,_sync:makeMeta(Number(s.data()?._sync?.version||0)+1)});});if(finalSettings){factorySettings=clone(finalSettings);STATE.factoryShadow=clone(finalSettings);localStorage.setItem('gekko_factory_settings',JSON.stringify(factorySettings));renderFactoryTower?.();}}catch(e){console.error('safeFactoryWrite',e)}}
+
+  // Override legacy cloud writers: never mirror an entire collection from a stale local array.
+  window.pushDbToCloud=async function(){return syncCollection('production','production_db',db,STATE.dbShadow,STATE.dbMeta)};
+  window.pushRmRecordsToCloud=async function(){return syncCollection('rm','rm_records',rmRecords,STATE.rmShadow,STATE.rmMeta)};
+  window.pushProjectsListToCloud=safeProjectsWrite;
+  window.pushPipeSpecsToCloud=safePipeSpecsWrite;
+  window.pushCalendarNotesToCloud=safeNotesWrite;
+  window.pushFactorySettingsToCloud=safeFactoryWrite;
+  window.pushDowntimeLogsToCloud=async function(logsToWrite){return syncCollection('downtime','downtime_logs',logsToWrite||downtimeLogs,STATE.dtShadow,STATE.dtMeta)};
+  window.pushManpowerLogsToCloud=async function(logsToWrite){return syncCollection('manpower','manpower_logs',logsToWrite||manpowerLogs,STATE.mpShadow,STATE.mpMeta)};
+  window.pushSingleDowntimeLog=async function(item){return fb&&STATE.cloudReady&&fb.auth?.currentUser&&!fb.auth.currentUser.isAnonymous?writeRecord('downtime_logs',item.id,item,STATE.dtMeta,STATE.dtShadow,'downtime'):null};
+  window.pushSingleManpowerLog=async function(item){return fb&&STATE.cloudReady&&fb.auth?.currentUser&&!fb.auth.currentUser.isAnonymous?writeRecord('manpower_logs',item.id,item,STATE.mpMeta,STATE.mpShadow,'manpower'):null};
+  window.deleteSingleFactoryLog=async function(kind,id){if(!fb||!STATE.cloudReady||!fb.auth?.currentUser||fb.auth.currentUser.isAnonymous)return;const isDt=kind==='dt';const coll=isDt?'downtime_logs':'manpower_logs';const meta=isDt?STATE.dtMeta:STATE.mpMeta;const shadow=isDt?STATE.dtShadow:STATE.mpShadow;const pend=isDt?STATE.dtPendingDeletes:STATE.mpPendingDeletes;const tomb=isDt?STATE.dtTombstones:STATE.mpTombstones;pend.add(String(id));tomb.add(String(id));return deleteRecord(coll,id,meta,shadow,isDt?'downtime':'manpower');};
+
+  window.initCloudSync=async function(){
+    const cfg=loadCloudConfig?.();if(!cfg){setCloudStatus?.('not-configured');return;}
+    try{
+      setCloudStatus?.('connecting','🔄 กำลังเชื่อมต่อออนไลน์แบบป้องกันเขียนทับ...');
+      const [{initializeApp},firestoreMod,authMod]=await Promise.all([
+        import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js'),
+        import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js')
+      ]);
+      const app=initializeApp(cfg);
+      let fdb;
+      try{
+        if(firestoreMod.initializeFirestore&&firestoreMod.persistentLocalCache&&firestoreMod.persistentMultipleTabManager){
+          fdb=firestoreMod.initializeFirestore(app,{localCache:firestoreMod.persistentLocalCache({tabManager:firestoreMod.persistentMultipleTabManager()})});
+        }else fdb=firestoreMod.getFirestore(app);
+      }catch(e){console.warn('V70 persistent cache fallback',e);fdb=firestoreMod.getFirestore(app)}
+      const auth=authMod.getAuth(app);fb={app,db:fdb,auth,...firestoreMod,...authMod};
+      window.__viewOnlyMode=new URLSearchParams(location.search).get('view')==='1';
+      document.getElementById('view-only-banner')?.classList.toggle('hidden',!window.__viewOnlyMode);
+      document.getElementById('view-link-btn')?.classList.remove('hidden');
+      const start=async()=>{STATE.cloudReady=true;try{await seedSafe();await attachSafeListeners();cloudSyncEnabled=true;setBadge('☁️ ออนไลน์ • Real-time sync • ป้องกันเขียนทับข้ามเครื่อง');renderGkV70Health?.();}catch(e){STATE.cloudReady=false;throw e;}};
+      if(window.__viewOnlyMode){await authMod.signInAnonymously(auth);await start();}
+      else{
+        const loginScreen=document.getElementById('login-screen');
+        if(!STATE.authBound){STATE.authBound=true;authMod.onAuthStateChanged(auth,async user=>{if(user&&!user.isAnonymous){loginScreen?.classList.add('hidden');document.getElementById('account-email')&&(document.getElementById('account-email').textContent=user.email||'');document.getElementById('account-badge')?.classList.remove('hidden');if(!STATE.cloudReady)await start();}else{loginScreen?.classList.remove('hidden');setCloudStatus?.('connecting','🔐 กรุณาเข้าสู่ระบบก่อนใช้งานออนไลน์');}})}
+      }
+    }catch(e){console.error('V70 initCloudSync failed',e);STATE.lastError=String(e?.message||e);setCloudStatus?.('error',`⚠️ เชื่อมต่อออนไลน์ไม่สำเร็จ: ${e?.message||e}`);}
+  };
+
+  window.gkV70SyncNow=async function(){if(!STATE.cloudReady){showToast?.('ยังไม่ได้เชื่อมต่อออนไลน์','error');return;}if(fb?.auth?.currentUser?.isAnonymous){showToast?.('👁️ โหมดดูอย่างเดียว — ไม่สามารถสั่งซิงค์ข้อมูลขึ้นคลาวด์ได้','error');return;}try{setCloudStatus?.('connecting','🔄 กำลังตรวจและซิงค์เฉพาะรายการที่เปลี่ยน...');await syncCollection('production','production_db',db,STATE.dbShadow,STATE.dbMeta);await syncCollection('rm','rm_records',rmRecords,STATE.rmShadow,STATE.rmMeta);await syncCollection('downtime','downtime_logs',downtimeLogs,STATE.dtShadow,STATE.dtMeta);await syncCollection('manpower','manpower_logs',manpowerLogs,STATE.mpShadow,STATE.mpMeta);await safeProjectsWrite();await safePipeSpecsWrite();await safeNotesWrite();await safeFactoryWrite();setBadge('☁️ ซิงค์ล่าสุดเรียบร้อย');renderGkV70Health?.();showToast?.('ซิงค์ข้อมูลที่เปลี่ยนล่าสุดแล้ว');}catch(e){console.error(e);setCloudStatus?.('error');}};
+
+  function issueScan(){
+    const issues=[];const idSet=new Set();const sigCount=new Map();
+    (db||[]).forEach(r=>{const id=String(r.id);if(idSet.has(id))issues.push(`Production ID ซ้ำ: ${id}`);idSet.add(id);if(!String(r.project||'').trim())issues.push(`Production ID ${id}: ไม่มีโครงการ`);if(!String(r.date||'').trim())issues.push(`Production ID ${id}: ไม่มีวันที่ผลิต`);if(!String(r.size||'').trim())issues.push(`Production ID ${id}: ไม่มีขนาดท่อ`);if(r.qty===undefined||r.qty===null||r.qty==='')issues.push(`Production ID ${id}: ไม่มีจำนวนผลิต`);const qty=Number(r.qty||0);const shiftKeys=['morningQty','afternoonQty','otQty'];const hasShift=shiftKeys.some(k=>r[k]!==undefined&&r[k]!==null&&r[k]!=='');const sum=shiftKeys.reduce((a,k)=>a+Number(r[k]||0),0);if(hasShift&&qty!==sum)issues.push(`Production ID ${id}: qty (${qty}) ไม่เท่ากับ เช้า+บ่าย+OT (${sum})`);if([r.morningQty,r.afternoonQty,r.otQty,r.qty].some(v=>v!==undefined&&v!==null&&v!==''&&Number(v)<0))issues.push(`Production ID ${id}: พบจำนวนติดลบ`);if(r.date&&r.receivedDate&&String(r.receivedDate)>String(r.date))issues.push(`Production ID ${id}: วันรับท่อมากกว่าวันผลิต`);const sig=`${r.project}|${r.size}|${r.thick}|${r.jacket}|${r.date}|${r.qty}|${r.deliveryLocation||''}`.toLowerCase();sigCount.set(sig,(sigCount.get(sig)||0)+1);});
+    sigCount.forEach((n,s)=>{if(n>1)issues.push(`Production รายการเหมือนกัน ${n} รายการ: ${s}`)});
+    const rmIds=new Set();const rmSig=new Map();(rmRecords||[]).forEach(r=>{const id=String(r.id);if(rmIds.has(id))issues.push(`RM ID ซ้ำ: ${id}`);rmIds.add(id);if(!String(r.project||'').trim())issues.push(`RM ID ${id}: ไม่มีโครงการ`);if(!String(r.receivedDate||'').trim())issues.push(`RM ID ${id}: ไม่มีวันที่รับ`);if(!String(r.size||'').trim())issues.push(`RM ID ${id}: ไม่มีขนาดท่อ`);if(r.originalQty===undefined&&r.qty===undefined)issues.push(`RM ID ${id}: ไม่มียอดรับ`);const original=Number(r.originalQty??r.qty??0),remaining=Number(r.remainingQty??r.qty??0),allocated=Number(r.allocatedQty??0);if(original<0||remaining<0||allocated<0)issues.push(`RM ID ${id}: พบยอดติดลบ`);if(allocated+remaining>original)issues.push(`RM ID ${id}: allocated + remaining มากกว่ายอดรับ`);const sig=`${r.project}|${r.size}|${r.thick}|${r.jacket}|${r.receivedDate}|${original}`.toLowerCase();rmSig.set(sig,(rmSig.get(sig)||0)+1);});
+    rmSig.forEach((n,s)=>{if(n>1)issues.push(`RM รายการเหมือนกัน ${n} รายการ: ${s}`)});
+    const rmAllocatedFromProduction=new Map();
+    (db||[]).forEach(r=>{
+      if(r.sourceRMId!=null){
+        const key=String(r.sourceRMId);
+        if(!rmIds.has(key)) issues.push(`Production ID ${r.id}: sourceRMId ${r.sourceRMId} ไม่พบใน RM`);
+        const used=Number(r.sourceRMQty ?? r.qty ?? 0);
+        if(!Number.isFinite(used)||used<0) issues.push(`Production ID ${r.id}: sourceRMQty ไม่ถูกต้อง`);
+        if(Number.isFinite(used)&&used>=0) rmAllocatedFromProduction.set(key,(rmAllocatedFromProduction.get(key)||0)+used);
+      }
+    });
+    (rmRecords||[]).forEach(r=>{
+      const expected=Number(r.allocatedQty??0), linked=Number(rmAllocatedFromProduction.get(String(r.id))||0);
+      if(Number.isFinite(expected)&&Number.isFinite(linked)&&expected!==linked){
+        issues.push(`RM ID ${r.id}: allocatedQty (${expected}) ไม่ตรงกับยอด Production ที่ link (${linked})`);
+      }
+    });
+    return issues;
+  }
+
+  function ensureHealthModal(){
+    let m=document.getElementById('gk-v70-health-modal');if(m)return m;
+    m=document.createElement('div');m.id='gk-v70-health-modal';m.innerHTML=`<div class="gk-v70-panel"><div class="gk-v70-head"><div><div class="gk-v70-title">☁️ Sync Center & Data Integrity</div><div class="gk-v70-sub">ระบบซิงค์หลายเครื่อง • ตรวจข้อมูลซ้ำ • ไม่ลบ/ไม่แก้ข้อมูลอัตโนมัติ</div></div><div class="gk-v70-actions"><button class="gk-v70-btn primary" onclick="gkV70SyncNow();renderGkV70Health()">🔄 ซิงค์ตอนนี้</button><button class="gk-v70-btn" onclick="gkV70HealthExport()">💾 Export Health</button><button class="gk-v70-btn" onclick="closeGkV70Health()">✕ ปิด</button></div></div><div class="gk-v70-body" id="gk-v70-health-body"></div></div>`;document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeGkV70Health()});return m;
+  }
+  window.openGkV70Health=function(){const m=ensureHealthModal();m.classList.add('is-open');renderGkV70Health()};
+  window.closeGkV70Health=function(){document.getElementById('gk-v70-health-modal')?.classList.remove('is-open')};
+  window.renderGkV70Health=function(){
+    const issues=issueScan();const body=document.getElementById('gk-v70-health-body');if(!body)return;
+    const online=!!STATE.cloudReady&&!!fb;const conf=STATE.conflicts.length;const pending=STATE.pending;
+    body.innerHTML=`<div class="gk-v70-grid"><div class="gk-v70-card"><div class="gk-v70-label">สถานะออนไลน์</div><div class="gk-v70-value">${online?'🟢':'⚪'}</div><div class="gk-v70-note">${online?'Real-time Firestore':'ทำงานในเครื่อง'}</div></div><div class="gk-v70-card"><div class="gk-v70-label">กำลังซิงค์</div><div class="gk-v70-value">${pending}</div><div class="gk-v70-note">รายการที่กำลังเขียน</div></div><div class="gk-v70-card"><div class="gk-v70-label">Conflict</div><div class="gk-v70-value">${conf}</div><div class="gk-v70-note">เก็บไว้ตรวจ ไม่เขียนทับอัตโนมัติ</div></div><div class="gk-v70-card"><div class="gk-v70-label">Validation</div><div class="gk-v70-value">${issues.length}</div><div class="gk-v70-note">ประเด็นที่ควรตรวจ</div></div></div><div class="gk-v70-grid2"><div class="gk-v70-card"><div class="gk-v70-section-title">📡 Online Health</div><table class="gk-v70-table"><tbody><tr><td>Device</td><td>${STATE.deviceId.slice(0,12)}</td></tr><tr><td>ผู้ใช้</td><td>${fb?.auth?.currentUser?.email||'—'}</td></tr><tr><td>Sync ล่าสุด</td><td>${STATE.lastSync?new Date(STATE.lastSync).toLocaleString('th-TH'):'ยังไม่มี'}</td></tr><tr><td>Firestore cache</td><td><span class="gk-v70-pill gk-v70-ok">Multi-tab เมื่อ SDK รองรับ</span></td></tr><tr><td>Conflict เก็บไว้</td><td>${conf}</td></tr></tbody></table></div><div class="gk-v70-card"><div class="gk-v70-section-title">🛡️ Data Integrity</div>${issues.length?`<div style="max-height:260px;overflow:auto"><table class="gk-v70-table"><thead><tr><th>#</th><th>สิ่งที่พบ</th></tr></thead><tbody>${issues.slice(0,100).map((x,i)=>`<tr><td>${i+1}</td><td>${String(x).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</td></tr>`).join('')}</tbody></table></div>`:'<div class="gk-v70-empty">🟢 ไม่พบประเด็น validation ตามกติกาปัจจุบัน</div>'}</div></div><div class="gk-v70-card" style="margin-top:10px"><div class="gk-v70-section-title">🔗 การเชื่อมโยงข้อมูล</div><div class="gk-v70-note">Production → RM ใช้ <b>sourceRMId</b> • ปุ่มเดิมยังคงใช้ฐานข้อมูลชุดเดิม • ระบบนี้เป็นชั้นตรวจ/ซิงค์ ไม่สร้าง Production/RM ใหม่เอง</div><div class="gk-v70-actions" style="margin-top:8px"><button class="gk-v70-btn" onclick="typeof openGQSection==='function'&&openGQSection('gq-quality')">เปิด Quality</button><button class="gk-v70-btn" onclick="typeof openGQSection==='function'&&openGQSection('gq-production')">เปิด Production</button><button class="gk-v70-btn" onclick="typeof openGQSection==='function'&&openGQSection('gq-logistics')">เปิด Logistics</button><button class="gk-v70-btn" onclick="typeof openGQSection==='function'&&openGQSection('gq-chem')">เปิด BOM/เคมี</button></div></div><div class="gk-v70-card" style="margin-top:10px"><div class="gk-v70-section-title">🧩 Conflict Center</div>${conf?`<div style="max-height:240px;overflow:auto"><table class="gk-v70-table"><thead><tr><th>เวลา</th><th>ประเภท</th><th>ID</th><th>เหตุผล</th></tr></thead><tbody>${STATE.conflicts.slice(-50).reverse().map(x=>`<tr><td>${new Date(x.at).toLocaleString('th-TH')}</td><td>${x.kind}</td><td>${x.id}</td><td>${String(x.reason||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</td></tr>`).join('')}</tbody></table></div>`:'<div class="gk-v70-empty">ไม่มี conflict ที่ค้างอยู่</div>'}</div><div class="gk-v70-card" style="margin-top:10px"><div class="gk-v70-section-title">⚠️ กติกาความปลอดภัยของระบบ</div><div class="gk-v70-note">เมื่อสองเครื่องแก้รายการเดียวกันพร้อมกัน ระบบใช้ transaction ตรวจ version; ถ้าชนกันจะไม่เขียนทับ และเก็บรายการไว้ใน Conflict Center เพื่อให้คนตัดสินใจเอง</div></div>`;
+  };
+  window.gkV70HealthExport=function(){const payload={exportedAt:new Date().toISOString(),deviceId:STATE.deviceId,cloudOnline:!!STATE.cloudReady,conflicts:STATE.conflicts,issues:issueScan(),counts:{production:(db||[]).length,rm:(rmRecords||[]).length,downtime:(downtimeLogs||[]).length,manpower:(manpowerLogs||[]).length}};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`gekko_health_${localDateKey?.()||'today'}.json`;a.click();URL.revokeObjectURL(a.href)};
+
+  function injectMenu(){
+    const dd=document.getElementById('extra-menu-dropdown');if(!dd||document.getElementById('gk-v70-health-menu'))return;
+    const anchor=[...dd.querySelectorAll('button')].find(b=>b.textContent.includes('Daily Command Center')||b.textContent.includes('Factory Control Tower'));
+    const btn=document.createElement('button');btn.id='gk-v70-health-menu';btn.className='w-full text-left px-3 py-2.5 text-xs font-semibold hover:bg-sky-50 dark:hover:bg-slate-800 flex items-center gap-2 border-t border-slate-100 dark:border-slate-800';btn.innerHTML='<span>☁️</span><span class="flex-1">Sync Center & Data Integrity</span><span class="text-[9px] text-slate-400">V70</span>';btn.onclick=function(){try{closeExtraMenu?.()}catch(_){};openGkV70Health()};if(anchor)dd.insertBefore(btn,anchor);else dd.appendChild(btn);
+  }
+  function gkV70PatchRuleHelp(){const pre=[...document.querySelectorAll('pre')].find(x=>x.textContent.includes('allow read, write: if request.auth != null;'));if(pre){pre.textContent="rules_version = '2';\nservice cloud.firestore {\n  match /databases/{db}/documents {\n    match /{document=**} {\n      allow read: if request.auth != null;\n      allow write: if request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';\n    }\n  }\n}";pre.title='V70 แนะนำ: Anonymous อ่านได้ แต่เขียนไม่ได้';}}
+  document.addEventListener('DOMContentLoaded',injectMenu,{once:true});window.addEventListener('load',injectMenu);setTimeout(injectMenu,600);setTimeout(injectMenu,1800);
+  document.addEventListener('DOMContentLoaded',gkV70PatchRuleHelp,{once:true});window.addEventListener('load',gkV70PatchRuleHelp);setTimeout(gkV70PatchRuleHelp,900);
+  window.addEventListener('online',()=>{if(fb&&STATE.cloudReady)setBadge('☁️ ออนไลน์ • เครือข่ายกลับมาแล้ว')});window.addEventListener('offline',()=>{if(fb)setCloudStatus?.('error','📴 ออฟไลน์ชั่วคราว • ข้อมูล local ยังใช้งานได้');renderGkV70Health?.()});
+  // Improve status display without changing existing workflows.
+  const oldSetCloudStatus=window.setCloudStatus;if(typeof oldSetCloudStatus==='function')window.setCloudStatus=function(state,detail){oldSetCloudStatus(state,detail);renderGkV70Health?.()};
+})();
+</script>
+<!-- ================= END GEKKO V70 SAFE ONLINE / DATA INTEGRITY LAYER ================= -->
+
+
+<!-- ================= GEKKO V71 QUALITY / ERP LINK SAFE LAYER ================= -->
+<script>
+(function(){
+  'use strict';
+  function validExternalUrl(v){try{const u=new URL(String(v||''),location.href);return /^https?:$/.test(u.protocol)&&u.hostname!==location.hostname;}catch(_){return false;}}
+  function addPlanetOneMenuOnlyWhenConfigured(){
+    const dd=document.getElementById('extra-menu-dropdown');
+    if(!dd||document.getElementById('gk-v71-erp-link')) return;
+    let url='';
+    try{url=localStorage.getItem('gekko_planetone_erp_url')||'';}catch(_){url='';}
+    // Do not invent or point to the public PlanetOne forum. Only show when the real company ERP URL is configured.
+    if(!validExternalUrl(url)) return;
+    const section=document.createElement('div');
+    section.id='gk-v71-erp-link';
+    section.innerHTML='<div class="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 border-top border-b border-slate-100 dark:border-slate-800">ERP & ระบบภายนอก</div><button type="button" class="w-full text-left px-3 py-2.5 text-xs font-semibold hover:bg-sky-50 dark:hover:bg-slate-800 flex items-center gap-2"><span>🏢</span><span class="flex-1">PlanetOne ERP</span><span class="text-[9px] text-slate-400">↗</span></button>';
+    section.querySelector('button').addEventListener('click',function(){try{closeExtraMenu?.();window.open(url,'_blank','noopener,noreferrer');}catch(_){}});
+    dd.appendChild(section);
+  }
+  document.addEventListener('DOMContentLoaded',addPlanetOneMenuOnlyWhenConfigured,{once:true});
+  window.addEventListener('load',addPlanetOneMenuOnlyWhenConfigured);
+  setTimeout(addPlanetOneMenuOnlyWhenConfigured,800);
+})();
+</script>
+
+<!-- ================= GEKKO V72 LINKED RM / CONCURRENCY CORRECTION LAYER ================= -->
+<script>
+(function(){
+  'use strict';
+  function num(v){const n=Number(v);return Number.isFinite(n)?n:0;}
+  function findRM(id){return (rmRecords||[]).find(r=>Number(r.id)===Number(id));}
+  function linkedQty(row){return num(row?.sourceRMQty ?? row?.qty ?? 0);}
+  function snapshotEdit(itemId){
+    const old=(db||[]).find(r=>Number(r.id)===Number(itemId));
+    if(!old||old.sourceRMId==null)return null;
+    const row=document.querySelector('#pipe-rows-container > div');
+    if(!row)return null;
+    const sizeSel=row.querySelector('.row-size-select')?.value||'';
+    const sizeCust=row.querySelector('.row-size-custom')?.value?.trim()||'';
+    const size=sizeSel==='CUSTOM'?sizeCust:sizeSel;
+    const thick=(row.querySelector('.row-thick')?.value||'').trim()||'ไม่ระบุ';
+    const jacket=row.querySelector('.row-jacket')?.value||'';
+    const morning=Math.max(0,num(row.querySelector('.row-morning')?.value));
+    const afternoon=Math.max(0,num(row.querySelector('.row-afternoon')?.value));
+    const ot=Math.max(0,num(row.querySelector('.row-ot')?.value));
+    const nextQty=morning+afternoon+ot;
+    return {old,size,thick,jacket,nextQty,project:document.getElementById('project-select')?.value==='CUSTOM'?(document.getElementById('project-custom')?.value||'').trim():(document.getElementById('project-select')?.value||'')};
+  }
+  function applyRMDelta(oldRow,newQty){
+    if(!oldRow||oldRow.sourceRMId==null)return true;
+    const rm=findRM(oldRow.sourceRMId);
+    if(!rm){showToast?.(`ไม่พบ RM ต้นทางของ Production ID ${oldRow.id} — ระบบไม่ปรับยอด RM อัตโนมัติ`,'error');return false;}
+    const oldQty=linkedQty(oldRow), delta=num(newQty)-oldQty;
+    if(delta>0){
+      const remaining=num(rm.remainingQty ?? rm.qty ?? 0);
+      if(delta>remaining){showToast?.(`เพิ่มจำนวนไม่ได้: RM ต้นทางเหลือ ${remaining.toLocaleString('th-TH')} ท่อน แต่ต้องเพิ่มอีก ${delta.toLocaleString('th-TH')} ท่อน`,'error');return false;}
+    }
+    rm.allocatedQty=num(rm.allocatedQty)+delta;
+    rm.remainingQty=Math.max(0,num(rm.originalQty ?? rm.qty ?? 0)-rm.allocatedQty);
+    rm.stage=rm.remainingQty>0?'RM':'จ่ายเข้าผลิตหมด';
+    rm.status=rm.remainingQty>0?'รับเข้าแล้ว':'จ่ายเข้าผลิตหมด';
+    const latest=(db||[]).find(r=>Number(r.id)===Number(oldRow.id));
+    if(latest)latest.sourceRMQty=num(newQty);
+    return true;
+  }
+
+  const oldHandleFormSubmit=window.handleFormSubmit;
+  if(typeof oldHandleFormSubmit==='function' && !window.__gkV72FormPatched){
+    window.__gkV72FormPatched=true;
+    window.handleFormSubmit=function(e){
+      const id=document.getElementById('editing-item-id')?.value||'';
+      const old=(db||[]).find(r=>Number(r.id)===Number(id));
+      const edit=snapshotEdit(id);
+      if(old&&old.sourceRMId!=null&&edit){
+        if(String(old.project||'')!==String(edit.project||'')||String(old.size||'')!==String(edit.size||'')||String(old.thick||'')!==String(edit.thick||'')||String(old.jacket||'')!==String(edit.jacket||'')){
+          showToast?.('รายการนี้เชื่อมกับ RM อยู่ จึงไม่อนุญาตให้เปลี่ยน โครงการ/ไซส์/ความหนา/Jacket โดยตรง เพื่อไม่ให้การเชื่อมโยง RM เพี้ยน','error');
+          e?.preventDefault?.();return;
+        }
+        const delta=edit.nextQty-linkedQty(old);const rm=findRM(old.sourceRMId);
+        if(delta>0 && (!rm || num(rm.remainingQty ?? rm.qty ?? 0)<delta)){
+          showToast?.('จำนวนผลิตใหม่มากกว่าวัตถุดิบ RM คงเหลือ — ระบบไม่บันทึกเพื่อป้องกันยอด RM ติดลบ','error');
+          e?.preventDefault?.();return;
+        }
+      }
+      const beforeId=id;
+      const result=oldHandleFormSubmit.apply(this,arguments);
+      const stillEditing=String(document.getElementById('editing-item-id')?.value||'');
+      if(old&&old.sourceRMId!=null&&beforeId && !stillEditing){
+        const latest=(db||[]).find(r=>Number(r.id)===Number(old.id));
+        if(latest && applyRMDelta(old,linkedQty(latest))) saveRMRecords?.();
+      }
+      return result;
+    };
+  }
+
+  const oldDeleteItem=window.deleteItem;
+  if(typeof oldDeleteItem==='function' && !window.__gkV72DeletePatched){
+    window.__gkV72DeletePatched=true;
+    window.deleteItem=function(id){
+      const old=(db||[]).find(r=>Number(r.id)===Number(id));
+      oldDeleteItem.apply(this,arguments);
+      if(old&&old.sourceRMId!=null && !(db||[]).some(r=>Number(r.id)===Number(id))){
+        const rm=findRM(old.sourceRMId);if(rm){const q=linkedQty(old);rm.allocatedQty=Math.max(0,num(rm.allocatedQty)-q);rm.remainingQty=Math.max(0,num(rm.originalQty??rm.qty??0)-rm.allocatedQty);rm.stage=rm.remainingQty>0?'RM':'จ่ายเข้าผลิตหมด';rm.status=rm.remainingQty>0?'รับเข้าแล้ว':'จ่ายเข้าผลิตหมด';saveRMRecords?.();}
+      }
+    };
+  }
+
+  const oldBulkDelete=window.bulkDelete;
+  if(typeof oldBulkDelete==='function' && !window.__gkV72BulkDeletePatched){
+    window.__gkV72BulkDeletePatched=true;
+    window.bulkDelete=function(){
+      const selected=new Set(selectedIds||[]);
+      const linked=(db||[]).filter(r=>selected.has(r.id)&&r.sourceRMId!=null).map(r=>({rmId:r.sourceRMId,qty:linkedQty(r)}));
+      oldBulkDelete.apply(this,arguments);
+      let changed=false;
+      linked.forEach(x=>{const rm=findRM(x.rmId);if(rm){rm.allocatedQty=Math.max(0,num(rm.allocatedQty)-x.qty);rm.remainingQty=Math.max(0,num(rm.originalQty??rm.qty??0)-rm.allocatedQty);rm.stage=rm.remainingQty>0?'RM':'จ่ายเข้าผลิตหมด';rm.status=rm.remainingQty>0?'รับเข้าแล้ว':'จ่ายเข้าผลิตหมด';changed=true;}});
+      if(changed)saveRMRecords?.();
+    };
+  }
+})();
+</script>
+<!-- ================= END GEKKO V72 LINKED RM / CONCURRENCY CORRECTION LAYER ================= -->
+
+
+<!-- ================= GEKKO V74 FINAL INTEGRITY SYNC PATCH ================= -->
+<script>
+(function(){
+  'use strict';
+  const prior=window.handleFormSubmit;
+  if(typeof prior==='function' && !window.__gkV74CloudQtyPatch){
+    window.__gkV74CloudQtyPatch=true;
+    window.handleFormSubmit=function(e){
+      const id=document.getElementById('editing-item-id')?.value||'';
+      const before=(db||[]).find(r=>Number(r.id)===Number(id));
+      const beforeLinked=before&&before.sourceRMId!=null?Number(before.sourceRMQty??before.qty??0):null;
+      const result=prior.apply(this,arguments);
+      if(beforeLinked!==null){
+        const after=(db||[]).find(r=>Number(r.id)===Number(before.id));
+        const afterLinked=after&&after.sourceRMId!=null?Number(after.sourceRMQty??after.qty??0):null;
+        if(after&&afterLinked!==beforeLinked){
+          // V72 updates the local linkage after the original saveDB call.
+          // Persist that final sourceRMQty as well so Cloud and Integrity Audit see the same value.
+          try{saveDB?.();}catch(err){console.error('V74 linked sourceRMQty persist failed',err);}
+        }
+      }
+      return result;
+    };
+  }
+})();
+</script>
+<!-- ================= END GEKKO V74 FINAL INTEGRITY SYNC PATCH ================= -->
+<!-- ================= END GEKKO V71 QUALITY / ERP LINK SAFE LAYER ================= -->
+
+<!-- V74 QUALITY PASS: final linked sourceRMQty cloud persistence -->
 </body>
 </html>
