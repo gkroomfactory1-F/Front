@@ -3762,11 +3762,29 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         function deleteItem(id) {
             if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
                 pushUndoSnapshot('ลบรายการ');
+                const target = db.find(i => i.id == id);
+                if (target) restoreRMStockForDeletedItem(target);
                 db = db.filter(i => i.id != id);
                 selectedIds.delete(id);
                 saveDB();
                 showToastWithUndo('ลบรายการสำเร็จ');
             }
+        }
+
+        // แก้บัค: รายการผลิตที่เกิดจากการย้าย RM เข้าแผนผลิต (มี sourceRMId) พอถูกลบทิ้ง
+        // ยอดคงเหลือในคลัง RM ต้นทางไม่เคยถูกคืนกลับมาเลย ทำให้ของ "หายไปจากระบบ" ถาวร
+        // ทั้งที่ RM จริงยังอยู่ในโรงงาน — ฟังก์ชันนี้คืนยอดกลับให้ทุกครั้งที่ลบรายการแบบนี้
+        function restoreRMStockForDeletedItem(item) {
+            if (!item || !item.sourceRMId) return;
+            const rmItem = rmRecords.find(r => Number(r.id) === Number(item.sourceRMId));
+            if (!rmItem) return;
+            const restoreQty = Number(item.sourceRMQty || item.qty || 0);
+            if (restoreQty <= 0) return;
+            rmItem.allocatedQty = Math.max(0, Number(rmItem.allocatedQty || 0) - restoreQty);
+            rmItem.remainingQty = Number(rmItem.remainingQty || 0) + restoreQty;
+            rmItem.stage = 'RM';
+            rmItem.status = 'รับเข้าแล้ว';
+            saveRMRecords();
         }
 
         function resetForm() {
@@ -4445,8 +4463,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                                 </div>
                             </div>
                             <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                                <input type="date" value="${getDispatchDate(item)||''}" onchange="updateFGDispatchDate(${item.id}, this.value)" class="fc-input !mt-0 !py-1 !px-2 text-[10px] font-bold w-[125px]" title="กำหนด/แก้วันที่ส่ง — ตั้งได้แม้ยังไม่เคยมีวันส่งมาก่อน">
                                 ${item.receivedDate ? `<input type="date" value="${item.receivedDate}" onchange="updateLegacyReceiveDate(${item.id}, this.value)" class="fc-input !mt-0 !py-1 !px-2 text-[10px] font-bold w-[125px]" title="แก้วันรับท่อ">` : ''}
-                                ${getDispatchDate(item) ? `<input type="date" value="${getDispatchDate(item)}" onchange="updateFGDispatchDate(${item.id}, this.value)" class="fc-input !mt-0 !py-1 !px-2 text-[10px] font-bold w-[125px]" title="แก้วันส่งท่อ">` : ''}
                                 <select onchange="quickSetStatus(${item.id}, this.value)" class="text-[10px] bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 font-bold text-slate-900 dark:text-white"><option value="กำลังผลิต" ${item.status==='กำลังผลิต'?'selected':''}>กำลังผลิต</option><option value="รอจัดส่ง" ${item.status==='รอจัดส่ง'?'selected':''}>คลัง FG / รอส่ง</option><option value="ส่งมอบแล้ว" ${item.status==='ส่งมอบแล้ว'?'selected':''}>ส่งมอบแล้ว</option></select>
                                 <button onclick="editDayTask(${item.id})" class="px-2.5 py-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-xs font-bold hover:bg-amber-500/30">แก้ไข</button>
                                 <button onclick="deleteItem(${item.id})" class="px-2 py-1 bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-lg text-xs font-bold hover:bg-rose-500/30">✕</button>
@@ -5482,6 +5500,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         function bulkDelete() {
             if (confirm(`คุณต้องการลบ ${selectedIds.size} รายการที่เลือกใช่หรือไม่?`)) {
                 pushUndoSnapshot('ลบหลายรายการ');
+                db.forEach(i => { if (selectedIds.has(i.id)) restoreRMStockForDeletedItem(i); });
                 db = db.filter(i => !selectedIds.has(i.id));
                 selectedIds.clear();
                 updateBulkToolbar();
