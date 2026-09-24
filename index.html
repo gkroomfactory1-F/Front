@@ -3387,7 +3387,17 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             }
         }
 
-        async function pushDbToCloud() {
+        // แก้บัค: กดแก้ "กำหนดวันส่ง" ถี่ๆ ติดกันเร็วๆ (ย้อนไปย้อนมา) ทำให้ค่าล่าสุดหาย/ถูกดีดกลับ
+        // สาเหตุ: เดิมแต่ละครั้งที่แก้ไข จะยิง pushDbToCloud() แบบไม่รอกัน (ไม่ await) พร้อมกันหลายรอบ
+        // การเขียนขึ้น Firestore แต่ละรอบใช้เวลาทางเครือข่ายไม่เท่ากัน รอบที่กดก่อนอาจไปถึงเซิร์ฟเวอร์ "ทีหลัง"
+        // รอบที่กดทีหลัง ทำให้ค่าที่เพิ่งกดล่าสุดถูกค่าเก่ากว่าทับกลับ (บางครั้งค่าเก่าคือค่าว่าง จึงดูเหมือน "ข้อมูลหาย")
+        // ทางแก้: ต่อคิวการเขียนทั้งหมดให้ทำทีละรอบ รอรอบก่อนหน้าเสร็จก่อนเสมอ การันตีว่าค่าที่เขียนทีหลังจะไปถึงปลายทางทีหลังจริง
+        let __gekkoPushDbChain = Promise.resolve();
+        function pushDbToCloud() {
+            __gekkoPushDbChain = __gekkoPushDbChain.then(() => doPushDbToCloud(), () => doPushDbToCloud());
+            return __gekkoPushDbChain;
+        }
+        async function doPushDbToCloud() {
             if (!fb) return;
             try {
                 const { doc } = fb;
@@ -3403,7 +3413,13 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             } catch (e) { console.error('pushDbToCloud failed', e); setCloudStatus('error'); }
         }
 
-        async function pushRmRecordsToCloud() {
+        // เหตุผลเดียวกับ pushDbToCloud ด้านบน — ต่อคิวกันบัคค่าดีดกลับตอนแก้ RM ถี่ๆ
+        let __gekkoPushRmChain = Promise.resolve();
+        function pushRmRecordsToCloud() {
+            __gekkoPushRmChain = __gekkoPushRmChain.then(() => doPushRmRecordsToCloud(), () => doPushRmRecordsToCloud());
+            return __gekkoPushRmChain;
+        }
+        async function doPushRmRecordsToCloud() {
             if (!fb) return;
             try {
                 const { doc } = fb;
@@ -3972,6 +3988,40 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             }
             renderActiveView();
             if (!autoMoved) showToast('อัปเดตวันส่งท่อใน FG แล้ว — Timeline จะเปลี่ยนตามทันที');
+        }
+
+        // ใช้กับ Timeline ที่รวมหลายรายการ (โครงการ+ไซส์+แจ็คเก็ตเดียวกัน วันส่งเดียวกัน) เป็นการ์ดเดียว
+        // แก้วันที่ในการ์ดรวม ต้องอัปเดตทุก id ในกลุ่มพร้อมกัน ไม่ใช่แค่ตัวแรก
+        function updateFGDispatchDateBulk(ids, newDate) {
+            if (!Array.isArray(ids) || !ids.length) return;
+            if (newDate && !isReasonableDate(newDate)) {
+                showToast('วันที่ส่งท่อดูผิดปกติ กรุณาตรวจสอบอีกครั้ง', 'error');
+                renderActiveView();
+                return;
+            }
+            pushUndoSnapshot('แก้ไขวันส่งท่อหลายรายการ (Timeline)');
+            const todayKeyForRevert = typeof localDateKey === 'function' ? localDateKey() : new Date().toISOString().slice(0, 10);
+            ids.forEach(id => {
+                const item = db.find(i => i.id == id);
+                if (!item) return;
+                item.dispatchDate = newDate || '';
+                if (item.__legacyDispatchDate === true) delete item.__legacyDispatchDate;
+                if (item.status === 'ส่งมอบแล้ว' && newDate && newDate >= todayKeyForRevert) item.status = 'รอจัดส่ง';
+            });
+            const autoMoved = typeof autoAdvanceProductionStatus === 'function' ? autoAdvanceProductionStatus() : 0;
+            if (!autoMoved) {
+                try {
+                    localStorage.setItem('gekko_production_db', JSON.stringify(db));
+                    if (typeof pushDbToCloud === 'function') pushDbToCloud();
+                } catch (persistErr) {
+                    console.error('updateFGDispatchDateBulk persist failed', persistErr);
+                    showToast('บันทึกวันส่งท่อไม่สำเร็จ กรุณาลองอีกครั้ง', 'error');
+                    renderActiveView();
+                    return;
+                }
+            }
+            renderActiveView();
+            if (!autoMoved) showToast(`อัปเดตวันส่งท่อ ${ids.length} รายการในกลุ่มเดียวกันแล้ว — Timeline จะเปลี่ยนตามทันที`);
         }
 
         // --- แก้ไขวันที่รับท่อ RM จาก RM / ปฏิทิน / Timeline ---
@@ -4918,20 +4968,45 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             const totalQty = kpiRows.reduce((a, b) => a + b.qty, 0);
             const uniqueProjects = new Set(kpiRows.map(i => i.project)).size;
 
-            let totalWeightKg = 0;
-            let totalTruckLoads = 0;
+            // แก้บัคความแม่นยำ: เดิมการ์ด KPI หน้าแรกใช้สูตรมั่ว (น้ำหนัก = เลขไซส์ × 35, รถไม่รู้จักไซส์ = เดา 50, เคมี = ท่อน × 4.2 คงที่)
+            // ซึ่งไม่ตรงกับตัวเลขในแท็บ "ตรวจสอบข้อมูล" ที่คำนวณจาก Master/BOM จริงแยกตามไซส์+Jacket
+            // เปลี่ยนมาใช้เครื่องคำนวณชุดเดียวกัน (gqWeightResolve / gqCapResolve / gqBomResolve) เพื่อให้ตัวเลขตรงกันทั้งแอป
+            // ไซส์/BOM ที่ยังไม่มีข้อมูลยืนยัน จะไม่ถูกเดาอีกต่อไป แต่จะนับแยกไว้โชว์เป็นหมายเหตุใต้การ์ดแทน
+            const useAccurateEngine = typeof gqWeightResolve === 'function' && typeof gqCapResolve === 'function' && typeof gqBomResolve === 'function';
+            const truckTypeForKpi = getTruckTypeSetting();
+            let totalWeightKg = 0, weightUnknownQty = 0;
+            let totalTruckLoads = 0, tripUnknownQty = 0;
+            let totalChemKg = 0, chemUnknownQty = 0;
             kpiRows.forEach(i => {
-                const w = getUnitWeight(i.size) * i.qty;
-                totalWeightKg += w;
+                const qty = Number(i.qty) || 0;
+                if (useAccurateEngine) {
+                    const wr = gqWeightResolve(i.size);
+                    if (wr && wr.source !== 'missing' && Number.isFinite(wr.kg)) totalWeightKg += wr.kg * qty;
+                    else weightUnknownQty += qty;
+                } else {
+                    totalWeightKg += getUnitWeight(i.size) * qty; // สำรอง เผื่อโมดูล GQ ยังไม่โหลด
+                }
                 // เที่ยวรถ = เฉพาะงานที่ "ยังไม่ส่งมอบ" เท่านั้น (ของที่ส่งไปแล้วไม่ต้องวางแผนรถอีก) — ยังนับน้ำหนัก/ยอดผลิตรวมสะสมทุกสถานะไว้เป็นประวัติเหมือนเดิม
                 if (i.status !== 'ส่งมอบแล้ว') {
-                    const cap = getTruckCapacity(i.size);
-                    if (cap > 0) totalTruckLoads += Math.ceil(i.qty / cap); // cap=0 คือไซส์ที่ประเมินไม่ได้เลย ไม่นับแทนที่จะทำให้ยอดรวมกลายเป็น Infinity
+                    if (useAccurateEngine) {
+                        const cap = gqCapResolve(i.size, truckTypeForKpi);
+                        if (cap && Number.isFinite(cap.cap) && cap.cap > 0) totalTruckLoads += Math.ceil(qty / cap.cap);
+                        else tripUnknownQty += qty; // ไม่ทราบความจุจริง ไม่เดา 50 อีกต่อไป
+                    } else {
+                        const cap = getTruckCapacity(i.size);
+                        if (cap > 0) totalTruckLoads += Math.ceil(qty / cap);
+                    }
+                }
+                if (useAccurateEngine) {
+                    const bom = gqBomResolve(i);
+                    if (bom && bom.status !== 'missing' && Number.isFinite(bom.totalChemicalKgPerPipe)) totalChemKg += bom.totalChemicalKgPerPipe * qty;
+                    else chemUnknownQty += qty;
                 }
             });
+            if (!useAccurateEngine) totalChemKg = totalQty * 4.2; // สำรองเดิม เผื่อโมดูล GQ ยังไม่โหลด
 
             const totalTons = (totalWeightKg / 1000).toFixed(2);
-            const totalChem = (totalQty * 4.2).toFixed(0);
+            const totalChem = totalChemKg.toFixed(0);
             const chemDrums = (totalChem / 200).toFixed(1);
 
             const passedCount = kpiRows.filter(i => (i.qc || 'Passed') === 'Passed').length;
@@ -4940,10 +5015,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('kpi-total-qty').innerText = totalQty.toLocaleString();
             document.getElementById('kpi-project-count').innerText = `จาก ${uniqueProjects} โครงการ`;
             document.getElementById('kpi-total-weight').innerText = totalTons;
-            document.getElementById('kpi-weight-kg').innerText = `~${Math.round(totalWeightKg).toLocaleString()} kg`;
+            document.getElementById('kpi-weight-kg').innerText = `~${Math.round(totalWeightKg).toLocaleString()} kg${weightUnknownQty ? ` • ไม่ทราบน้ำหนัก ${weightUnknownQty.toLocaleString()} ท่อน` : ''}`;
             document.getElementById('kpi-truck-loads').innerText = totalTruckLoads;
             document.getElementById('kpi-total-chem').innerText = Number(totalChem).toLocaleString();
-            document.getElementById('kpi-chem-drums').innerText = `~${chemDrums} ถัง (200L)`;
+            document.getElementById('kpi-chem-drums').innerText = `~${chemDrums} ถัง (200L)${chemUnknownQty ? ` • ยังไม่มี BOM ${chemUnknownQty.toLocaleString()} ท่อน` : ''}`;
             document.getElementById('kpi-qc-pass-rate').innerText = `${qcRate}%`;
             document.getElementById('kpi-qc-count').innerText = `(${passedCount}/${kpiRows.length})`;
         }
@@ -6005,6 +6080,25 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 `;
             }
 
+            function timelineShippingChipGroup(g) {
+                const col = getProjectColor(g.project);
+                const ids = g.items.map(i => i.id);
+                const idsAttr = JSON.stringify(ids).replace(/"/g, '&quot;');
+                const dd = getDispatchDate(g.items[0]) || '';
+                const loc = [...new Set(g.items.map(i => i.deliveryLocation).filter(Boolean))].join(' / ');
+                const clickTarget = g.items.length === 1 ? `editItem(${g.items[0].id})` : `openDayDetailModal('${dd}')`;
+                return `
+                    <div onclick="event.stopPropagation(); ${clickTarget}" class="px-1.5 py-1 rounded-md mb-1 cursor-pointer hover:opacity-90 transition" style="background-color: ${col.bg}">
+                        <div class="text-[9px] truncate font-bold text-white opacity-90 leading-tight">${g.project || '-'}</div>
+                        <div class="text-[10px] font-black text-white leading-tight">${g.size || '-'}${g.jacket && g.jacket !== 'ไม่ระบุ' ? ' ' + g.jacket : ''}</div>
+                        <div class="text-[9px] text-white/85 leading-tight">🚚 ส่ง = ${Number(g.qty || 0).toLocaleString('th-TH')} ท่อน${g.items.length > 1 ? ` (รวม ${g.items.length} รายการ)` : ''}</div>
+                        <div class="text-[8px] text-white/75 leading-tight">FG กำหนดส่ง: ${dd || '-'}</div>
+                        ${loc ? `<div class="text-[8px] text-white/85 truncate">📍 ${loc}</div>` : ''}
+                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${dd}" onchange="updateFGDispatchDateBulk(${idsAttr}, this.value)" class="w-full text-[9px] font-bold rounded px-1 py-0.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600"></div>
+                    </div>
+                `;
+            }
+
             function timelineShippingChip(it) {
                 const col = getProjectColor(it.project);
                 return `
@@ -6045,8 +6139,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         cellHtml = items.map(timelineReceiveChip).join('');
                     } else if (row.key === 'ส่งท่อ') {
                         // สำคัญ: วันส่งอ่านจาก dispatchDate ใน FG โดยตรง
+                        // รวมรายการที่ โครงการ+ไซส์+แจ็คเก็ต เหมือนกันในวันเดียวกันเป็นการ์ดเดียว (เหมือนตารางคลัง FG) กันการ์ดซ้ำเกลื่อนช่อง
                         const items = db.filter(i => getDispatchDate(i) === key);
-                        cellHtml = items.map(timelineShippingChip).join('');
+                        const groups = groupDisplayRows(items);
+                        cellHtml = groups.map(timelineShippingChipGroup).join('');
                     } else if (row.key === 'เช้า') {
                         const items = db.filter(i => i.date === key && Number(i.morningQty || 0) > 0);
                         cellHtml = items.map(i => timelineProductionChip(i, 'เช้า', i.morningQty)).join('');
