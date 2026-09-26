@@ -1740,8 +1740,12 @@
 
             <div class="text-xs px-3 py-2 rounded-xl" id="cloud-setup-status-line"></div>
 
-            <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                <p class="font-bold text-slate-800 dark:text-slate-200">ขั้นตอนตั้งค่า (ทำครั้งเดียว ใช้เวลา ~5 นาที ฟรี):</p>
+            <div class="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed overflow-hidden">
+                <button type="button" id="cloud-setup-steps-toggle" onclick="(function(){var b=document.getElementById('cloud-setup-steps-body');var t=document.getElementById('cloud-setup-steps-toggle');var open=b.style.display!=='none';b.style.display=open?'none':'block';t.querySelector('.gk-toggle-caret').textContent=open?'▸':'▾';})()" class="w-full flex items-center justify-between gap-2 p-3 text-left font-bold text-slate-800 dark:text-slate-200">
+                    <span>📋 ขั้นตอนตั้งค่า (ทำครั้งเดียว ใช้เวลา ~5 นาที ฟรี) — กดเพื่อแสดง/ซ่อน</span>
+                    <span class="gk-toggle-caret">▸</span>
+                </button>
+                <div id="cloud-setup-steps-body" class="space-y-2 px-3 pb-3" style="display:none">
                 <ol class="list-decimal list-inside space-y-1.5">
                     <li>เข้า <span class="font-mono text-theme-600 dark:text-theme-400">console.firebase.google.com</span> ล็อกอินด้วย Gmail แล้วกด "Add project" ตั้งชื่ออะไรก็ได้ เช่น gekko-pipe-system</li>
                     <li>ในโปรเจกต์ ไปที่เมนู <strong>Build → Firestore Database</strong> กด "Create database" เลือกโหมด <strong>Production mode</strong> แล้วเลือก location ใกล้ๆ (เช่น asia-southeast1)</li>
@@ -1759,6 +1763,7 @@ service cloud.firestore {
                     <li>กลับไปหน้าโปรเจกต์หลัก (รูปเฟือง ⚙️ ข้าง Project Overview → Project settings) เลื่อนลงมาที่ "Your apps" กด ไอคอนเว็บ <strong>&lt;/&gt;</strong> เพื่อสร้างเว็บแอป ตั้งชื่ออะไรก็ได้ แล้วกด Register app</li>
                     <li>จะมีโค้ด <span class="font-mono">const firebaseConfig = { ... }</span> ขึ้นมา — <strong>คัดลอกทั้งก้อนตั้งแต่ { ถึง }</strong> มาวางในช่องด้านล่างนี้</li>
                 </ol>
+                </div>
             </div>
 
             <div>
@@ -9055,7 +9060,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 </script>
 <!-- ================= INSIGHTS PLUS (added block — self-contained, read-only, no edits to existing code) ================= -->
 <style>
-#ip-fab{position:fixed;left:20px;bottom:20px;z-index:9997;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border:none;border-radius:999px;padding:12px 18px;font-weight:800;font-size:13px;box-shadow:0 10px 25px rgba(14,165,233,.35);cursor:pointer;display:flex;align-items:center;gap:8px;transition:transform .15s ease}
+#ip-fab{position:fixed;left:20px;bottom:20px;z-index:9997;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border:none;border-radius:999px;padding:9px 14px;font-weight:800;font-size:11.5px;box-shadow:0 10px 25px rgba(14,165,233,.35);cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform .15s ease}
 #ip-fab:hover{transform:translateY(-2px)}
 #ip-status-badge{position:fixed;left:20px;bottom:74px;z-index:9997;font-size:11px;font-weight:800;padding:6px 10px;border-radius:999px;color:#fff;display:flex;align-items:center;gap:6px;box-shadow:0 6px 16px rgba(0,0,0,.15);cursor:pointer}
 #ip-status-badge.ip-green{background:#16a34a}
@@ -12916,7 +12921,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
       if (bar) return bar;
       bar = document.createElement('div');
       bar.id = 'gk-v85-4-alert-bar';
-      bar.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:65;max-width:320px;display:none;';
+      bar.style.cssText = 'position:fixed;left:12px;bottom:74px;z-index:65;max-width:320px;display:none;';
       bar.innerHTML =
         '<div style="background:#fef3c7;color:#78350f;border:1px solid #f59e0b;border-radius:12px;padding:10px 12px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.15)" class="dark:bg-amber-900/70 dark:text-amber-100 dark:border-amber-600">'+
           '<div style="font-weight:800;margin-bottom:4px" id="gk-v85-4-alert-title"></div>'+
@@ -13198,6 +13203,94 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 })();
 </script>
 <!-- ================= END GEKKO V85.6 AI POLISH (CONFLICT LINK POLLING + HISTORY TOGGLE HINT + PER-QUESTION THROTTLE, ADDITIVE) ================= -->
+
+<!-- ================= GEKKO V86 KPI CARDS: SHOW "ยังไม่ส่ง" ONLY (ADDITIVE — does not remove/alter gqModel or Smart Dashboard, which still keep full history) ================= -->
+<script id="gekko-v86-kpi-current-only">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V86_KPI_PATCHED) return;
+
+  // คำนวณเฉพาะรายการที่ "ยังไม่ส่งมอบ" จากชุดข้อมูลเดียวกับที่ gqModel ใช้อยู่
+  // (ไม่แตะ gqModel/gqFiltered เดิม แค่ใช้ผลลัพธ์ของมันมากรองซ้ำ) — Smart Dashboard/Insights Plus/Export
+  // ยังคงคำนวณครบทุกสถานะ (รวมส่งแล้ว) ไว้เป็นประวัติเหมือนเดิมทุกจุด ไม่เปลี่ยนแปลง
+  function computeCurrentOnlyModel(){
+    try{
+      const D = (typeof gqFiltered === 'function') ? gqFiltered() : null;
+      if (!D) return null;
+      const items = (D.items || []).filter(function(it){ return it && it.status !== 'ส่งมอบแล้ว'; });
+      let qty = 0, weightKnown = 0, weightEst = 0, iso = 0, poly = 0, passed = 0, failed = 0;
+      const projects = {};
+      for (const it of items){
+        const q = (typeof gqQty === 'function') ? gqQty(it) : (Number(it.qty) || 0);
+        if (q < 0) continue;
+        qty += q;
+        if (typeof gqWeightResolve === 'function'){
+          const w = gqWeightResolve(it.size);
+          if (w){
+            if (w.source === 'verified') weightKnown += w.kg * q;
+            else if (w.source === 'estimated') weightEst += w.kg * q;
+          }
+        }
+        if (typeof gqBomResolve === 'function'){
+          const bom = gqBomResolve(it) || {};
+          poly += q * (Number(bom.polyolKgPerPipe) || 0);
+          iso += q * (Number(bom.isoKgPerPipe) || 0);
+        }
+        const qc = String(it.qc || '').trim();
+        if (qc === 'Passed') passed += q;
+        else if (qc && ['Pass','ผ่าน','ผ่าน QC'].indexOf(qc) !== -1) passed += q;
+        else if (['Failed','Fail','ไม่ผ่าน','NG'].indexOf(qc) !== -1) failed += q;
+        const p = String(it.project || 'ไม่ระบุ');
+        projects[p] = true;
+      }
+      const qcRate = (passed + failed) > 0 ? (passed / (passed + failed) * 100) : null;
+      return { qty, weightKnown, weightEst, iso, poly, passed, failed, qcRate, projectCount: Object.keys(projects).length };
+    }catch(e){ console.error('GEKKO V86 current-only KPI calc error:', e); return null; }
+  }
+
+  function applyCurrentOnlyKPIs(){
+    const m = computeCurrentOnlyModel();
+    if (!m) return;
+    const fmt = (typeof gqFmt === 'function') ? gqFmt : function(v){ return String(v); };
+    const q = document.getElementById('kpi-total-qty');
+    const p = document.getElementById('kpi-project-count');
+    const w = document.getElementById('kpi-total-weight');
+    const wk = document.getElementById('kpi-weight-kg');
+    const ch = document.getElementById('kpi-total-chem');
+    const cd = document.getElementById('kpi-chem-drums');
+    const qc = document.getElementById('kpi-qc-pass-rate');
+    const qcc = document.getElementById('kpi-qc-count');
+    if (q) q.textContent = fmt(m.qty);
+    if (p) p.textContent = 'จาก ' + m.projectCount + ' โครงการ (เฉพาะยังไม่ส่ง)';
+    if (w) w.textContent = fmt(m.weightKnown / 1000, 2);
+    if (wk) wk.textContent = fmt(m.weightKnown, 0) + ' kg' + (m.weightEst ? (' + ~' + fmt(m.weightEst, 0) + ' kg ประมาณการ') : '');
+    if (ch) ch.textContent = fmt(m.iso + m.poly, 0);
+    if (cd && typeof GQ_MASTER !== 'undefined'){
+      const isoDrums = Math.ceil((m.iso || 0) / GQ_MASTER.chemical.classification.drumIsoKg);
+      const polyDrums = Math.ceil((m.poly || 0) / GQ_MASTER.chemical.classification.drumPolyKg);
+      cd.textContent = 'ISO ≈ ' + fmt(isoDrums, 0) + ' ถัง (250 kg/ถัง) • POLY ≈ ' + fmt(polyDrums, 0) + ' ถัง (210 kg/ถัง)';
+    }
+    if (qc) qc.textContent = (m.qcRate === null) ? '—' : (m.qcRate.toFixed(0) + '%');
+    if (qcc) qcc.textContent = '(' + fmt(m.passed, 0) + '/' + fmt(m.passed + m.failed, 0) + ')';
+  }
+
+  // ห่อ window.updateKPIs เดิม: ให้ของเดิมทำงานก่อนตามปกติ (เผื่อจุดอื่นพึ่งพา side-effect เดิม เช่น
+  // แจ้งเตือน/มีเสียง confetti ที่ QC ครบ 100%) แล้วค่อยเขียนทับตัวเลขบนการ์ดหน้าแรกด้วยยอด "ยังไม่ส่ง" เท่านั้น
+  const _origUpdateKPIs = window.updateKPIs;
+  window.updateKPIs = function(){
+    if (typeof _origUpdateKPIs === 'function'){
+      try{ _origUpdateKPIs.apply(this, arguments); }catch(e){ console.error('original updateKPIs error:', e); }
+    }
+    try{ applyCurrentOnlyKPIs(); }catch(e){ console.error('applyCurrentOnlyKPIs error:', e); }
+  };
+
+  // เผื่อ updateKPIs ทำงานไปแล้วก่อนแพตช์นี้โหลดเสร็จ (เช่นตอนโหลดหน้าเว็บครั้งแรก)
+  setTimeout(function(){ try{ applyCurrentOnlyKPIs(); }catch(_){} }, 900);
+
+  window.__GEKKO_V86_KPI_PATCHED = true;
+})();
+</script>
+<!-- ================= END GEKKO V86 KPI CARDS PATCH ================= -->
 
 </body>
 </html>
