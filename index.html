@@ -731,6 +731,15 @@
         opacity: 1 !important;
     }
 </style>
+<style id="gq-kpi-waiting-history-style">
+    /* KPI: main = waiting to ship, secondary = all production history */
+    #kpi-total-qty-all,#kpi-total-weight-all,#kpi-total-chem-all,#kpi-qc-total-summary{
+        line-height:1.25;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+</style>
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
 
@@ -884,22 +893,24 @@
         <!-- Executive KPI Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div onclick="openGQSection('gq-production')" title="กดเพื่อดูรายละเอียดยอดผลิตแยกตามโครงการ (Smart Dashboard)" class="kpi-clickable bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-theme-400 dark:hover:border-theme-500 transition">
-                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ยอดผลิตรวมสะสม</p>
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">รอจัดส่ง (เฉพาะท่อยังไม่ส่ง)</p>
                 <div class="flex items-baseline gap-1.5 mt-2">
                     <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white" id="kpi-total-qty">0</h3>
                     <span class="text-xs font-bold text-theme-500">ท่อน</span>
                 </div>
                 <p class="text-[11px] text-slate-400 mt-1" id="kpi-project-count">จาก 0 โครงการ</p>
+                <p class="text-[10px] text-slate-400 mt-1" id="kpi-total-qty-all">ผลิตทั้งหมดสะสม 0 ท่อน</p>
                 <p class="text-[10px] text-theme-500 font-semibold mt-1.5">ดูรายละเอียด →</p>
             </div>
 
             <div onclick="openGQSection('gq-logistics')" title="กดเพื่อดูรายละเอียดน้ำหนักและโลจิสติกส์ (verified vs. ประมาณการ)" class="kpi-clickable bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-theme-400 dark:hover:border-theme-500 transition">
-                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">น้ำหนักรวม (Gross Wt.)</p>
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">น้ำหนักท่อรอจัดส่ง (Gross Wt.)</p>
                 <div class="flex items-baseline gap-1.5 mt-2">
                     <h3 class="text-2xl font-extrabold text-blue-600 dark:text-blue-400" id="kpi-total-weight">0</h3>
                     <span class="text-xs font-medium text-slate-400">ตัน (Tons)</span>
                 </div>
                 <p class="text-[11px] text-slate-400 mt-1" id="kpi-weight-kg">~0 kg (อิงสเปกท่อมาตรฐาน)</p>
+                <p class="text-[10px] text-slate-400 mt-1" id="kpi-total-weight-all">ผลิตทั้งหมดสะสม 0 kg</p>
                 <p class="text-[10px] text-theme-500 font-semibold mt-1.5">ดูรายละเอียด →</p>
             </div>
 
@@ -923,22 +934,23 @@
             </div>
 
             <div onclick="openGQSection('gq-chem')" title="กดเพื่อดูรายละเอียด BOM เคมี ISO/Polyol ต่อไซส์/Jacket" class="kpi-clickable bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-theme-400 dark:hover:border-theme-500 transition">
-                <p class="text-xs font-semibold text-theme-600 dark:text-theme-500 uppercase tracking-wider">เคมีโฟม ISO & Polyol</p>
+                <p class="text-xs font-semibold text-theme-600 dark:text-theme-500 uppercase tracking-wider">เคมีสำหรับท่อรอจัดส่ง ISO & Polyol</p>
                 <div class="flex items-baseline gap-1.5 mt-2">
                     <h3 class="text-2xl font-extrabold text-theme-600 dark:text-theme-500" id="kpi-total-chem">0</h3>
                     <span class="text-xs font-medium text-slate-400">Kg</span>
                 </div>
                 <p class="text-[11px] text-slate-400 mt-1" id="kpi-chem-drums">~0 ถัง (200L)</p>
+                <p class="text-[10px] text-slate-400 mt-1" id="kpi-total-chem-all">ผลิตทั้งหมดสะสม 0 kg</p>
                 <p class="text-[10px] text-theme-500 font-semibold mt-1.5">ดูรายละเอียด →</p>
             </div>
 
             <div id="kpi-card-qc" onclick="openGQSection('gq-quality')" title="กดเพื่อดูรายละเอียด QC / คุณภาพข้อมูล" class="kpi-clickable bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-theme-400 dark:hover:border-theme-500 transition">
-                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ผ่าน QC Pass Rate</p>
+                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">QC Pass Rate • ท่อรอจัดส่ง</p>
                 <div class="flex items-baseline gap-1.5 mt-2">
                     <h3 class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400" id="kpi-qc-pass-rate">0%</h3>
                     <span class="text-xs font-medium text-slate-400" id="kpi-qc-count">(0)</span>
                 </div>
-                <p class="text-[11px] text-slate-400 mt-1">เกณฑ์มาตรฐาน ISO 9001</p>
+                <p class="text-[11px] text-slate-400 mt-1" id="kpi-qc-total-summary">รวมทั้งหมด: 0% (0/0)</p>
                 <p class="text-[10px] text-theme-500 font-semibold mt-1.5">ดูรายละเอียด →</p>
             </div>
         </div>
@@ -7246,8 +7258,26 @@ function bomFor(size,jacket){const M=master();const key=`${jacketKey(jacket)}|${
 function itemInPeriod(i){if(state.period==='all')return true;const t=today();let start=t,end=t;if(state.period==='month'){start=t.slice(0,8)+'01';end=t}else{const d=Number(state.period);if(!d)return true;end=addDays(t,d-1)}const keys=[i?.date,i?.receivedDate,i?.fgReceivedDate,i?.dispatchDate,dispatch(i)].filter(Boolean);return keys.some(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&k>=start&&k<=end)}
 function searchable(i){return [i?.project,i?.size,i?.thick,i?.jacket,i?.deliveryLocation,i?.status,i?.qc,i?.date,i?.receivedDate,dispatch(i)].join(' ').toLowerCase()}
 function readArray(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');return Array.isArray(v)?v:[]}catch(_){return []}}
-function notesData(){try{const v=JSON.parse(localStorage.getItem('gekko_calendar_notes')||'null');return v&&typeof v==='object'&&!Array.isArray(v)?v:{} }catch(_){return {}}}
-function baseRows(){const rows=readArray('gekko_production_db');return rows.filter(i=>itemInPeriod(i)&&(state.project==='__ALL__'||i?.project===state.project)&&(!state.search||searchable(i).includes(state.search.toLowerCase())))}
+function notesData(){
+  // แก้ไข (self-review): เดิมอ่านจาก localStorage ตรงๆ ซึ่งเป็นข้อมูล "ล่าสุดที่เซฟสำเร็จ" เท่านั้น
+  // ถ้าผู้ใช้เพิ่งแก้ไขในหน้าจอ (ยังไม่ได้เซฟ) หรือ localStorage เซฟไม่สำเร็จ (เช่นพื้นที่เต็ม)
+  // Dashboard นี้จะโชว์ข้อมูลเก่ากว่าที่เห็นในส่วนอื่นของแอปจริง จึงเปลี่ยนไปอ่านจาก window.__GEKKO_DATA
+  // (bridge ที่ระบบสร้างไว้ให้ตั้งแต่ script แรกของไฟล์) ซึ่งชี้ไปที่ตัวแปร calendarNotes ในหน่วยความจำจริง
+  try{
+    const bridged = window.__GEKKO_DATA?.calendarNotes;
+    if (bridged && typeof bridged === 'object' && !Array.isArray(bridged)) return bridged;
+  }catch(_){ }
+  try{const v=JSON.parse(localStorage.getItem('gekko_calendar_notes')||'null');return v&&typeof v==='object'&&!Array.isArray(v)?v:{} }catch(_){return {}}
+}
+function baseRows(){
+  // แก้ไข (self-review): เดิมอ่าน 'gekko_production_db' จาก localStorage ตรงๆ ซึ่งอาจเก่ากว่าข้อมูลจริงในหน่วยความจำ
+  // (เช่น เพิ่งแก้ไขแต่ยังไม่เซฟ หรือเซฟไม่สำเร็จเพราะพื้นที่เต็ม) เปลี่ยนไปอ่านจาก window.__GEKKO_DATA.db ก่อน
+  // ซึ่งชี้ไปที่ตัวแปร db จริงในหน่วยความจำ (เหมือนที่ Smart Dashboard v1/v2 ใช้อยู่แล้ว) แล้วค่อย fallback เป็น
+  // localStorage เฉพาะกรณีที่ bridge ยังไม่พร้อมจริงๆ (กันพังตอนโหลดเร็วเกินไป)
+  const bridged = window.__GEKKO_DATA?.db;
+  const rows = Array.isArray(bridged) ? bridged : readArray('gekko_production_db');
+  return rows.filter(i=>itemInPeriod(i)&&(state.project==='__ALL__'||i?.project===state.project)&&(!state.search||searchable(i).includes(state.search.toLowerCase())))
+}
 function calc(){const rows=baseRows(),M=master();let total=0,weight=0,weightUnknown=0,trips=0,tripUnknown=0,chem=0,chemUnknown=0,pass=0,fail=0,unknown=0,ot=0;const projects={},sizes={},days={},issues=[];rows.forEach(i=>{const q=qty(i.qty);total+=q;ot+=qty(i.otQty);if(i.qc==='Passed')pass++;else if(i.qc)fail++;else unknown++;const s=spec(i.size);if(s&&num(s.weightKg)>0)weight+=num(s.weightKg)*q;else weightUnknown+=q;const cap=s&&num(s.truck6Crane)>0?num(s.truck6Crane):0;if(cap)trips+=Math.ceil(q/cap);else tripUnknown+=q;const b=bomFor(i.size,i.jacket);if(b&&num(b.totalChemicalKgPerPipe)>0)chem+=num(b.totalChemicalKgPerPipe)*q;else chemUnknown+=q;const p=i.project||'ไม่ระบุ';projects[p]??={qty:0,weight:0,weightUnknown:0,trips:0,tripUnknown:0,chem:0,chemUnknown:0,rows:0,ot:0};const x=projects[p];x.qty+=q;x.rows++;x.ot+=qty(i.otQty);if(s&&num(s.weightKg)>0)x.weight+=num(s.weightKg)*q;else x.weightUnknown+=q;if(cap)x.trips+=Math.ceil(q/cap);else x.tripUnknown+=q;if(b)x.chem+=num(b.totalChemicalKgPerPipe)*q;else x.chemUnknown+=q;const sk=normalizeSize(i.size);sizes[sk]??={size:sk,qty:0,weight:0,weightUnknown:0,trips:0,tripUnknown:0,jacket:{}};sizes[sk].qty+=q;if(s&&num(s.weightKg)>0)sizes[sk].weight+=num(s.weightKg)*q;else sizes[sk].weightUnknown+=q;if(cap)sizes[sk].trips+=Math.ceil(q/cap);else sizes[sk].tripUnknown+=q;const jk=i.jacket||'ไม่ระบุ';sizes[sk].jacket[jk]=(sizes[sk].jacket[jk]||0)+q;const dd=dispatch(i);if(i.status==='รอจัดส่ง'&&!dd)issues.push(`รอจัดส่งแต่ไม่มีวันส่ง: ${p} / ${i.size}`);if(s&&q>0&&i.receivedDate&&i.date&&i.receivedDate>=i.date)issues.push(`วันรับท่อไม่ก่อนวันผลิต: ${p} / ${i.size}`);if(!s&&q>0)issues.push(`ไม่มี Master รถ/น้ำหนัก: ${p} / ${i.size}`);if(!bomFor(i.size,i.jacket)&&q>0)issues.push(`ไม่มี BOM คู่ ${i.jacket||'ไม่ระบุ'} / ${i.size||'ไม่ระบุ'}`);if(i.qc&&i.qc!=='Passed')issues.push(`QC ต้องติดตาม: ${p} / ${i.size} (${i.qc})`);[i.date,dd,i.receivedDate].filter(Boolean).forEach(k=>{if(days[k]===undefined)days[k]={date:k,production:0,dispatch:0,received:0};if(k===i.date)days[k].production+=q;if(k===dd)days[k].dispatch+=q;if(k===i.receivedDate)days[k].received+=q})});const duplicateSignatures=new Set(),seen=new Set();rows.forEach(i=>{const k=[i.project,normalizeSize(i.size),jacketKey(i.jacket),qty(i.qty),i.date,dispatch(i),i.receivedDate].join('|');if(seen.has(k))duplicateSignatures.add(k);else seen.add(k)});return{rows,total,weight,weightUnknown,trips,tripUnknown,chem,chemUnknown,pass,fail,unknown,qcRate:rows.length?pass/rows.length*100:null,ot,projects:Object.values(projects).sort((a,b)=>b.qty-a.qty),sizes:Object.values(sizes).sort((a,b)=>b.qty-a.qty),days:Object.values(days).sort((a,b)=>a.date.localeCompare(b.date)),issues:Array.from(new Set(issues)),duplicateCount:duplicateSignatures.size}}
 function populate(){const sel=document.getElementById('gdx-project');if(!sel)return;const names=[...new Set((Array.isArray(window.__GEKKO_DATA?.db)?window.__GEKKO_DATA.db:[]).map(i=>i?.project).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));const cur=state.project;sel.innerHTML='<option value="__ALL__">ทุกโครงการ</option>'+names.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');sel.value=names.includes(cur)?cur:'__ALL__'}
 function topBar(){const m=calc();const due3=m.rows.filter(i=>i.status!=='ส่งมอบแล้ว'&&dispatch(i)&&dispatch(i)>=today()&&dispatch(i)<=addDays(today(),2)).length;const overdue=m.rows.filter(i=>i.status!=='ส่งมอบแล้ว'&&dispatch(i)&&dispatch(i)<today()).length;return `<div class="gdx-kpis"><div class="gdx-kpi blue"><div class="l">ผลิตรวม</div><div class="v">${fmt(m.total)}</div><div class="s">ท่อน</div></div><div class="gdx-kpi blue"><div class="l">น้ำหนักยืนยัน</div><div class="v">${fmt(m.weight/1000,2)}</div><div class="s">ตัน</div></div><div class="gdx-kpi purple"><div class="l">รถ 6 ล้อเฮี๊ยบ</div><div class="v">${fmt(m.trips)}</div><div class="s">เที่ยวที่คำนวณได้</div></div><div class="gdx-kpi ${m.tripUnknown?'amber':'green'}"><div class="l">รถคำนวณไม่ได้</div><div class="v">${fmt(m.tripUnknown)}</div><div class="s">ท่อน</div></div><div class="gdx-kpi ${m.chemUnknown?'amber':'green'}"><div class="l">เคมีจาก BOM</div><div class="v">${fmt(m.chem,0)}</div><div class="s">kg • ${fmt(m.chemUnknown)} ท่อนยังไม่มี BOM</div></div><div class="gdx-kpi ${overdue?'red':'green'}"><div class="l">งานเลยกำหนด</div><div class="v">${fmt(overdue)}</div><div class="s">รายการ</div></div><div class="gdx-kpi ${due3?'amber':'green'}"><div class="l">ครบกำหนด 3 วัน</div><div class="v">${fmt(due3)}</div><div class="s">รายการ</div></div></div>`}
@@ -7409,7 +7439,7 @@ const key=`${j}|${size}`,sel=GQ_MASTER.chemical.selected[key];if(sel){const amb=
 const x=gqInch(size);const candidates=Object.entries(GQ_MASTER.chemical.selected).filter(([k])=>k.startsWith(j+'|')).map(([k,c])=>({...c,size:k.split('|').slice(1).join('|'),x:gqInch(k.split('|').slice(1).join('|'))})).filter(c=>Number.isFinite(c.x));if(!candidates.length)return{size,j,status:'missing',source:'ไม่มี BOM ของ Jacket นี้',candidateCount:0,isoKgPerPipe:null,polyolKgPerPipe:null,totalChemicalKgPerPipe:null};let best=candidates.sort((a,b)=>Math.abs(a.x-x)-Math.abs(b.x-x))[0];return{...best,status:'estimated',source:'ประมาณจากไซส์ใกล้เคียง +5%',isoKgPerPipe:best.isoKgPerPipe*1.05,polyolKgPerPipe:best.polyolKgPerPipe*1.05,totalChemicalKgPerPipe:best.totalChemicalKgPerPipe*1.05,ambiguity:false}}
 function gqQty(it){const q=Number(it?.qty);return Number.isFinite(q)?q:0}
 function gqDuplicateCount(arr,rm=false){const m=new Map();for(const it of arr){const key=rm?[it.project,it.size,it.jacket,it.originalQty??it.qty,it.receivedDate].join('|'):[it.project,it.size,it.jacket,it.qty,it.morningQty,it.afternoonQty,it.otQty,it.date,it.receivedDate,gqDispatch(it),it.deliveryLocation].join('|');m.set(key,(m.get(key)||0)+1)}return[...m.values()].filter(x=>x>1).reduce((a,x)=>a+x-1,0)}
-function gqModel(filter){const D=gqFiltered();const items=D.items;let qty=0,weightKnown=0,weightEst=0,trips=0,planningTrips=0,tripUnknownQty=0,chemExact=0,chemPlanning=0,poly=0,iso=0,chemEstQty=0,chemAmbQty=0,bomMissingQty=0,passed=0,failed=0,unknownQc=0,ot=0;const issues=[];const bySize={},byProject={};const tripUnknownItems=[],chemAmbItems=[],chemEstItems=[],bomMissingItems=[],unknownQcItems=[];for(const it of items){const q=gqQty(it);if(q<0){issues.push({type:'negativeQty',item:it,msg:`จำนวนติดลบ ${q} ท่อน`});continue}qty+=q;const w=gqWeightResolve(it.size);if(w.source==='verified')weightKnown+=w.kg*q;else if(w.source==='estimated')weightEst+=w.kg*q;else issues.push({type:'weightMissing',item:it,msg:`ไม่มีน้ำหนักสำหรับ ${it.size}`});const cap=gqCapResolve(it.size,'truck6Crane');const notDelivered=it.status!=='ส่งมอบแล้ว';if(notDelivered){if(Number.isFinite(cap.cap)&&cap.cap>0){if(cap.source==='verified')trips+=Math.ceil(q/cap.cap);planningTrips+=Math.ceil(q/cap.cap)}else{tripUnknownQty+=q;tripUnknownItems.push(it);}}const bom=gqBomResolve(it);if(bom.status==='exact')chemExact+=q*(bom.totalChemicalKgPerPipe||0);if(bom.status==='planning')chemPlanning+=q*(bom.totalChemicalKgPerPipe||0);if(bom.status==='estimated'){chemPlanning+=q*(bom.totalChemicalKgPerPipe||0);chemEstQty+=q;chemEstItems.push(it);}if(bom.status==='missing'){bomMissingQty+=q;bomMissingItems.push(it);}poly+=q*(Number(bom.polyolKgPerPipe)||0);iso+=q*(Number(bom.isoKgPerPipe)||0);if(bom.ambiguity){chemAmbQty+=q;chemAmbItems.push(it);}const qc=String(it.qc||'').trim();if(qc==='Passed')passed+=q;else if(qc && ['Pass','ผ่าน','ผ่าน QC'].includes(qc))passed+=q;else if(['Failed','Fail','ไม่ผ่าน','NG'].includes(qc))failed+=q;else{unknownQc+=q;unknownQcItems.push(it);}ot+=Number(it.otQty)||0;if(Math.abs((Number(it.morningQty)||0)+(Number(it.afternoonQty)||0)+(Number(it.otQty)||0)-q)>0.0001)issues.push({type:'shiftMismatch',item:it,msg:`ยอดกะไม่เท่ากับยอดรวม (${(Number(it.morningQty)||0)+(Number(it.afternoonQty)||0)+(Number(it.otQty)||0)} ≠ ${q})`});const dates=gqEventDates(it);if(it.receivedDate&&it.date&&gqDate(it.receivedDate)>gqDate(it.date))issues.push({type:'dateOrder',item:it,msg:'วันที่รับท่ออยู่หลังวันที่ผลิต'});if(it.date&&gqDispatch(it)&&gqDate(it.date)>gqDispatch(it))issues.push({type:'dateOrder',item:it,msg:'วันที่ผลิตอยู่หลังวันส่ง'});const sk=gqNormalizeSize(it.size);bySize[sk]??={qty:0,weightKg:0,estWeightKg:0,trips:0,cap:gqCapResolve(sk,'truck6Crane'),jacket:new Set()};bySize[sk].qty+=q;if(w.source==='verified')bySize[sk].weightKg+=w.kg*q;else if(w.source==='estimated')bySize[sk].estWeightKg+=w.kg*q;if(notDelivered&&cap.cap)bySize[sk].trips+=Math.ceil(q/cap.cap);bySize[sk].jacket.add(it.jacket||'ไม่ระบุ');const p=String(it.project||'ไม่ระบุ');byProject[p]??={qty:0,items:0,status:{'กำลังผลิต':0,'รอจัดส่ง':0,'ส่งมอบแล้ว':0,other:0},weightKg:0,trips:0};byProject[p].qty+=q;byProject[p].items++;if(byProject[p].status[it.status]!==undefined)byProject[p].status[it.status]+=q;else byProject[p].status.other+=q;if(w.kg)byProject[p].weightKg+=w.kg*q;if(notDelivered&&cap.cap)byProject[p].trips+=Math.ceil(q/cap.cap)}const exactQcQty=passed, qcKnown=passed+failed, qcRate=qcKnown>0?passed/qcKnown*100:null;const duplicateProduction=Number(D.duplicateProduction)||0;const duplicateRM=gqDuplicateCount(D.rm,true);if(duplicateProduction)issues.push({type:'duplicateProduction',msg:`พบรายการผลิตซ้ำ ${duplicateProduction} รายการ`});if(duplicateRM)issues.push({type:'duplicateRM',msg:`พบรายการ RM ซ้ำ ${duplicateRM} รายการ`});const today=gqToday(),due3Items=items.filter(it=>{const d=gqDispatch(it)||gqDate(it.date);if(!d)return false;const x=new Date(d+'T00:00:00'),t=new Date(today+'T00:00:00'),e=new Date(t);e.setDate(e.getDate()+2);return x>=t&&x<=e}),due3=due3Items.length,overdueItems=items.filter(it=>{const d=gqDispatch(it);return d&&d<today&&it.status!=='ส่งมอบแล้ว'}),overdue=overdueItems.length,missingDispatchItems=items.filter(it=>it.status==='รอจัดส่ง'&&!gqDispatch(it)),missingDispatch=missingDispatchItems.length;return{...D,qty,weightKnown,weightEst,trips,planningTrips,tripUnknownQty,tripUnknownItems,chemExact,chemPlanning,chemEstQty,chemEstItems,poly,iso,chemAmbQty,chemAmbItems,bomMissingQty,bomMissingItems,passed,failed,unknownQc,unknownQcItems,qcRate,due3,due3Items,overdue,overdueItems,missingDispatch,missingDispatchItems,duplicateProduction,duplicateRM,issues,bySize,byProject,exactQcQty,notes:D.notes,filter}}
+function gqModel(filter){const D=gqFiltered();const items=(filter&&filter.onlyWaiting)?D.items.filter(it=>it&&it.status==='รอจัดส่ง'):(filter&&filter.excludeDelivered)?D.items.filter(it=>it&&it.status!=='ส่งมอบแล้ว'):D.items;let qty=0,weightKnown=0,weightEst=0,trips=0,planningTrips=0,tripUnknownQty=0,chemExact=0,chemPlanning=0,poly=0,iso=0,chemEstQty=0,chemAmbQty=0,bomMissingQty=0,passed=0,failed=0,unknownQc=0,ot=0;const issues=[];const bySize={},byProject={};const tripUnknownItems=[],chemAmbItems=[],chemEstItems=[],bomMissingItems=[],unknownQcItems=[];for(const it of items){const q=gqQty(it);if(q<0){issues.push({type:'negativeQty',item:it,msg:`จำนวนติดลบ ${q} ท่อน`});continue}qty+=q;const w=gqWeightResolve(it.size);if(w.source==='verified')weightKnown+=w.kg*q;else if(w.source==='estimated')weightEst+=w.kg*q;else issues.push({type:'weightMissing',item:it,msg:`ไม่มีน้ำหนักสำหรับ ${it.size}`});const cap=gqCapResolve(it.size,'truck6Crane');const notDelivered=it.status!=='ส่งมอบแล้ว';if(notDelivered){if(Number.isFinite(cap.cap)&&cap.cap>0){if(cap.source==='verified')trips+=Math.ceil(q/cap.cap);planningTrips+=Math.ceil(q/cap.cap)}else{tripUnknownQty+=q;tripUnknownItems.push(it);}}const bom=gqBomResolve(it);if(bom.status==='exact')chemExact+=q*(bom.totalChemicalKgPerPipe||0);if(bom.status==='planning')chemPlanning+=q*(bom.totalChemicalKgPerPipe||0);if(bom.status==='estimated'){chemPlanning+=q*(bom.totalChemicalKgPerPipe||0);chemEstQty+=q;chemEstItems.push(it);}if(bom.status==='missing'){bomMissingQty+=q;bomMissingItems.push(it);}poly+=q*(Number(bom.polyolKgPerPipe)||0);iso+=q*(Number(bom.isoKgPerPipe)||0);if(bom.ambiguity){chemAmbQty+=q;chemAmbItems.push(it);}const qc=String(it.qc||'').trim();if(qc==='Passed')passed+=q;else if(qc && ['Pass','ผ่าน','ผ่าน QC'].includes(qc))passed+=q;else if(['Failed','Fail','ไม่ผ่าน','NG'].includes(qc))failed+=q;else{unknownQc+=q;unknownQcItems.push(it);}ot+=Number(it.otQty)||0;if(Math.abs((Number(it.morningQty)||0)+(Number(it.afternoonQty)||0)+(Number(it.otQty)||0)-q)>0.0001)issues.push({type:'shiftMismatch',item:it,msg:`ยอดกะไม่เท่ากับยอดรวม (${(Number(it.morningQty)||0)+(Number(it.afternoonQty)||0)+(Number(it.otQty)||0)} ≠ ${q})`});const dates=gqEventDates(it);if(it.receivedDate&&it.date&&gqDate(it.receivedDate)>gqDate(it.date))issues.push({type:'dateOrder',item:it,msg:'วันที่รับท่ออยู่หลังวันที่ผลิต'});if(it.date&&gqDispatch(it)&&gqDate(it.date)>gqDispatch(it))issues.push({type:'dateOrder',item:it,msg:'วันที่ผลิตอยู่หลังวันส่ง'});const sk=gqNormalizeSize(it.size);bySize[sk]??={qty:0,weightKg:0,estWeightKg:0,trips:0,cap:gqCapResolve(sk,'truck6Crane'),jacket:new Set()};bySize[sk].qty+=q;if(w.source==='verified')bySize[sk].weightKg+=w.kg*q;else if(w.source==='estimated')bySize[sk].estWeightKg+=w.kg*q;if(notDelivered&&cap.cap)bySize[sk].trips+=Math.ceil(q/cap.cap);bySize[sk].jacket.add(it.jacket||'ไม่ระบุ');const p=String(it.project||'ไม่ระบุ');byProject[p]??={qty:0,items:0,status:{'กำลังผลิต':0,'รอจัดส่ง':0,'ส่งมอบแล้ว':0,other:0},weightKg:0,trips:0};byProject[p].qty+=q;byProject[p].items++;if(byProject[p].status[it.status]!==undefined)byProject[p].status[it.status]+=q;else byProject[p].status.other+=q;if(w.kg)byProject[p].weightKg+=w.kg*q;if(notDelivered&&cap.cap)byProject[p].trips+=Math.ceil(q/cap.cap)}const exactQcQty=passed, qcKnown=passed+failed, qcRate=qcKnown>0?passed/qcKnown*100:null;const duplicateProduction=Number(D.duplicateProduction)||0;const duplicateRM=gqDuplicateCount(D.rm,true);if(duplicateProduction)issues.push({type:'duplicateProduction',msg:`พบรายการผลิตซ้ำ ${duplicateProduction} รายการ`});if(duplicateRM)issues.push({type:'duplicateRM',msg:`พบรายการ RM ซ้ำ ${duplicateRM} รายการ`});const today=gqToday(),due3Items=items.filter(it=>{const d=gqDispatch(it)||gqDate(it.date);if(!d)return false;const x=new Date(d+'T00:00:00'),t=new Date(today+'T00:00:00'),e=new Date(t);e.setDate(e.getDate()+2);return x>=t&&x<=e}),due3=due3Items.length,overdueItems=items.filter(it=>{const d=gqDispatch(it);return d&&d<today&&it.status!=='ส่งมอบแล้ว'}),overdue=overdueItems.length,missingDispatchItems=items.filter(it=>it.status==='รอจัดส่ง'&&!gqDispatch(it)),missingDispatch=missingDispatchItems.length;return{...D,qty,weightKnown,weightEst,trips,planningTrips,tripUnknownQty,tripUnknownItems,chemExact,chemPlanning,chemEstQty,chemEstItems,poly,iso,chemAmbQty,chemAmbItems,bomMissingQty,bomMissingItems,passed,failed,unknownQc,unknownQcItems,qcRate,due3,due3Items,overdue,overdueItems,missingDispatch,missingDispatchItems,duplicateProduction,duplicateRM,issues,bySize,byProject,exactQcQty,notes:D.notes,filter}}
 function gqCard(label,val,note,cls=''){return `<div class="gq-card gq-kpi ${cls}"><div class="gq-label">${label}</div><div class="gq-value">${val}</div><div class="gq-note">${note||''}</div></div>`}
 function gqRenderOverview(m){const issues=m.issues.length;const sourceWeight=m.weightKnown?`${gqFmt(m.weightKnown/1000,2)} ตัน`:'—';const estWeight=m.weightEst?`${gqFmt(m.weightEst/1000,2)} ตัน`:'0';const drum=m.poly>0?Math.ceil(m.poly/GQ_MASTER.chemical.classification.drumPolyKg):0;const ai=gqFindings(m);document.getElementById('gq-overview').innerHTML=`<div class="gq-grid gq-kpi-grid">${gqCard('ยอดผลิตในตัวกรอง',gqFmt(m.qty,0),`${Object.keys(m.byProject).length} โครงการ`,'info')}${gqCard('น้ำหนัก Master',sourceWeight,m.weightEst?`+ ประมาณการ ${estWeight}`:'ใช้ข้อมูลน้ำหนักยืนยันทั้งหมด','good')}${gqCard('รถ 6 ล้อเฮี๊ยบ (ทางการ)',gqFmt(m.trips,0)+' เที่ยว',m.tripUnknownQty?`ยังไม่ทราบความจุ ${gqFmt(m.tripUnknownQty,0)} ท่อน`:'ใช้ capacity จาก Master 19 ขนาด','good')}${gqCard('ISO ตาม BOM',gqFmt(m.iso,0)+' kg',`≈ ${gqFmt(m.iso/m.qty||0,2)} kg/ท่อน`,'info')}${gqCard('POLY ตาม BOM',gqFmt(m.poly,0)+' kg',`ซื้อเชิงแผน ≥ ${gqFmt(drum,0)} ถัง (210 kg/ถัง)`,'info')}${gqCard('ISO + POLY',gqFmt(m.iso+m.poly,0)+' kg',m.bomMissingQty?`ยังมี ${gqFmt(m.bomMissingQty,0)} ท่อนที่ไม่มี BOM`:m.chemEstQty?`มีประมาณการ ${gqFmt(m.chemEstQty,0)} ท่อน`:'BOM planning ครบ','info')}${gqCard('QC Pass Rate',m.qcRate===null?'—':m.qcRate.toFixed(1)+'%',`Passed ${gqFmt(m.passed,0)} • Failed ${gqFmt(m.failed,0)} • Unknown ${gqFmt(m.unknownQc,0)}`,(m.qcRate===null?'warn':m.qcRate>=98?'good':m.qcRate>=95?'warn':'bad'))}${gqCard('Data Quality',issues+' จุด',`${m.duplicateProduction+m.duplicateRM} duplicate • ${m.bomMissingQty?gqFmt(m.bomMissingQty,0)+' ท่อน BOM missing':'BOM ไม่หาย'}`,issues?'bad':'good')}</div><div style="height:10px"></div><div class="gq-grid gq-two"><div class="gq-card"><div class="gq-head"><div><div class="gq-h2">🎯 จุดที่ควรจัดการก่อน</div><div class="gq-caption">Rule-based AI ใช้ข้อมูลจริงจากตัวกรองปัจจุบัน</div></div><span class="gq-chip info">AI READY</span></div><div class="gq-list">${ai.slice(0,6).map(x=>`<div class="gq-alert${x.action?' gq-alert-clickable':''}"${x.action?` onclick="${x.action}" title="กดเพื่อไปยังจุดที่เกี่ยวข้อง" role="button" tabindex="0"`:''}><div class="ico">${gqEsc(x.icon)}</div><div><strong>${gqEsc(x.title)}</strong><br><span>${gqEsc(x.body)}</span>${x.action?`<br><span class="gq-link-hint">${gqEsc(x.actionLabel||'ไปดู →')}</span>`:''}</div></div>`).join('')||'<div class="gq-empty">ไม่พบประเด็นเร่งด่วนตามกติกาปัจจุบัน</div>'}</div></div><div class="gq-card"><div class="gq-head"><div><div class="gq-h2">📌 สถานะงานและกำลังส่ง</div><div class="gq-caption">ปริมาณท่อนตามสถานะ</div></div></div><div class="gq-mini-grid"><div class="gq-mini"><div class="n">${gqFmt(m.due3,0)}</div><div class="t">ครบกำหนดใน 3 วัน</div></div><div class="gq-mini"><div class="n">${gqFmt(m.overdue,0)}</div><div class="t">เลยกำหนดส่ง</div></div><div class="gq-mini"><div class="n">${gqFmt(m.missingDispatch,0)}</div><div class="t">รอส่งแต่ไม่มีวันส่ง</div></div><div class="gq-mini"><div class="n">${gqFmt(m.tripUnknownQty,0)}</div><div class="t">ท่อนที่ยังไม่ทราบความจุรถ</div></div></div></div></div>`}
 function gqRenderProduction(m){const rows=Object.entries(m.byProject).sort((a,b)=>b[1].qty-a[1].qty);document.getElementById('gq-production').innerHTML=`<div class="gq-card"><div class="gq-head"><div><div class="gq-h2">🏭 ภาพรวมการผลิตรายโครงการ</div><div class="gq-caption">ใช้ยอดจากรายการในตัวกรอง ไม่สร้างข้อมูลใหม่</div></div><span class="gq-chip info">${rows.length} โครงการ</span></div><div class="gq-table-wrap"><table class="gq-table"><thead><tr><th>โครงการ</th><th class="r">ยอด</th><th class="r">น้ำหนัก</th><th class="r">รถ 6 ล้อ</th><th class="r">กำลังผลิต</th><th class="r">รอจัดส่ง</th><th class="r">ส่งมอบแล้ว</th></tr></thead><tbody>${rows.map(([p,x])=>`<tr><td><strong>${gqEsc(p)}</strong><div class="gq-muted">${x.items} รายการ</div></td><td class="r"><strong>${gqFmt(x.qty,0)}</strong></td><td class="r">${gqFmt(x.weightKg/1000,2)} t</td><td class="r">${gqFmt(x.trips,0)}</td><td class="r">${gqFmt(x.status['กำลังผลิต'],0)}</td><td class="r">${gqFmt(x.status['รอจัดส่ง'],0)}</td><td class="r">${gqFmt(x.status['ส่งมอบแล้ว'],0)}</td></tr>`).join('')||`<tr><td colspan="7"><div class="gq-empty">ไม่พบข้อมูลตามตัวกรอง</div></td></tr>`}</tbody></table></div></div>`}
@@ -7517,7 +7547,95 @@ if(!localStorage.getItem('gekko_truck_type'))localStorage.setItem('gekko_truck_t
 // Accuracy patch for main KPI display: no legacy 4.2 kg blanket and no legacy 6-wheel-full default.
 window.getUnitWeight=function(size){return gqWeightResolve(size).kg||0};window.gqWeightResolveForAlerts=function(size){try{return gqWeightResolve(size)}catch(_){return{kg:null,source:'missing',basis:'resolver error'}}};
 window.getTruckCapacity=function(size){const type=localStorage.getItem('gekko_truck_type')||'truck6Crane';const r=gqCapResolve(size,type);return Number.isFinite(r.cap)&&r.cap>0?r.cap:0};
-window.updateKPIs=function(){try{const m=gqModel({period:'all',project:'__ALL__',jacket:'__ALL__',search:''});const q=document.getElementById('kpi-total-qty'),p=document.getElementById('kpi-project-count'),w=document.getElementById('kpi-total-weight'),wk=document.getElementById('kpi-weight-kg'),tr=document.getElementById('kpi-truck-loads'),td=document.getElementById('kpi-truck-desc'),ch=document.getElementById('kpi-total-chem'),cd=document.getElementById('kpi-chem-drums'),qc=document.getElementById('kpi-qc-pass-rate'),qcc=document.getElementById('kpi-qc-count');if(q)gqAnimateNumber(q,gqFmt(m.qty));if(p)p.textContent=`จาก ${Object.keys(m.byProject).length} โครงการ`;if(w)gqAnimateNumber(w,gqFmt(m.weightKnown/1000,2),{decimals:2});if(wk)wk.textContent=`${gqFmt(m.weightKnown,0)} kg${m.weightEst?` + ~${gqFmt(m.weightEst,0)} kg ประมาณการ`:''}`;if(tr)gqAnimateNumber(tr,gqFmt(m.planningTrips));if(td)td.textContent='รถ 6 ล้อเฮี๊ยบ • '+(m.planningTrips>m.trips?`รวมประมาณการจากไซส์ใกล้เคียง ${gqFmt(m.planningTrips-m.trips)} เที่ยว (+ยืนยันแล้ว ${gqFmt(m.trips)})`:'ยืนยันจาก Master ทั้งหมด')+(m.tripUnknownQty?` • ยังคำนวณไม่ได้ ${gqFmt(m.tripUnknownQty)} ท่อน`:'');if(ch)gqAnimateNumber(ch,gqFmt(m.iso+m.poly,0));if(cd){const isoDrums=Math.ceil((m.iso||0)/GQ_MASTER.chemical.classification.drumIsoKg);const polyDrums=Math.ceil((m.poly||0)/GQ_MASTER.chemical.classification.drumPolyKg);cd.textContent=`ISO ≈ ${gqFmt(isoDrums,0)} ถัง (250 kg/ถัง) • POLY ≈ ${gqFmt(polyDrums,0)} ถัง (210 kg/ถัง)`;}if(qc){if(m.qcRate===null){qc.textContent='—'}else{gqAnimateNumber(qc,m.qcRate.toFixed(0)+'%',{suffix:'%'});if(m.qcRate>=100){if(!gqQcCelebratedAt100){gqQcCelebratedAt100=true;setTimeout(()=>gqConfettiBurst(qc),560)}}else{gqQcCelebratedAt100=false}}}if(qcc)qcc.textContent=`(${gqFmt(m.passed,0)}/${gqFmt(m.passed+m.failed,0)})`;const chemTitle=document.querySelector('#kpi-total-chem')?.parentElement?.parentElement?.querySelector('p');if(chemTitle)chemTitle.textContent='เคมี ISO + POLY (BOM)';if(qc){const qcOk=m.qcRate===null||m.qcRate>=95;qc.classList.toggle('text-emerald-600',qcOk);qc.classList.toggle('dark:text-emerald-400',qcOk);qc.classList.toggle('text-rose-600',!qcOk);qc.classList.toggle('dark:text-rose-400',!qcOk);}const qcCard=document.getElementById('kpi-card-qc');if(qcCard){const qcOk2=m.qcRate===null||m.qcRate>=95;qcCard.classList.toggle('border-rose-300',!qcOk2);qcCard.classList.toggle('dark:border-rose-800',!qcOk2);}const truckDot=document.getElementById('kpi-truck-warn-dot');if(truckDot)truckDot.classList.toggle('hidden',!m.tripUnknownQty);try{const findings=(typeof window.acAlertsBuild==='function')?window.acAlertsBuild():((typeof gqFindings==='function')?gqFindings(m):[]);const bell=document.getElementById('gq-alert-count');if(bell){if(findings.length){bell.textContent=findings.length>99?'99+':findings.length;bell.classList.remove('hidden');}else{bell.classList.add('hidden');}}}catch(_){}try{const face=document.getElementById('gq-mood-face');if(face){const n=(typeof window.acAlertsBuild==='function')?window.acAlertsBuild().length:((typeof gqFindings==='function')?gqFindings(m).length:0);face.textContent=n===0?'😄':n<=2?'🙂':n<=5?'😐':'😟'}}catch(_){}try{gqCheckProductionMilestone(m)}catch(_){}}catch(e){console.error('GQ KPI patch',e)}};
+window.updateKPIs=function(){try{
+  /* KPI cards: main figures = "รอจัดส่ง" only. Secondary figures = all production history.
+     Truck card intentionally keeps the latest working calculation unchanged (m = not delivered). */
+  const m=gqModel({period:'all',project:'__ALL__',jacket:'__ALL__',search:'',excludeDelivered:true});
+  const mWait=gqModel({period:'all',project:'__ALL__',jacket:'__ALL__',search:'',onlyWaiting:true});
+  const mAll=gqModel({period:'all',project:'__ALL__',jacket:'__ALL__',search:''});
+  const q=document.getElementById('kpi-total-qty'),
+        p=document.getElementById('kpi-project-count'),
+        qAll=document.getElementById('kpi-total-qty-all'),
+        w=document.getElementById('kpi-total-weight'),
+        wk=document.getElementById('kpi-weight-kg'),
+        wAll=document.getElementById('kpi-total-weight-all'),
+        tr=document.getElementById('kpi-truck-loads'),
+        td=document.getElementById('kpi-truck-desc'),
+        ch=document.getElementById('kpi-total-chem'),
+        cd=document.getElementById('kpi-chem-drums'),
+        chAll=document.getElementById('kpi-total-chem-all'),
+        qc=document.getElementById('kpi-qc-pass-rate'),
+        qcc=document.getElementById('kpi-qc-count'),
+        qcAll=document.getElementById('kpi-qc-total-summary');
+
+  /* 1) จำนวนท่อ: เฉพาะรอจัดส่ง */
+  if(q)gqAnimateNumber(q,gqFmt(mWait.qty));
+  if(p)p.textContent=`จาก ${Object.keys(mWait.byProject).length} โครงการ • รอจัดส่ง`;
+  if(qAll)qAll.textContent=`ผลิตทั้งหมดสะสม ${gqFmt(mAll.qty,0)} ท่อน`;
+
+  /* 2) น้ำหนัก: เฉพาะรอจัดส่งเป็นตัวใหญ่; ยอดรวมทั้งหมดเป็นตัวเล็ก */
+  const waitKnownWeightKg=Number(mWait.weightKnown)||0;
+  const waitEstimatedWeightKg=Number(mWait.weightEst)||0;
+  const allKnownWeightKg=Number(mAll.weightKnown)||0;
+  const allEstimatedWeightKg=Number(mAll.weightEst)||0;
+  if(w)gqAnimateNumber(w,gqFmt(waitKnownWeightKg/1000,2),{decimals:2});
+  if(wk)wk.textContent=`${gqFmt(waitKnownWeightKg,0)} kg${waitEstimatedWeightKg?` + ~${gqFmt(waitEstimatedWeightKg,0)} kg ประมาณการ`:''}`;
+  if(wAll)wAll.textContent=`ผลิตทั้งหมดสะสม ${gqFmt(allKnownWeightKg+allEstimatedWeightKg,0)} kg`;
+
+  /* 3) รถ: คงสูตร/ค่าจากโค้ดล่าสุดที่ใช้งานได้ ไม่เปลี่ยนตาม KPI อื่น */
+  if(tr)gqAnimateNumber(tr,gqFmt(m.planningTrips));
+  if(td)td.textContent='รถ 6 ล้อเฮี๊ยบ • '+(m.planningTrips>m.trips?`รวมประมาณการจากไซส์ใกล้เคียง ${gqFmt(m.planningTrips-m.trips)} เที่ยว (+ยืนยันแล้ว ${gqFmt(m.trips)})`:'ยืนยันจาก Master ทั้งหมด')+(m.tripUnknownQty?` • ยังคำนวณไม่ได้ ${gqFmt(m.tripUnknownQty)} ท่อน`:'');
+
+  /* 4) เคมี: ตัวใหญ่ = รอจัดส่ง / ตัวเล็ก = ผลิตทั้งหมดสะสม */
+  const waitChem=Number(mWait.iso||0)+Number(mWait.poly||0);
+  const allChem=Number(mAll.iso||0)+Number(mAll.poly||0);
+  if(ch)gqAnimateNumber(ch,gqFmt(waitChem,0));
+  if(cd){
+    const isoDrums=Math.ceil((mWait.iso||0)/GQ_MASTER.chemical.classification.drumIsoKg);
+    const polyDrums=Math.ceil((mWait.poly||0)/GQ_MASTER.chemical.classification.drumPolyKg);
+    cd.textContent=`ISO ≈ ${gqFmt(isoDrums,0)} ถัง (250 kg/ถัง) • POLY ≈ ${gqFmt(polyDrums,0)} ถัง (210 kg/ถัง)`;
+  }
+  if(chAll)chAll.textContent=`ผลิตทั้งหมดสะสม ${gqFmt(allChem,0)} kg`;
+  const chemTitle=document.querySelector('#kpi-total-chem')?.parentElement?.parentElement?.querySelector('p');
+  if(chemTitle)chemTitle.textContent='เคมีสำหรับท่อรอจัดส่ง ISO + POLY (BOM)';
+
+  /* 5) QC: ตัวใหญ่ = เฉพาะรอจัดส่ง / ตัวเล็ก = ภาพรวมทั้งหมด */
+  if(qc){
+    if(mWait.qcRate===null)qc.textContent='—';
+    else gqAnimateNumber(qc,mWait.qcRate.toFixed(0)+'%',{suffix:'%'});
+    if(mWait.qcRate>=100){
+      if(!gqQcCelebratedAt100){gqQcCelebratedAt100=true;setTimeout(()=>gqConfettiBurst(qc),560)}
+    }else gqQcCelebratedAt100=false;
+  }
+  if(qcc)qcc.textContent=`(${gqFmt(mWait.passed,0)}/${gqFmt(mWait.passed+mWait.failed,0)})`;
+  if(qcAll){
+    const allQcKnown=(Number(mAll.passed)||0)+(Number(mAll.failed)||0);
+    const allRate=allQcKnown>0?(Number(mAll.passed)||0)/allQcKnown*100:null;
+    qcAll.textContent=allRate===null?`รวมทั้งหมด: — (${gqFmt(mAll.qty,0)} ท่อน)`:`รวมทั้งหมด: ${allRate.toFixed(0)}% (${gqFmt(mAll.passed,0)}/${gqFmt(allQcKnown,0)})`;
+  }
+  if(qc){
+    const qcOk=mWait.qcRate===null||mWait.qcRate>=95;
+    qc.classList.toggle('text-emerald-600',qcOk);
+    qc.classList.toggle('dark:text-emerald-400',qcOk);
+    qc.classList.toggle('text-rose-600',!qcOk);
+    qc.classList.toggle('dark:text-rose-400',!qcOk);
+  }
+  const qcCard=document.getElementById('kpi-card-qc');
+  if(qcCard){
+    const qcOk2=mWait.qcRate===null||mWait.qcRate>=95;
+    qcCard.classList.toggle('border-rose-300',!qcOk2);
+    qcCard.classList.toggle('dark:border-rose-800',!qcOk2);
+  }
+
+  /* รถแจ้งเตือนยังอิง model เดิม เพื่อไม่เปลี่ยนพฤติกรรมที่ใช้งานได้แล้ว */
+  const truckDot=document.getElementById('kpi-truck-warn-dot');
+  if(truckDot)truckDot.classList.toggle('hidden',!m.tripUnknownQty);
+
+  /* Alert / mood / milestone: คง logic เดิม */
+  try{const findings=(typeof window.acAlertsBuild==='function')?window.acAlertsBuild():((typeof gqFindings==='function')?gqFindings(m):[]);const bell=document.getElementById('gq-alert-count');if(bell){if(findings.length){bell.textContent=findings.length>99?'99+':findings.length;bell.classList.remove('hidden')}else bell.classList.add('hidden')}}catch(_){ }
+  try{const face=document.getElementById('gq-mood-face');if(face){const n=(typeof window.acAlertsBuild==='function')?window.acAlertsBuild().length:((typeof gqFindings==='function')?gqFindings(m).length:0);face.textContent=n===0?'😄':n<=2?'🙂':n<=5?'😐':'😟'}}catch(_){ }
+  try{gqCheckProductionMilestone(m)}catch(_){ }
+}catch(e){console.error('GQ KPI patch',e)}};
 // Make the legacy project chart align with the KPI total: all production records, not “pending dispatch only”.
 // หมายเหตุแก้บั๊ก: patch นี้เขียนทับ updateCharts ให้วาด "เฉพาะกราฟแท่ง" เท่านั้น ทำให้กราฟ Jacket และสถานะงานหยุดอัปเดตหลังจากนี้ไป และเปลี่ยนความหมายกราฟแท่งจาก "ยอดรอจัดส่งตามกำหนด" เป็น "ยอดรวมทั้งหมด" แบบเงียบๆ จึงปิดการ override นี้ (คงไว้เป็นคอมเมนต์ ไม่ลบ) เพื่อให้ updateCharts() ตัวเต็ม (~บรรทัด 4086) ที่วาดครบ 3 กราฟทำงานตามปกติ
 // เดิม: /* window.updateCharts=function(){try{if(typeof Chart==='undefined')return;const items=gqReadData().production;const isDark=document.documentElement.classList.contains('dark');const textColor=isDark?'#cbd5e1':'#475569';const map={};items.forEach(it=>{const p=it.project||'ไม่ระบุ';map[p]=(map[p]||0)+gqQty(it)});const labels=Object.keys(map),data=labels.map(x=>map[x]);if(typeof barChartInstance!=='undefined'&&barChartInstance)barChartInstance.destroy();barChartInstance=new Chart(document.getElementById('barChart').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'จำนวนท่อนในระบบ',data}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:textColor}},y:{beginAtZero:true,ticks:{color:textColor}}}}});}catch(e){console.error('GQ chart patch',e)}}; */
@@ -13106,19 +13224,26 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
     };
 
     /* ===================== 6) throttle การยิง Remote AI ===================== */
-    let lastRemoteAt = 0;
+    // แก้ไข (self-review ตอน V85.6): เดิม throttle นี้บล็อก "ทุกคำถาม" ถี่กว่า 4 วิ ไม่ว่าจะถามต่างเรื่องกันแค่ไหน
+    // V85.6 เขียนไว้ว่าตั้งใจแทนที่ด้วย throttle เฉพาะคำถามซ้ำเดิม แต่เพราะเป็นแพตช์ additive ที่ห่อ V.ask ซ้อนกัน
+    // (ไม่ได้ลบโค้ดเดิม) จึงกลายเป็น "เพิ่มเติมจาก" ไม่ใช่ "แทนที่" — คำถามคนละคำถามที่ถามห่างกัน < 4 วิ
+    // ก็ยังโดนบล็อกจากตรงนี้อยู่ดี แก้ตรงนี้ตรงๆ ให้ตรวจคำถามซ้ำเดิมเหมือนที่ V85.6 ตั้งใจไว้จริง
+    let lastRemoteAt = 0, lastRemoteQuestion = '';
     const MIN_GAP_MS = 4000;
     const originalAsk3 = V.ask;
     V.ask = async function(question){
       const endpoint = (localStorage.getItem(AI_ENDPOINT_KEY)||'').trim();
+      const q = String(question||'').trim();
       const sinceLast = Date.now() - lastRemoteAt;
-      if (endpoint && sinceLast < MIN_GAP_MS){
-        const evidence = V.buildEvidence(String(question||''));
-        const answer = V.localAnswer(String(question||''), evidence) +
-          `\n\n⏱️ เรียก AI ถี่เกินไป (รออีก ${Math.ceil((MIN_GAP_MS - sinceLast)/1000)} วิ) ระบบใช้ Local AI ให้ก่อน`;
-        return { question: String(question||'').trim(), answer, remote:false, evidence, remoteError:'throttled' };
+      const isSameQuestionTooSoon = endpoint && q && q === lastRemoteQuestion && sinceLast < MIN_GAP_MS;
+      if (isSameQuestionTooSoon){
+        const evidence = V.buildEvidence(q);
+        const answer = V.localAnswer(q, evidence) +
+          `\n\n⏱️ เพิ่งถามคำถามเดิมไปเมื่อครู่ (รออีก ${Math.ceil((MIN_GAP_MS - sinceLast)/1000)} วิ) ระบบใช้ Local AI ให้ก่อน`;
+        return { question: q, answer, remote:false, evidence, remoteError:'throttled' };
       }
       lastRemoteAt = Date.now();
+      lastRemoteQuestion = q;
       return originalAsk3.call(V, question);
     };
 
@@ -13204,93 +13329,122 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 </script>
 <!-- ================= END GEKKO V85.6 AI POLISH (CONFLICT LINK POLLING + HISTORY TOGGLE HINT + PER-QUESTION THROTTLE, ADDITIVE) ================= -->
 
-<!-- ================= GEKKO V86 KPI CARDS: SHOW "ยังไม่ส่ง" ONLY (ADDITIVE — does not remove/alter gqModel or Smart Dashboard, which still keep full history) ================= -->
-<script id="gekko-v86-kpi-current-only">
+
+
+
+<!-- V91: Compact KPI presentation only. Original code/functions are preserved. -->
+<style id="gq-v91-kpi-compact-style">
+  /* Keep the same card design, but limit secondary information to one compact line. */
+  #kpi-total-qty-all,
+  #kpi-total-weight-all,
+  #kpi-total-chem-all,
+  #kpi-qc-total-summary{
+    display:block !important;
+    margin-top:4px !important;
+    padding-top:4px !important;
+    border-top:1px dashed rgba(148,163,184,.35);
+    font-size:10px !important;
+    line-height:1.25 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  #kpi-project-count,
+  #kpi-weight-kg,
+  #kpi-chem-drums,
+  #kpi-truck-desc,
+  #kpi-qc-count{
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  #kpi-card-truck #kpi-truck-desc{line-height:1.25 !important;}
+  #kpi-card-truck > p[onclick]{margin-top:4px !important;}
+</style>
+<script id="gq-v91-kpi-compact-script">
 (function(){
   'use strict';
-  if (window.__GEKKO_V86_KPI_PATCHED) return;
-
-  // คำนวณเฉพาะรายการที่ "ยังไม่ส่งมอบ" จากชุดข้อมูลเดียวกับที่ gqModel ใช้อยู่
-  // (ไม่แตะ gqModel/gqFiltered เดิม แค่ใช้ผลลัพธ์ของมันมากรองซ้ำ) — Smart Dashboard/Insights Plus/Export
-  // ยังคงคำนวณครบทุกสถานะ (รวมส่งแล้ว) ไว้เป็นประวัติเหมือนเดิมทุกจุด ไม่เปลี่ยนแปลง
-  function computeCurrentOnlyModel(){
+  function fmt(n, d){
     try{
-      const D = (typeof gqFiltered === 'function') ? gqFiltered() : null;
-      if (!D) return null;
-      const items = (D.items || []).filter(function(it){ return it && it.status !== 'ส่งมอบแล้ว'; });
-      let qty = 0, weightKnown = 0, weightEst = 0, iso = 0, poly = 0, passed = 0, failed = 0;
-      const projects = {};
-      for (const it of items){
-        const q = (typeof gqQty === 'function') ? gqQty(it) : (Number(it.qty) || 0);
-        if (q < 0) continue;
-        qty += q;
-        if (typeof gqWeightResolve === 'function'){
-          const w = gqWeightResolve(it.size);
-          if (w){
-            if (w.source === 'verified') weightKnown += w.kg * q;
-            else if (w.source === 'estimated') weightEst += w.kg * q;
-          }
-        }
-        if (typeof gqBomResolve === 'function'){
-          const bom = gqBomResolve(it) || {};
-          poly += q * (Number(bom.polyolKgPerPipe) || 0);
-          iso += q * (Number(bom.isoKgPerPipe) || 0);
-        }
-        const qc = String(it.qc || '').trim();
-        if (qc === 'Passed') passed += q;
-        else if (qc && ['Pass','ผ่าน','ผ่าน QC'].indexOf(qc) !== -1) passed += q;
-        else if (['Failed','Fail','ไม่ผ่าน','NG'].indexOf(qc) !== -1) failed += q;
-        const p = String(it.project || 'ไม่ระบุ');
-        projects[p] = true;
+      return Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});
+    }catch(_){ return String(n||0); }
+  }
+  function applyCompactKpiHistory(){
+    try{
+      if(typeof gqModel!=='function') return;
+      const wait=gqModel({period:'all',project:'__ALL__',jacket:'__ALL__',search:'',onlyWaiting:true});
+      const all=gqModel({period:'all',project:'__ALL__',jacket:'__ALL__',search:''});
+      const waitQty=Number(wait.qty)||0, allQty=Number(all.qty)||0;
+      const prevQty=Math.max(0,allQty-waitQty);
+      const waitWeight=(Number(wait.weightKnown)||0)+(Number(wait.weightEst)||0);
+      const allWeight=(Number(all.weightKnown)||0)+(Number(all.weightEst)||0);
+      const prevWeight=Math.max(0,allWeight-waitWeight);
+      const waitChem=(Number(wait.iso)||0)+(Number(wait.poly)||0);
+      const allChem=(Number(all.iso)||0)+(Number(all.poly)||0);
+      const prevChem=Math.max(0,allChem-waitChem);
+
+      const qAll=document.getElementById('kpi-total-qty-all');
+      if(qAll) qAll.textContent=`ผลิตสะสมทั้งหมด ${fmt(allQty)} ท่อน • ก่อนหน้า ${fmt(prevQty)} ท่อน`;
+
+      const wAll=document.getElementById('kpi-total-weight-all');
+      if(wAll) wAll.textContent=`น้ำหนักผลิตสะสม ${fmt(allWeight/1000,2)} ตัน • ก่อนหน้า ${fmt(prevWeight/1000,2)} ตัน`;
+
+      const cAll=document.getElementById('kpi-total-chem-all');
+      if(cAll) cAll.textContent=`เคมีสะสมทั้งหมด ${fmt(allChem)} kg • ก่อนหน้า ${fmt(prevChem)} kg`;
+
+      const qcAll=document.getElementById('kpi-qc-total-summary');
+      if(qcAll){
+        const passed=Number(all.passed)||0, failed=Number(all.failed)||0, total=passed+failed;
+        const rate=total ? Math.round((passed/total)*100) : 100;
+        qcAll.textContent=`QC สะสมทั้งหมด ${rate}% (${fmt(passed)}/${fmt(total)})`;
       }
-      const qcRate = (passed + failed) > 0 ? (passed / (passed + failed) * 100) : null;
-      return { qty, weightKnown, weightEst, iso, poly, passed, failed, qcRate, projectCount: Object.keys(projects).length };
-    }catch(e){ console.error('GEKKO V86 current-only KPI calc error:', e); return null; }
-  }
 
-  function applyCurrentOnlyKPIs(){
-    const m = computeCurrentOnlyModel();
-    if (!m) return;
-    const fmt = (typeof gqFmt === 'function') ? gqFmt : function(v){ return String(v); };
-    const q = document.getElementById('kpi-total-qty');
-    const p = document.getElementById('kpi-project-count');
-    const w = document.getElementById('kpi-total-weight');
-    const wk = document.getElementById('kpi-weight-kg');
-    const ch = document.getElementById('kpi-total-chem');
-    const cd = document.getElementById('kpi-chem-drums');
-    const qc = document.getElementById('kpi-qc-pass-rate');
-    const qcc = document.getElementById('kpi-qc-count');
-    if (q) q.textContent = fmt(m.qty);
-    if (p) p.textContent = 'จาก ' + m.projectCount + ' โครงการ (เฉพาะยังไม่ส่ง)';
-    if (w) w.textContent = fmt(m.weightKnown / 1000, 2);
-    if (wk) wk.textContent = fmt(m.weightKnown, 0) + ' kg' + (m.weightEst ? (' + ~' + fmt(m.weightEst, 0) + ' kg ประมาณการ') : '');
-    if (ch) ch.textContent = fmt(m.iso + m.poly, 0);
-    if (cd && typeof GQ_MASTER !== 'undefined'){
-      const isoDrums = Math.ceil((m.iso || 0) / GQ_MASTER.chemical.classification.drumIsoKg);
-      const polyDrums = Math.ceil((m.poly || 0) / GQ_MASTER.chemical.classification.drumPolyKg);
-      cd.textContent = 'ISO ≈ ' + fmt(isoDrums, 0) + ' ถัง (250 kg/ถัง) • POLY ≈ ' + fmt(polyDrums, 0) + ' ถัง (210 kg/ถัง)';
-    }
-    if (qc) qc.textContent = (m.qcRate === null) ? '—' : (m.qcRate.toFixed(0) + '%');
-    if (qcc) qcc.textContent = '(' + fmt(m.passed, 0) + '/' + fmt(m.passed + m.failed, 0) + ')';
+      /* Keep the first-line labels short; the main numbers remain waiting-to-ship only. */
+      const p=document.getElementById('kpi-project-count');
+      if(p) p.textContent=`จาก ${Object.keys(wait.byProject||{}).length} โครงการ`;
+      const td=document.getElementById('kpi-truck-desc');
+      if(td && !/ยังคำนวณไม่ได้/.test(td.textContent||'')) td.textContent='รถ 6 ล้อเฮี๊ยบ • อ้างอิง Master';
+    }catch(e){ console.warn('V91 compact KPI',e); }
   }
-
-  // ห่อ window.updateKPIs เดิม: ให้ของเดิมทำงานก่อนตามปกติ (เผื่อจุดอื่นพึ่งพา side-effect เดิม เช่น
-  // แจ้งเตือน/มีเสียง confetti ที่ QC ครบ 100%) แล้วค่อยเขียนทับตัวเลขบนการ์ดหน้าแรกด้วยยอด "ยังไม่ส่ง" เท่านั้น
-  const _origUpdateKPIs = window.updateKPIs;
-  window.updateKPIs = function(){
-    if (typeof _origUpdateKPIs === 'function'){
-      try{ _origUpdateKPIs.apply(this, arguments); }catch(e){ console.error('original updateKPIs error:', e); }
-    }
-    try{ applyCurrentOnlyKPIs(); }catch(e){ console.error('applyCurrentOnlyKPIs error:', e); }
+  const prevUpdate=window.updateKPIs;
+  window.updateKPIs=function(){
+    try{ if(typeof prevUpdate==='function') prevUpdate.apply(this,arguments); }catch(e){ console.warn('V91 wrapped KPI',e); }
+    applyCompactKpiHistory();
   };
-
-  // เผื่อ updateKPIs ทำงานไปแล้วก่อนแพตช์นี้โหลดเสร็จ (เช่นตอนโหลดหน้าเว็บครั้งแรก)
-  setTimeout(function(){ try{ applyCurrentOnlyKPIs(); }catch(_){} }, 900);
-
-  window.__GEKKO_V86_KPI_PATCHED = true;
+  window.gqApplyCompactKpiHistory=applyCompactKpiHistory;
+  setTimeout(applyCompactKpiHistory,120);
 })();
 </script>
-<!-- ================= END GEKKO V86 KPI CARDS PATCH ================= -->
+
+
+<!-- V92: KPI isolation guard. Does not delete or replace prior code. Prevent dashboard filters from leaking into homepage KPI calculations. -->
+<script id="gq-v92-kpi-isolation-guard">
+(function(){
+  'use strict';
+  const previousKpiUpdate = window.updateKPIs;
+  function withKpiAllData(fn){
+    let saved = null, changed = false;
+    try {
+      if (typeof GQ_STATE !== 'undefined' && GQ_STATE && GQ_STATE.filter) {
+        saved = {...GQ_STATE.filter};
+        GQ_STATE.filter = {period:'all', project:'__ALL__', jacket:'__ALL__', search:''};
+        changed = true;
+      }
+      return fn();
+    } finally {
+      if (changed && typeof GQ_STATE !== 'undefined' && GQ_STATE && saved) GQ_STATE.filter = saved;
+    }
+  }
+  window.updateKPIs = function(){
+    return withKpiAllData(function(){
+      return typeof previousKpiUpdate === 'function' ? previousKpiUpdate.apply(this, arguments) : undefined;
+    });
+  };
+  window.gqKpiAllDataGuard = withKpiAllData;
+  setTimeout(function(){ try{ window.updateKPIs(); }catch(e){ console.warn('V92 KPI guard',e); } }, 180);
+})();
+</script>
+<!-- ================= END GEKKO V92 KPI ISOLATION GUARD ================= -->
 
 </body>
 </html>
