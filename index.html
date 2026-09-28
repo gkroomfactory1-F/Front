@@ -13473,5 +13473,126 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 </script>
 <!-- ================= END GEKKO V92 KPI ISOLATION GUARD ================= -->
 
+<!-- ================= GEKKO V85.7 DEFAULT DATE RANGE: TODAY -> +7 DAYS (ADDITIVE, NO EDITS TO EXISTING CODE) ================= -->
+<script id="gekko-v85-7-default-date-range">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V85_7_PATCHED) return;
+
+  /* ทำอะไร: เปิดแอปครั้งแรกของแต่ละวัน ตั้ง "วันที่เริ่มต้น" = วันนี้ และ "วันที่สิ้นสุด" = วันนี้ + 7 วัน
+     (เช่น 28/9 ถึง 5/10) ให้อัตโนมัติ ผู้ใช้ปรับเองต่อได้ตามปกติ
+
+     ทำไมทำแค่ "ครั้งแรกของวัน" ไม่ใช่ทุกครั้งที่เปิด:
+       - V.boot ของระบบเดิมถูกเรียกหลายรอบ (DOMContentLoaded/load/700ms/1800ms) และระบบจำค่าตัวกรองไว้ใน localStorage
+         ถ้าตั้งทุกครั้งจะทับช่วงวันที่ที่ผู้ใช้เลือกเองไว้เมื่อครู่ (รีเฟรชแล้วช่วงที่ตั้งไว้หาย) น่ารำคาญและงงมาก
+       - จำ "วันที่ตั้งค่าล่าสุด" ไว้ ถ้าวันนี้ตั้งไปแล้วจะไม่ยุ่งอีก
+
+     ปุ่ม "ล้างตัวกรอง" ยังล้างจริงตามที่ผู้ใช้ตั้งใจ (แสดงทุกรายการ) และวันนั้นจะไม่ตั้งค่าเริ่มต้นกลับมาอีก
+
+     ข้อควรระวังที่วัดแล้ว: งานค้าง/ส่งช้ามีวันที่ผลิต-รับ-ส่งเป็นวันก่อนหน้า ช่วง 7 วันข้างหน้าจึงซ่อนรายการเหล่านั้น
+     (ข้อมูลตัวอย่าง 4 จาก 4 แถวถูกซ่อน) จึงเพิ่มแถบเตือนสีเหลือง "ช่วงวันที่ซ่อนอยู่ N รายการ" พร้อมปุ่มแสดงทั้งหมดในคลิกเดียว */
+
+  const DONE_KEY = 'gekko_v85_7_default_range_day';
+  const HINT_ID  = 'gk-v85-7-range-hint';
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function fmtKey(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function todayKey(){
+    try{ if (typeof localDateKey === 'function') return localDateKey(); }catch(_){}
+    return fmtKey(new Date());
+  }
+  function plusDays(key, n){
+    const d = new Date(key + 'T00:00:00');   // เวลาท้องถิ่น กันวันเพี้ยนจาก UTC (เขตเวลาไทย)
+    d.setDate(d.getDate() + n);
+    return fmtKey(d);
+  }
+  function thaiShort(key){
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key||'');
+    return m ? (Number(m[3]) + '/' + Number(m[2])) : '';
+  }
+
+  function applyDefaultOncePerDay(V){
+    let doneDay = '';
+    try{ doneDay = localStorage.getItem(DONE_KEY) || ''; }catch(_){}
+    const today = todayKey();
+    if (doneDay === today) return false;               // วันนี้ตั้งไปแล้ว ไม่ทับที่ผู้ใช้ปรับเอง
+
+    const from = document.getElementById('gk-v85-date-from');
+    const to   = document.getElementById('gk-v85-date-to');
+    if (!from || !to) return false;                    // filter bar ยังไม่พร้อม รอรอบ boot ถัดไป
+
+    V.state.from = today;
+    V.state.to   = plusDays(today, 7);
+    V.saveState();
+    V.syncUI();                                        // เขียนค่าลงช่อง input (มีอยู่แล้วในระบบเดิม)
+    try{ localStorage.setItem(DONE_KEY, today); }catch(_){}
+    return true;
+  }
+
+  function hiddenCount(V){
+    // นับรายการที่ "ถูกซ่อนเพราะช่วงวันที่อย่างเดียว" โดยไม่นับตัวกรองอื่น
+    try{
+      const s = V.state;
+      if (!s.from && !s.to) return 0;
+      const all = V.getDb();
+      const withoutRange = Object.assign({}, s, { from:'', to:'' });
+      return all.filter(function(it){
+        return V.dateMatch(it, withoutRange) && !V.dateMatch(it, s);
+      }).length;
+    }catch(_){ return 0; }
+  }
+
+  function renderHint(V){
+    const meta = document.getElementById('gk-v85-filter-meta');
+    let hint = document.getElementById(HINT_ID);
+    const n = hiddenCount(V);
+    if (!meta || n <= 0){ if (hint) hint.remove(); return; }
+
+    if (!hint){
+      hint = document.createElement('span');
+      hint.id = HINT_ID;
+      hint.className = 'gk-v85-filter-pill warn';
+      hint.style.cursor = 'pointer';
+      hint.title = 'กดเพื่อแสดงทุกรายการ (ล้างช่วงวันที่)';
+      hint.addEventListener('click', function(){
+        V.state.from = ''; V.state.to = '';
+        V.saveState(); V.syncUI();
+        try{ localStorage.setItem(DONE_KEY, todayKey()); }catch(_){}   // ผู้ใช้เลือกดูทั้งหมดเอง วันนี้ไม่ตั้งซ้ำ
+        if (typeof window.renderActiveView === 'function') window.renderActiveView();
+      });
+      meta.insertBefore(hint, meta.firstChild);
+    }
+    hint.textContent = '⚠️ ช่วงวันที่ ' + thaiShort(V.state.from) + ' – ' + thaiShort(V.state.to) +
+                       ' ซ่อนอยู่ ' + n.toLocaleString('th-TH') + ' รายการ • กดเพื่อแสดงทั้งหมด';
+  }
+
+  let tries = 0;
+  (function boot(){
+    tries++;
+    const V = window.GekkoV85;
+    const ready = V && typeof V.syncUI === 'function' && typeof V.saveState === 'function' &&
+                  typeof V.dateMatch === 'function' && document.getElementById('gk-v85-date-from');
+    if (!ready){ if (tries < 40) setTimeout(boot, 300); return; }
+    if (window.__GEKKO_V85_7_PATCHED) return;
+
+    // 1) ตั้งค่าเริ่มต้น (ครั้งแรกของวัน) แล้ววาดตารางใหม่ให้ตรงกับช่วงที่ตั้ง
+    const changed = applyDefaultOncePerDay(V);
+    if (changed && typeof window.renderActiveView === 'function') window.renderActiveView();
+
+    // 2) ห่อ updateMeta เพื่อใส่แถบเตือน "ซ่อนอยู่ N รายการ" ทุกครั้งที่สรุปตัวกรองอัปเดต
+    const prevMeta = V.updateMeta;
+    V.updateMeta = function(){
+      const r = prevMeta.apply(this, arguments);
+      try{ renderHint(V); }catch(_){}
+      return r;
+    };
+    try{ V.updateMeta(); }catch(_){}
+
+    window.__GEKKO_V85_7_PATCHED = true;
+  })();
+})();
+</script>
+<!-- ================= END GEKKO V85.7 DEFAULT DATE RANGE (ADDITIVE) ================= -->
+
 </body>
 </html>
