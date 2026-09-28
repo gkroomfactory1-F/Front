@@ -2685,7 +2685,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
         }
 
-        function setThemeColor(colorName) {
+        function setThemeColor(colorName, silent = false) {
             if (!PALETTES[colorName]) return;
             currentThemeColor = colorName;
             const p = PALETTES[colorName];
@@ -2695,9 +2695,12 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             root.style.setProperty('--color-500', p[500]);
             root.style.setProperty('--color-600', p[600]);
             root.style.setProperty('--color-700', p[700]);
-            localStorage.setItem('gekko_color_theme', colorName);
+            // ครอบ try/catch: setThemeColor() ถูกเรียกเป็นบรรทัดแรกของ initApp() ซึ่งรันทุกครั้งที่ saveDB() ทำงาน
+            // ถ้า localStorage เต็ม การเขียนธีมล้มเหลวต้องไม่ทำให้ initApp()/saveDB() พังทั้งชุด (ธีมแค่ไม่ถูกจำ ไม่ใช่เรื่องร้ายแรง)
+            try { localStorage.setItem('gekko_color_theme', colorName); } catch (err) { console.warn('setThemeColor: จำธีมไม่สำเร็จ (พื้นที่เต็ม)', err); }
             if (barChartInstance) updateCharts();
-            showToast(`เปลี่ยนธีมสีระบบเรียบร้อย`);
+            // silent=true เมื่อถูกเรียกอัตโนมัติจาก initApp() (ทุกครั้งที่เปิดแอป/บันทึก) ผู้ใช้ไม่ได้กดเปลี่ยนสีเอง จึงไม่ควรมี toast เด้ง
+            if (!silent) showToast(`เปลี่ยนธีมสีระบบเรียบร้อย`);
         }
 
         function toggleDarkMode() {
@@ -2714,7 +2717,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 document.documentElement.classList.remove('dark');
                 document.getElementById('theme-icon').innerText = '☀️';
             }
-            localStorage.setItem('gekko_dark_mode', isDarkMode ? 'dark' : 'light');
+            // ครอบ try/catch เหตุผลเดียวกับ setThemeColor: applyDarkMode() ถูกเรียกจาก initApp() ทุกครั้งที่ saveDB() ทำงาน
+            try { localStorage.setItem('gekko_dark_mode', isDarkMode ? 'dark' : 'light'); } catch (err) { console.warn('applyDarkMode: จำโหมดมืด/สว่างไม่สำเร็จ (พื้นที่เต็ม)', err); }
             if (barChartInstance) updateCharts();
         }
 
@@ -3554,7 +3558,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             } catch (err) {
                 ok = false;
                 console.error('saveDB: localStorage.setItem failed (อาจเต็ม)', err);
-                try { showToast('⚠️ บันทึกลงเครื่องไม่สำเร็จ (พื้นที่เก็บข้อมูลเต็ม) — ข้อมูลนี้จะหายถ้ารีเฟรชหน้า ลองลบรูปส่งท่อเก่าที่ไม่ใช้แล้วเพื่อเพิ่มพื้นที่', 'error'); } catch (_) {}
+                try { showToast('บันทึกลงเครื่องไม่สำเร็จ (พื้นที่เก็บข้อมูลเต็ม) — ข้อมูลนี้จะหายถ้ารีเฟรชหน้า ลองลบรูปส่งท่อเก่าที่ไม่ใช้แล้วเพื่อเพิ่มพื้นที่', 'error'); } catch (_) {}
             }
             initApp();
             // เผื่อหน้าต่างปฏิทินเต็มจอ / รายละเอียดวันเปิดอยู่ ให้รีเฟรชทันทีโดยไม่ต้องปิดเปิดใหม่
@@ -6616,7 +6620,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         let gekkoAutoAdvanceIntervalId = null;
 
         function initApp() {
-            setThemeColor(currentThemeColor);
+            setThemeColor(currentThemeColor, true);
             applyDarkMode();
             try { if (typeof gqSetGreeting === 'function') gqSetGreeting(); } catch (_) {}
             renderProjectOptions();
@@ -13039,7 +13043,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
       if (bar) return bar;
       bar = document.createElement('div');
       bar.id = 'gk-v85-4-alert-bar';
-      bar.style.cssText = 'position:fixed;left:12px;bottom:74px;z-index:65;max-width:320px;display:none;';
+      bar.style.cssText = 'position:fixed;left:12px;bottom:120px;z-index:9998;max-width:320px;display:none;';
       bar.innerHTML =
         '<div style="background:#fef3c7;color:#78350f;border:1px solid #f59e0b;border-radius:12px;padding:10px 12px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.15)" class="dark:bg-amber-900/70 dark:text-amber-100 dark:border-amber-600">'+
           '<div style="font-weight:800;margin-bottom:4px" id="gk-v85-4-alert-title"></div>'+
@@ -13080,8 +13084,31 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
             (r.soon.length ? ('ใกล้ครบกำหนดใน 2 วัน ' + r.soon.length + ' รายการ') : '');
         }
         bar.style.display = 'block';
+        placeAlertBar(bar);
       }catch(_){}
     }
+    // วางแบนเนอร์เหนือปุ่มลอยมุมซ้ายล่างของ Insights Plus (ip-fab / ip-status-badge) เสมอ
+    // เดิมแบนเนอร์อยู่ bottom:74px ซึ่งตรงกับป้ายสถานะ Insights Plus พอดีและถูกทับมิด (z-index ต่างกัน 65 vs 9997)
+    // คำนวณจากตำแหน่งจริงเพราะป้ายเปลี่ยนขนาดได้ (ข้อความสถานะยาวต่างกัน / หน้าจอมือถือ)
+    function placeAlertBar(bar){
+      try{
+        let top = window.innerHeight;
+        ['ip-fab','ip-status-badge'].forEach(function(id){
+          const el = document.getElementById(id);
+          if (!el) return;
+          const cs = getComputedStyle(el);
+          if (cs.display === 'none' || cs.visibility === 'hidden') return;
+          const r = el.getBoundingClientRect();
+          if (r.height > 0 && r.top < top) top = r.top;
+        });
+        // ระยะจากขอบล่างจอถึงบนสุดของปุ่มลอย + ช่องว่าง 10px
+        bar.style.bottom = Math.max(74, Math.round(window.innerHeight - top + 10)) + 'px';
+      }catch(_){}
+    }
+    window.addEventListener('resize', function(){
+      const b = document.getElementById('gk-v85-4-alert-bar');
+      if (b && b.style.display !== 'none') placeAlertBar(b);
+    });
     setTimeout(checkAlerts, 3000);
     setInterval(checkAlerts, 10*60*1000);
 
