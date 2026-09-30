@@ -996,7 +996,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="openAddRMModal()" class="text-[11px] bg-theme-500/15 text-theme-700 dark:text-theme-400 hover:bg-theme-500/25 border border-theme-500/30 px-2.5 py-1.5 rounded-lg font-bold transition">📥 รับท่อเข้า RM</button>
-                        <button type="button" id="btn-reset" onclick="resetForm()" class="text-xs text-slate-400 hover:text-white hidden">✕ ล้างค่า</button>
+                        <button type="button" id="btn-reset" onclick="resetForm()" class="text-xs text-slate-400 hover:text-slate-900 dark:hover:text-white hidden">✕ ล้างค่า</button>
                     </div>
                 </div>
 
@@ -1040,6 +1040,8 @@
                                 <span>รายการไซส์ท่อและแผนกะผลิต (เช้า/บ่าย/OT)</span>
                             </label>
                             <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="openHealthCheck()" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1 rounded-lg transition shadow-sm flex items-center gap-1">🩺 <span>ตรวจข้อมูล</span></button>
+                                <button type="button" onclick="openProjectManager()" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1 rounded-lg transition shadow-sm flex items-center gap-1">🗂 <span>โครงการ</span></button>
                                 <button type="button" onclick="openSizeManagerModal()" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1 rounded-lg transition shadow-sm flex items-center gap-1">
                                     <span>⚙️</span>
                                     <span>จัดการไซส์</span>
@@ -1153,6 +1155,8 @@
                         <select id="filter-project" onchange="renderActiveView()" class="text-xs bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none font-medium">
                             <option value="">ทุกโครงการ</option>
                         </select>
+                        <select id="filter-month" onchange="applyMonthFilter(this.value)" title="เลือกเดือนเพื่อดูข้อมูลย้อนหลัง (ตั้งช่วงวันที่ให้อัตโนมัติ)" class="text-xs bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg px-2.5 py-1.5"></select>
+                        <button type="button" onclick="openHistoryModal()" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap">📚 ประวัติรายเดือน</button>
                         <div id="kanban-date-filter-wrap" class="hidden items-center gap-1.5">
                             <label for="kanban-date-filter" class="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 whitespace-nowrap">📅 วันที่บอร์ด</label>
                             <input type="date" id="kanban-date-filter" onchange="renderActiveView()" title="เลือก 1 วันเพื่อจำกัดรายการบนบอร์ด Kanban ลดจำนวนการ์ดที่แสดง" class="text-xs bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg px-2 py-1.5 focus:outline-none font-medium">
@@ -1300,6 +1304,9 @@
                         <span id="fg-total-badge" class="text-xs font-mono bg-blue-500/20 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg font-bold">0 ท่อน คงคลัง</span>
                         <button onclick="openAddFGModal()" class="text-xs bg-theme-500 hover:bg-theme-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg transition">+ เพิ่มรายการเอง</button>
                     </div>
+                    <div class="mb-3">
+                        <input type="search" id="fg-filter-text" oninput="renderFGWarehouse()" placeholder="🔍 ค้นหาโครงการ / ไซส์ / Jacket / สถานที่ส่ง" class="fc-input !mt-0">
+                    </div>
                     <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                         <table class="w-full text-left border-collapse text-xs">
                             <thead>
@@ -1326,6 +1333,13 @@
                         </div>
                         <span id="rm-total-badge" class="text-xs font-mono bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-lg font-bold">0 รายการ</span>
                         <button onclick="openAddRMModal()" class="text-xs bg-theme-500 hover:bg-theme-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg transition">+ เพิ่มรายการเอง</button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <input type="search" id="rm-filter-text" oninput="renderRMWarehouse()" placeholder="🔍 ค้นหาโครงการ / ไซส์ / ความหนา" class="fc-input !mt-0 flex-1 min-w-[180px]">
+                        <select id="rm-filter-jacket" onchange="renderRMWarehouse()" class="fc-input !mt-0 !w-auto">
+                            <option value="">ทุก Jacket</option><option>GI</option><option>ALU</option><option>SS</option><option>HDPE</option><option>ALUZ</option><option>ไม่ระบุ</option>
+                        </select>
+                        <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"><input type="checkbox" id="rm-filter-hide-empty" onchange="renderRMWarehouse()"> ซ่อนที่จ่ายเข้าผลิตหมดแล้ว</label>
                     </div>
                     <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
                         <table class="w-full text-left border-collapse text-xs">
@@ -1357,7 +1371,9 @@
                             <p class="text-[10px] text-slate-500">เลือกวันที่เพื่อดูว่าวันนั้นมีแผนส่งท่ออะไรบ้าง</p>
                         </div>
                         <div class="flex items-center gap-2">
+                            <button type="button" onclick="shiftShipDate(-1)" title="วันก่อนหน้า" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1.5 rounded-lg">◀</button>
                             <input type="date" id="ship-date-picker" onchange="renderShipping()" class="text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 dark:text-white font-medium">
+                            <button type="button" onclick="shiftShipDate(1)" title="วันถัดไป" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1.5 rounded-lg">▶</button>
                             <button onclick="document.getElementById('ship-date-picker').value=localDateKey(); renderShipping();" class="text-xs bg-theme-500 hover:bg-theme-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg transition">วันนี้</button>
                             <span id="ship-total-badge" class="text-xs font-mono bg-purple-500/20 text-purple-600 dark:text-purple-400 px-2.5 py-1 rounded-lg font-bold">0 ท่อน</span>
                         </div>
@@ -1406,7 +1422,7 @@
                         <p class="text-xs text-slate-400">แยก 3 ล็อต (เช้า / บ่าย / OT) ข้อมูลเชื่อมต่อกับระบบหลักทันที</p>
                     </div>
                 </div>
-                <button onclick="closeDayDetailModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+                <button onclick="closeDayDetailModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white text-lg font-bold">✕</button>
             </div>
 
             <!-- รายการงานในวันนี้ -->
@@ -1532,7 +1548,7 @@
                         <p class="text-xs text-slate-400">สรุปความก้าวหน้า น้ำหนัก และเที่ยวรถ 6 ล้อแยกตามโครงการ</p>
                     </div>
                 </div>
-                <button onclick="closeSummaryModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+                <button onclick="closeSummaryModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white text-lg">✕</button>
             </div>
 
             <!-- Project Summary Cards Grid -->
@@ -1551,7 +1567,7 @@
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">⚙️ จัดการรายชื่อโครงการ</h3>
-                <button onclick="closeProjectModal()" class="text-slate-400 hover:text-white">✕</button>
+                <button onclick="closeProjectModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
             </div>
             <div class="max-h-60 overflow-y-auto space-y-2 pr-1" id="project-modal-list"></div>
             <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
@@ -1565,7 +1581,7 @@
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">⚙️ จัดการไซส์ท่อ</h3>
-                <button onclick="closeSizeManagerModal()" class="text-slate-400 hover:text-white">✕</button>
+                <button onclick="closeSizeManagerModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
             </div>
 
             <div class="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
@@ -1595,7 +1611,7 @@
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-3">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">🏭 เพิ่มรายการเข้าคลัง FG เอง</h3>
-                <button onclick="closeAddFGModal()" class="text-slate-400 hover:text-white">✕</button>
+                <button onclick="closeAddFGModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
             </div>
             <div>
                 <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">โครงการ</label>
@@ -1654,8 +1670,8 @@
     <div id="add-rm-modal" class="fixed inset-0 z-[75] bg-slate-950/70 backdrop-blur-sm hidden flex justify-center items-center p-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-3">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
-                <h3 class="text-base font-bold text-slate-900 dark:text-white">📦 เพิ่มรายการรับท่อเข้าคลัง RM เอง</h3>
-                <button onclick="closeAddRMModal()" class="text-slate-400 hover:text-white">✕</button>
+                <h3 id="rm-modal-title" class="text-base font-bold text-slate-900 dark:text-white">📦 เพิ่มรายการรับท่อเข้าคลัง RM เอง</h3>
+                <button onclick="closeAddRMModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
             </div>
             <div>
                 <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">วันที่รับท่อ</label>
@@ -1665,12 +1681,13 @@
                 <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">โครงการ</label>
                 <select id="rm-add-project" onchange="checkRMProjectInput()" class="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white font-medium"></select>
                 <input type="text" id="rm-add-project-custom" placeholder="ระบุชื่อโครงการใหม่..." class="hidden w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-theme-600 dark:text-theme-500 font-medium rounded-lg p-2 mt-2 focus:ring-2 focus:ring-theme-500 focus:outline-none">
+                <button type="button" onclick="openProjectManager()" class="mt-1 text-[10px] font-bold text-sky-600 dark:text-sky-400 hover:underline">🗂 จัดการ / ซ่อนโครงการที่เลิกใช้</button>
             </div>
             <div class="grid grid-cols-2 gap-2.5">
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">ขนาดท่อ</label>
                     <select id="rm-add-size" onchange="checkRMSizeInput()" class="w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 dark:text-white font-medium"></select>
-                    <input type="text" id="rm-add-size-custom" placeholder="เช่น 28&amp;quot;" class="hidden w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-theme-600 dark:text-theme-500 font-medium rounded-lg p-2 mt-2 focus:ring-2 focus:ring-theme-500 focus:outline-none">
+                    <input type="text" id="rm-add-size-custom" placeholder="เช่น 28&quot;" class="hidden w-full text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-theme-600 dark:text-theme-500 font-medium rounded-lg p-2 mt-2 focus:ring-2 focus:ring-theme-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Jacket</label>
@@ -1698,7 +1715,8 @@
             <p class="text-[10px] text-slate-400">รายการนี้คือการรับวัตถุดิบเข้า "คลัง RM" เท่านั้น ยังไม่ถือว่าเริ่มผลิต สามารถนำวันที่และจำนวนนี้ไปอ้างอิงตอนวางวันผลิตภายหลังได้</p>
             <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
                 <button onclick="closeAddRMModal()" class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs px-4 py-2 rounded-xl">ยกเลิก</button>
-                <button onclick="saveAddRMItem()" class="bg-theme-500 hover:bg-theme-600 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl">💾 รับเข้าคลัง RM</button>
+                <button id="rm-modal-more-btn" onclick="saveAddRMItem(true)" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs px-4 py-2 rounded-xl">➕ บันทึก + เพิ่มต่อ</button>
+                <button id="rm-modal-save-btn" onclick="saveAddRMItem()" class="bg-theme-500 hover:bg-theme-600 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl">💾 รับเข้าคลัง RM</button>
             </div>
         </div>
     </div>
@@ -1711,7 +1729,7 @@
                     <h3 class="text-base font-bold text-slate-900 dark:text-white">🏭 วางแผนผลิตจากคลัง RM</h3>
                     <p id="rm-plan-stock-label" class="text-[10px] text-slate-500 mt-1"></p>
                 </div>
-                <button onclick="closeRMProductionPlanModal()" class="text-slate-400 hover:text-white">✕</button>
+                <button onclick="closeRMProductionPlanModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
             </div>
             <input type="hidden" id="rm-plan-id">
             <div class="grid grid-cols-2 gap-2.5">
@@ -1747,7 +1765,7 @@
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-slate-900 dark:text-white">☁️ ตั้งค่าใช้งานออนไลน์ (ข้อมูลซิงค์ทุกเครื่อง)</h3>
-                <button onclick="closeCloudSetupModal()" class="text-slate-400 hover:text-white">✕</button>
+                <button onclick="closeCloudSetupModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
             </div>
 
             <div class="text-xs px-3 py-2 rounded-xl" id="cloud-setup-status-line"></div>
@@ -1809,7 +1827,7 @@ service cloud.firestore {
         <div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl max-w-4xl w-full p-4 shadow-2xl space-y-3">
             <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
                 <h3 id="shipping-image-title" class="text-sm font-bold">รูปส่งท่อ</h3>
-                <button type="button" onclick="closeShippingImageModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+                <button type="button" onclick="closeShippingImageModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white text-lg font-bold">✕</button>
             </div>
             <div class="bg-slate-100 dark:bg-slate-950 rounded-xl p-2 flex justify-center max-h-[75vh] overflow-auto">
                 <img id="shipping-image-preview" src="" alt="รูปส่งท่อ" class="max-w-full max-h-[70vh] object-contain rounded-lg">
@@ -1932,7 +1950,7 @@ service cloud.firestore {
         <div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3 no-print">
                 <h3 class="text-base font-bold">🏷️ Product Traceability QR Pass</h3>
-                <button onclick="closeQrModal()" class="text-slate-400 hover:text-white">✕</button>
+                <button onclick="closeQrModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
             </div>
             <div id="qr-printable-area" class="bg-white text-slate-900 p-5 rounded-xl border border-slate-300 space-y-3 text-center">
                 <div class="border-b-2 border-slate-900 pb-2">
@@ -1965,7 +1983,7 @@ service cloud.firestore {
         <div class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
                 <h3 class="text-base font-bold">🕓 ประวัติสำรองข้อมูลอัตโนมัติ</h3>
-                <button onclick="closeBackupHistoryModal()" class="text-slate-400 hover:text-white">✕</button>
+                <button onclick="closeBackupHistoryModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button>
             </div>
             <p class="text-[11px] text-slate-500 dark:text-slate-400">ระบบจะสำรองข้อมูลอัตโนมัติให้ 1 ครั้งต่อวัน (เก็บย้อนหลังสูงสุด 14 วัน) เผื่อกรณีข้อมูลหายหรือเบราว์เซอร์ล้าง cache กดกู้คืนจากรายการด้านล่างได้ทันที</p>
             <div id="backup-history-list" class="space-y-2"></div>
@@ -2135,7 +2153,7 @@ service cloud.firestore {
                     <h3 class="text-lg font-bold">ตัวอย่างก่อนพิมพ์เอกสาร (Print Preview & Logistics Calculation)</h3>
                     <p class="text-xs text-slate-400" id="print-modal-mode">โหมดพิมพ์</p>
                 </div>
-                <button onclick="closePrintModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+                <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white text-lg">✕</button>
             </div>
 
             <div id="printable-area" class="p-5 bg-white text-slate-900 rounded-xl space-y-4 border border-slate-300">
@@ -2538,9 +2556,9 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
         // เพิ่มไซส์ท่อใหม่เข้าระบบ (จะไปโผล่ในดรอปดาวน์ไซส์ท่อทุกจุดในแอปทันที)
         function addPipeSizeToSystem(sizeName, weight, casing) {
-            const name = (sizeName || '').trim();
+            const name = normalizeSizeName(sizeName);
             if (!name) { showToast('กรุณาระบุชื่อไซส์ท่อ', 'error'); return false; }
-            if (PIPE_SPECS[name]) { showToast('มีไซส์ท่อนี้อยู่แล้ว', 'error'); return false; }
+            if (PIPE_SPECS[name]) return true;
             customPipeSpecs[name] = {
                 weight: Number(weight) || 0,
                 casing: Number(casing) || 0,
@@ -2781,6 +2799,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         normalizeRMRecords();
 
         function saveRMRecords() {
+            try { normalizeSizesInArray(rmRecords); } catch (_) {}
             localStorage.setItem('gekko_rm_records', JSON.stringify(rmRecords));
             if (typeof pushRmRecordsToCloud === 'function') pushRmRecordsToCloud();
         }
@@ -2823,6 +2842,67 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         normalizeLegacyDataOnce();
+
+        // ===== ชื่อไซส์: 2 กับ 2" คือไซส์เดียวกัน -> ใช้ 2" ; ไซส์ที่ไม่ใช่ตัวเลขนิ้ว (เช่น DN50) คงไว้ตามที่พิมพ์ =====
+        function normalizeSizeName(v) {
+            let s = String(v == null ? '' : v).trim();
+            if (!s) return s;
+            s = s.replace(/[\u201C\u201D\u2033\u2036\uFF02]/g, '"').replace(/''/g, '"').replace(/\s+/g, ' ');
+            const hadQuote = /"\s*$/.test(s);
+            let core = s.replace(/\s*"\s*$/, '').trim();
+            if (/^\d+(?:\.\d+)?$/.test(core) || /^\d+\/\d+$/.test(core) || /^\d+\s*[- ]\s*\d+\/\d+$/.test(core)) {
+                return core.replace(/^(\d+)\s*[- ]\s*(\d+\/\d+)$/, '$1-$2') + '"';
+            }
+            return hadQuote ? core + '"' : s;
+        }
+        function sizeSortValue(name) {
+            const c = String(name).replace(/"/g, '').trim();
+            let m = c.match(/^(\d+)\s*[- ]\s*(\d+)\/(\d+)$/); if (m) return Number(m[1]) + Number(m[2]) / Number(m[3]);
+            m = c.match(/^(\d+)\/(\d+)$/); if (m) return Number(m[1]) / Number(m[2]);
+            m = c.match(/^\d+(?:\.\d+)?$/); if (m) return Number(c);
+            return Infinity;
+        }
+        function normalizeSizesInArray(arr) {
+            let n = 0;
+            (arr || []).forEach(r => { if (r && typeof r.size === 'string') { const x = normalizeSizeName(r.size); if (x !== r.size) { r.size = x; n++; } } });
+            return n;
+        }
+        // รวมไซส์ซ้ำ (2 -> 2") ในข้อมูลเดิมครั้งเดียวตอนเปิดแอป (สำรองข้อมูลเดิมไว้ก่อนเสมอ)
+        function migrateSizeNames() {
+            try {
+                const willChange = db.some(r => r && typeof r.size === 'string' && normalizeSizeName(r.size) !== r.size)
+                    || rmRecords.some(r => r && typeof r.size === 'string' && normalizeSizeName(r.size) !== r.size)
+                    || Object.keys(customPipeSpecs).some(k => normalizeSizeName(k) !== k);
+                if (!willChange) return;
+                if (!localStorage.getItem('gekko_backup_pre_size_norm')) {
+                    localStorage.setItem('gekko_backup_pre_size_norm', JSON.stringify({ at: new Date().toISOString(), db, rmRecords, customPipeSpecs }));
+                }
+                const nDb = normalizeSizesInArray(db), nRm = normalizeSizesInArray(rmRecords);
+                Object.keys(customPipeSpecs).forEach(k => {
+                    const nk = normalizeSizeName(k);
+                    if (nk === k) return;
+                    const spec = customPipeSpecs[k];
+                    const hasDefault = !!DEFAULT_PIPE_SPECS[nk] && !hiddenDefaultSizes.includes(nk);
+                    if (hasDefault) { delete customPipeSpecs[k]; return; }
+                    if (!customPipeSpecs[nk] || (Number(customPipeSpecs[nk].weight) === 0 && Number(spec.weight) > 0)) customPipeSpecs[nk] = spec;
+                    delete customPipeSpecs[k];
+                });
+                hiddenDefaultSizes = hiddenDefaultSizes.map(normalizeSizeName);
+                localStorage.setItem('gekko_custom_pipe_specs', JSON.stringify(customPipeSpecs));
+                localStorage.setItem('gekko_hidden_default_sizes', JSON.stringify(hiddenDefaultSizes));
+                if (nDb) localStorage.setItem('gekko_production_db', JSON.stringify(db));
+                if (nRm) localStorage.setItem('gekko_rm_records', JSON.stringify(rmRecords));
+                rebuildPipeSpecs();
+            } catch (err) { console.error('migrateSizeNames failed', err); }
+        }
+        migrateSizeNames();
+        // ไซส์ที่พิมพ์เอง: ปรับเป็นรูปแบบมาตรฐานทันทีที่พิมพ์เสร็จ (กดออกจากช่อง/Enter)
+        document.addEventListener('focusout', function (e) {
+            const t = e.target;
+            if (t && t.tagName === 'INPUT' && (t.classList.contains('row-size-custom') || /size-custom$|^new-size-name$/.test(t.id || ''))) {
+                const v = normalizeSizeName(t.value); if (v !== t.value) t.value = v;
+            }
+        }, true);
 
         // --- แก้ข้อมูลเก่า Pool House CHB1A: ให้วันที่รับท่อทั้งหมดไปรวมเป็น 10 ก.ย. 2569
         // ทำครั้งเดียวต่อ browser session และแก้เฉพาะ receivedDate ไม่แตะวันผลิต/วันส่ง/จำนวน
@@ -2901,9 +2981,9 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
         function getSizeSelectOptionsHtml(selectedVal = '') {
             let options = `<option value="">-- ไซส์ --</option>`;
-            Object.keys(PIPE_SPECS).forEach(sz => {
+            Object.keys(PIPE_SPECS).sort((a, b) => sizeSortValue(a) - sizeSortValue(b) || String(a).localeCompare(String(b), 'th')).forEach(sz => {
                 const sel = sz === selectedVal ? 'selected' : '';
-                options += `<option value="${sz}" ${sel}>${sz}</option>`;
+                options += `<option value="${String(sz).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" ${sel}>${String(sz).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</option>`;
             });
             const customSel = (selectedVal && !PIPE_SPECS[selectedVal]) ? 'selected' : '';
             options += `<option value="CUSTOM" ${customSel}>+ กำหนดเอง</option>`;
@@ -3054,35 +3134,151 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             }
         }
 
-        function renderProjectOptions() {
-            const select = document.getElementById('project-select');
-            const filter = document.getElementById('filter-project');
-            const quickProj = document.getElementById('quick-project');
-
-            const curVal = select ? select.value : '';
-            const curFilter = filter ? filter.value : '';
-            const curQuick = quickProj ? quickProj.value : '';
-
-            if (select) select.innerHTML = `<option value="">-- เลือกโครงการ --</option>`;
-            if (quickProj) quickProj.innerHTML = `<option value="">-- เลือกโครงการ --</option>`;
-
-            projectsList.forEach(p => {
-                if (select) select.innerHTML += `<option value="${p}">${p}</option>`;
-                if (quickProj) quickProj.innerHTML += `<option value="${p}">${p}</option>`;
-            });
-
-            if (select) select.innerHTML += `<option value="CUSTOM">+ เพิ่มโครงการใหม่...</option>`;
-            if (quickProj) quickProj.innerHTML += `<option value="CUSTOM">+ เพิ่มโครงการใหม่...</option>`;
-
-            if (select && (projectsList.includes(curVal) || curVal === 'CUSTOM')) select.value = curVal;
-            if (quickProj && (projectsList.includes(curQuick) || curQuick === 'CUSTOM')) quickProj.value = curQuick;
-
-            if (filter) {
-                filter.innerHTML = `<option value="">ทุกโครงการ</option>`;
-                projectsList.forEach(p => filter.innerHTML += `<option value="${p}">${p}</option>`);
-                if (projectsList.includes(curFilter)) filter.value = curFilter;
+        // ===== โครงการ: จัดเรียงตามงานล่าสุด, ซ่อนโครงการที่เลิกใช้, ค้นหา, จัดการ/เปลี่ยนชื่อ/รวม =====
+        const PJ_PH_MAIN = "<option value=\"\">-- เลือกโครงการ --</option>", PJ_PH_FILTER = "<option value=\"\">ทุกโครงการ</option>", PJ_CUSTOM_LABEL = "+ เพิ่มโครงการใหม่...";
+        const DELIVERED_LABEL = 'ส่งมอบแล้ว';
+        let projectsArchived = (() => { try { const a = JSON.parse(localStorage.getItem('gekko_projects_archived') || '[]'); return Array.isArray(a) ? a : []; } catch (_) { return []; } })();
+        function saveProjectsArchived() { localStorage.setItem('gekko_projects_archived', JSON.stringify(projectsArchived)); }
+        function pjEsc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function getProjectStats() {
+            const m = {};
+            const get = n => m[n] || (m[n] = { open: 0, rm: 0, total: 0, last: '' });
+            db.forEach(i => { const s = get(i.project || ''); s.total++; if (i.status !== DELIVERED_LABEL) s.open++; const d = i.date || i.receivedDate || ''; if (d > s.last) s.last = d; });
+            rmRecords.forEach(i => { const s = get(i.project || ''); s.total++; s.rm += Math.max(0, Number(i.remainingQty ?? i.qty ?? 0)); const d = i.receivedDate || ''; if (d > s.last) s.last = d; });
+            return m;
+        }
+        function projectOptionsHtml(q, opt) {
+            opt = opt || {};
+            const st = getProjectStats(), needle = (q || '').trim().toLowerCase();
+            const byRecent = (a, b) => ((st[b] ? st[b].last : '').localeCompare(st[a] ? st[a].last : '')) || String(a).localeCompare(String(b), 'th');
+            const match = p => !needle || String(p).toLowerCase().includes(needle);
+            const active = projectsList.filter(p => !projectsArchived.includes(p) && match(p)).sort(byRecent);
+            const arch = projectsList.filter(p => projectsArchived.includes(p) && match(p)).sort((a, b) => String(a).localeCompare(String(b), 'th'));
+            const o = p => '<option value="' + pjEsc(p) + '">' + pjEsc(p) + '</option>';
+            let h = opt.placeholder || '';
+            if (opt.custom) h += '<option value="CUSTOM">' + pjEsc(opt.customLabel || PJ_CUSTOM_LABEL) + '</option>';
+            h += active.map(o).join('');
+            if (arch.length) h += '<optgroup label="📁 เลิกใช้แล้ว (ซ่อนไว้)">' + arch.map(o).join('') + '</optgroup>';
+            if (needle && !active.length && !arch.length) h += '<option value="" disabled>ไม่พบโครงการที่ตรงกับ "' + pjEsc(q) + '"</option>';
+            return h;
+        }
+        function fillProjectSelect(sel) {
+            if (!sel) return;
+            const cur = sel.value, q = sel.dataset.q || '';
+            sel.innerHTML = projectOptionsHtml(q, { placeholder: sel.dataset.ph || '', custom: sel.dataset.custom === '1' });
+            if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+            else if (q.trim()) {
+                const hits = [...sel.options].filter(o => o.value && o.value !== 'CUSTOM' && !o.disabled);
+                if (hits.length === 1) { sel.value = hits[0].value; sel.dispatchEvent(new Event('change')); }
             }
         }
+        function setupProjectSelect(id, ph, custom) {
+            const sel = document.getElementById(id);
+            if (!sel) return null;
+            sel.dataset.ph = ph || ''; sel.dataset.custom = custom ? '1' : '';
+            const prev = sel.previousElementSibling;
+            if (!(prev && prev.dataset && prev.dataset.pjsearch)) {
+                const inp = document.createElement('input');
+                inp.type = 'search'; inp.dataset.pjsearch = '1'; inp.placeholder = '🔍 พิมพ์ค้นหาโครงการ...';
+                inp.className = 'fc-input !mt-0 !mb-1 !py-1 text-[11px]';
+                inp.addEventListener('input', () => { sel.dataset.q = inp.value; fillProjectSelect(sel); });
+                sel.parentNode.insertBefore(inp, sel);
+            }
+            return sel;
+        }
+        function resetProjectSearch(sel) { if (!sel) return; sel.dataset.q = ''; const i = sel.previousElementSibling; if (i && i.dataset && i.dataset.pjsearch) i.value = ''; }
+        function renderProjectOptions() {
+            [['project-select', PJ_PH_MAIN, true], ['quick-project', PJ_PH_MAIN, true]].forEach(([id, ph, c]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (!el.dataset.pjready) { setupProjectSelect(id, ph, c); el.dataset.pjready = '1'; }
+                fillProjectSelect(el);
+            });
+            const filter = document.getElementById('filter-project');
+            if (filter) {
+                const cur = filter.value;
+                filter.innerHTML = projectOptionsHtml('', { placeholder: PJ_PH_FILTER, custom: false });
+                if (cur && [...filter.options].some(o => o.value === cur)) filter.value = cur;
+            }
+        }
+        let pjMgrRows = [];
+        function openProjectManager() {
+            let m = document.getElementById('pj-mgr-modal');
+            if (!m) {
+                m = document.createElement('div');
+                m.id = 'pj-mgr-modal';
+                m.className = 'fixed inset-0 z-[90] bg-slate-950/70 backdrop-blur-sm p-4';
+                m.style.cssText = 'display:none;align-items:center;justify-content:center';
+                m.innerHTML = '<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full p-5 shadow-2xl space-y-3 max-h-[90vh] flex flex-col">'
+                    + '<div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3"><div><h3 class="text-base font-bold text-slate-900 dark:text-white">🗂 จัดการโครงการ</h3><p class="text-[10px] text-slate-500">โครงการที่เลิกใช้จะย้ายไปท้ายรายการ (ยังดูข้อมูลเก่าได้) • การซ่อนเก็บในเครื่องนี้</p></div>'
+                    + '<button type="button" onclick="closeProjectManager()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button></div>'
+                    + '<div class="flex flex-wrap gap-2"><input type="search" id="pj-mgr-search" oninput="renderProjectManager()" placeholder="🔍 ค้นหาโครงการ..." class="fc-input !mt-0 flex-1 min-w-[160px]">'
+                    + '<button type="button" id="pj-mgr-bulk" onclick="pjMgrAction(\'bulk\')" class="text-xs bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold px-3 py-1.5 rounded-lg"></button></div>'
+                    + '<div class="flex gap-2"><input type="text" id="pj-mgr-new" placeholder="ชื่อโครงการใหม่..." class="fc-input !mt-0 flex-1" onkeydown="if(event.key===\'Enter\'){event.preventDefault();pjMgrAction(\'add\')}">'
+                    + '<button type="button" onclick="pjMgrAction(\'add\')" class="text-xs bg-theme-500 hover:bg-theme-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg">+ เพิ่มโครงการ</button></div>'
+                    + '<div id="pj-mgr-list" class="overflow-y-auto space-y-1.5 pr-1 flex-1"></div></div>';
+                document.body.appendChild(m);
+            }
+            m.style.display = 'flex';
+            renderProjectManager();
+        }
+        function closeProjectManager() { const m = document.getElementById('pj-mgr-modal'); if (m) m.style.display = 'none'; }
+        function renderProjectManager() {
+            const host = document.getElementById('pj-mgr-list'); if (!host) return;
+            const st = getProjectStats(), q = (document.getElementById('pj-mgr-search') ? document.getElementById('pj-mgr-search').value : '').trim().toLowerCase();
+            const last = p => (st[p] ? st[p].last : '');
+            pjMgrRows = projectsList.filter(p => !q || String(p).toLowerCase().includes(q))
+                .sort((a, b) => (projectsArchived.includes(a) - projectsArchived.includes(b)) || last(b).localeCompare(last(a)) || String(a).localeCompare(String(b), 'th'));
+            const idle = projectsList.filter(p => !projectsArchived.includes(p) && st[p] && st[p].total > 0 && st[p].open === 0 && st[p].rm === 0);
+            const bulk = document.getElementById('pj-mgr-bulk');
+            if (bulk) { bulk.textContent = '📁 เลิกใช้ทุกโครงการที่ไม่มีงานค้าง (' + idle.length + ')'; bulk.disabled = !idle.length; bulk.style.opacity = idle.length ? '1' : '.5'; }
+            const badge = (t, c) => '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + c + '">' + t + '</span>';
+            const btn = 'text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200';
+            host.innerHTML = pjMgrRows.map((p, idx) => {
+                const s = st[p] || { open: 0, rm: 0, total: 0, last: '' }, arch = projectsArchived.includes(p);
+                const badges = (s.open ? badge('งานค้าง ' + s.open, 'bg-amber-500/15 text-amber-700 dark:text-amber-400') : '') + (s.rm ? badge('RM คงเหลือ ' + s.rm.toLocaleString('th-TH'), 'bg-sky-500/15 text-sky-700 dark:text-sky-400') : '')
+                    + (!s.open && !s.rm ? badge(s.total ? 'ไม่มีงานค้าง' : 'ยังไม่มีข้อมูล', 'bg-slate-500/15 text-slate-500') : '') + (arch ? badge('เลิกใช้แล้ว', 'bg-rose-500/10 text-rose-500') : '');
+                return '<div class="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 ' + (arch ? 'opacity-60' : '') + '">'
+                    + '<div class="min-w-0"><div class="text-xs font-bold text-slate-900 dark:text-white break-words">' + pjEsc(p) + '</div><div class="flex flex-wrap gap-1 mt-1">' + badges + (s.last ? '<span class="text-[10px] text-slate-400">ล่าสุด ' + s.last + '</span>' : '') + '</div></div>'
+                    + '<div class="flex gap-1 shrink-0"><button type="button" class="' + btn + '" onclick="pjMgrAction(\'' + (arch ? 'restore' : 'archive') + '\',' + idx + ')">' + (arch ? '↩ ใช้อีกครั้ง' : '📁 เลิกใช้') + '</button>'
+                    + '<button type="button" class="' + btn + '" onclick="pjMgrAction(\'rename\',' + idx + ')">✏️ ชื่อ</button>'
+                    + (s.total === 0 ? '<button type="button" class="' + btn + ' !text-rose-500" onclick="pjMgrAction(\'delete\',' + idx + ')">🗑</button>' : '') + '</div></div>';
+            }).join('') || '<p class="text-xs text-slate-400 text-center p-4">ไม่พบโครงการ</p>';
+        }
+        function pjMgrAction(kind, idx) {
+            if (blockIfViewOnly()) return;
+            const name = pjMgrRows[idx], st = getProjectStats();
+            if (kind === 'add') {
+                const inp = document.getElementById('pj-mgr-new'); const v = (inp.value || '').trim();
+                if (!v) return;
+                if (projectsList.includes(v)) { showToast('มีโครงการชื่อนี้อยู่แล้ว', 'error'); return; }
+                projectsList.push(v); projectsArchived = projectsArchived.filter(x => x !== v); saveProjectsArchived(); saveProjectsList(); inp.value = ''; showToast('เพิ่มโครงการ "' + v + '" แล้ว');
+            } else if (kind === 'archive') { if (!projectsArchived.includes(name)) projectsArchived.push(name); saveProjectsArchived(); renderProjectOptions(); }
+            else if (kind === 'restore') { projectsArchived = projectsArchived.filter(x => x !== name); saveProjectsArchived(); renderProjectOptions(); }
+            else if (kind === 'bulk') {
+                const idle = projectsList.filter(p => !projectsArchived.includes(p) && st[p] && st[p].total > 0 && st[p].open === 0 && st[p].rm === 0);
+                if (!idle.length || !confirm('เลิกใช้ ' + idle.length + ' โครงการที่ไม่มีงานค้างแล้ว?\n(กลับมาใช้ได้ภายหลัง)')) return;
+                projectsArchived = [...new Set([...projectsArchived, ...idle])]; saveProjectsArchived(); renderProjectOptions();
+            } else if (kind === 'delete') {
+                if (!name || (st[name] && st[name].total > 0) || !confirm('ลบโครงการ "' + name + '" ?')) return;
+                projectsList = projectsList.filter(x => x !== name); projectsArchived = projectsArchived.filter(x => x !== name); saveProjectsArchived(); saveProjectsList();
+            } else if (kind === 'rename') {
+                const nv = (prompt('ชื่อโครงการใหม่ (ถ้าตรงกับโครงการที่มีอยู่ จะรวมเข้าด้วยกัน):', name) || '').trim();
+                if (!nv || nv === name) return;
+                const merge = projectsList.includes(nv);
+                if (merge && !confirm('มีโครงการ "' + nv + '" อยู่แล้ว — รวม "' + name + '" เข้าด้วยกัน?')) return;
+                pushUndoSnapshot('เปลี่ยนชื่อโครงการ');
+                db.forEach(i => { if (i.project === name) i.project = nv; });
+                rmRecords.forEach(i => { if (i.project === name) i.project = nv; });
+                const wasArch = projectsArchived.includes(name);
+                projectsList = merge ? projectsList.filter(x => x !== name) : projectsList.map(x => x === name ? nv : x);
+                projectsArchived = projectsArchived.filter(x => x !== name);
+                if (wasArch && !merge && !projectsArchived.includes(nv)) projectsArchived.push(nv);
+                saveProjectsArchived(); saveProjectsList(); saveDB(); saveRMRecords(); showToastWithUndo(merge ? 'รวมโครงการเป็น "' + nv + '" แล้ว' : 'เปลี่ยนชื่อเป็น "' + nv + '" แล้ว');
+            }
+            renderProjectManager();
+        }
+
 
         function checkProjectInput() {
             const select = document.getElementById('project-select');
@@ -3552,6 +3748,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         function saveDB() {
+            try { normalizeSizesInArray(db); } catch (_) {}
             let ok = true;
             try {
                 localStorage.setItem('gekko_production_db', JSON.stringify(db));
@@ -3949,7 +4146,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         function renderFGWarehouse(data) {
             const tbody = document.getElementById('fg-warehouse-table-body');
             if (!tbody) return;
-            const stock = (data || db).filter(i => i.status === 'รอจัดส่ง');
+            const stock = (data || db).filter(i => i.status === 'รอจัดส่ง').filter(i => {
+                const q = (document.getElementById('fg-filter-text')?.value || '').trim().toLowerCase();
+                return !q || `${i.project||''} ${i.size||''} ${i.jacket||''} ${i.thick||''} ${i.deliveryLocation||''}`.toLowerCase().includes(q);
+            });
             const groups = groupDisplayRows(stock);
             let total = 0;
 
@@ -3967,6 +4167,9 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                     <td class="p-2.5 border border-slate-200 dark:border-slate-800 text-center align-top">
                         <div class="flex flex-col items-center gap-1.5">
                             <span class="text-[10px] font-bold px-2 py-1 rounded-full ${deliveryStatus.cls}">${deliveryStatus.text}</span>
+                            <details class="w-full text-[10px]"><summary class="cursor-pointer text-sky-600 dark:text-sky-400 hover:underline font-bold">✏️ แก้ไข / ลบ${g.items.length>1?` (${g.items.length} รายการ)`:''}</summary>
+                                <div class="mt-1 space-y-1">${g.items.map(it=>`<div class="flex items-center justify-between gap-2 bg-slate-100 dark:bg-slate-800/60 rounded px-1.5 py-1"><span class="font-mono">${Number(it.qty||0).toLocaleString('th-TH')} ท่อน</span><span class="whitespace-nowrap"><button type="button" onclick="editItem(${it.id})" class="text-amber-600 dark:text-amber-400 font-bold hover:underline">แก้ไข</button> <button type="button" onclick="deleteItem(${it.id})" class="text-rose-500 font-bold hover:underline">ลบ</button></span></div>`).join('')}</div>
+                            </details>
                             ${g.items.length === 1
                                 ? `<button onclick="quickSetStatus(${g.items[0].id}, 'ส่งมอบแล้ว')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold transition">✓ ส่งของแล้ว</button>`
                                 : `<button onclick="confirmDeliverGroupedFG(${JSON.stringify(g.items.map(i=>i.id)).replace(/"/g,'&quot;')})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold transition">✓ ส่งของทั้งหมด (${g.qty.toLocaleString('th-TH')})</button>`
@@ -4139,7 +4342,15 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             const tbody=document.getElementById('rm-warehouse-table-body');
             const waitingBody=document.getElementById('waiting-production-table-body');
             if(!tbody)return;
-            const activeRM=rmRecords.slice();
+            const q=(document.getElementById('rm-filter-text')?.value||'').trim().toLowerCase();
+            const fj=document.getElementById('rm-filter-jacket')?.value||'';
+            const hideEmpty=!!document.getElementById('rm-filter-hide-empty')?.checked;
+            const activeRM=rmRecords.filter(r=>{
+                if(fj && (r.jacket||'ไม่ระบุ')!==fj) return false;
+                if(hideEmpty && Number(r.remainingQty ?? r.qty ?? 0)<=0) return false;
+                if(q && !`${r.project||''} ${r.size||''} ${r.thick||''} ${r.jacket||''}`.toLowerCase().includes(q)) return false;
+                return true;
+            }).sort((a,b)=>String(b.receivedDate||'').localeCompare(String(a.receivedDate||'')) || (Number(b.createdAt||0)-Number(a.createdAt||0)) || (Number(b.id)-Number(a.id)));
             // แสดงทุก RM record ที่มี ID ของตัวเอง แม้ project/size/qty/date จะเหมือนกัน
             const newRows=activeRM;
             tbody.innerHTML=newRows.map(i=>{
@@ -4151,24 +4362,26 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                     <td class="p-2.5 border border-slate-200 dark:border-slate-800 text-center font-mono">
                         <input type="date" value="${i.receivedDate||''}" onchange="updateRMReceiveDate(${i.id}, this.value)" class="fc-input !mt-0 !py-1.5 !px-2 text-[11px] font-bold">
                         <div class="text-[9px] text-slate-400 mt-1">แก้วันรับ → ปฏิทิน/Timeline</div>
+                        <button type="button" onclick="openEditRMModal(${i.id})" class="mt-1.5 w-full bg-sky-500/15 text-sky-700 dark:text-sky-400 hover:bg-sky-500/25 border border-sky-500/30 px-2 py-1 rounded-lg text-[10px] font-bold">✏️ แก้ไข (ไซส์/Jacket/จำนวน)</button>
                     </td>
                     <td class="p-2.5 border border-slate-200 dark:border-slate-800 font-semibold">${i.project||'-'}</td>
-                    <td class="p-2.5 border border-slate-200 dark:border-slate-800 text-center">${i.size||'-'}</td>
+                    <td class="p-2.5 border border-slate-200 dark:border-slate-800 text-center">${i.size||'-'}${(i.thick&&i.thick!=='ไม่ระบุ')?`<div class="text-[9px] text-slate-400">หนา ${i.thick}</div>`:''}</td>
                     <td class="p-2.5 border border-slate-200 dark:border-slate-800 text-center">${i.jacket||'-'}</td>
                     <td class="p-2.5 border border-slate-200 dark:border-slate-800 text-center"><div class="font-bold text-sky-600 dark:text-sky-400">คงเหลือ ${remaining.toLocaleString('th-TH')}</div><div class="text-[9px] text-slate-400">รับ ${original.toLocaleString('th-TH')} • ย้ายผลิต ${moved.toLocaleString('th-TH')}</div><div class="mt-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-theme-500" style="width:${pct}%"></div></div></td>
                     <td class="p-2.5 border border-slate-200 dark:border-slate-800 text-center">
                         <span class="text-[10px] font-bold px-2 py-1 rounded-full ${remaining>0?'bg-sky-500/15 text-sky-700 dark:text-sky-400':'bg-slate-500/15 text-slate-500'}">${remaining>0?'RM คงเหลือ':'จ่ายเข้าผลิตหมด'}</span>
                         ${remaining>0?`<button onclick="openRMProductionPlanModal(${i.id})" class="block mx-auto mt-1.5 bg-theme-500 hover:bg-theme-600 text-slate-950 px-2.5 py-1 rounded-lg text-[10px] font-bold">🏭 วางแผนผลิต</button>`:`<span class="block mt-1 text-[9px] text-slate-400">ไม่มีคงเหลือ</span>`}
+                        ${(Number(i.allocatedQty||0)===0 && !i.sourceDbId)?`<button type="button" onclick="deleteRMItem(${i.id})" class="block mx-auto mt-1.5 text-[10px] font-bold text-rose-500 hover:text-rose-600 hover:underline">🗑 ลบรายการ</button>`:''}
                     </td>
                 </tr>`;
-            }).join('')||`<tr><td colspan="6" class="p-6 text-center text-slate-400 text-xs">ยังไม่มี RM คงเหลือสำหรับวางแผนผลิต</td></tr>`;
+            }).join('')||`<tr><td colspan="6" class="p-6 text-center text-slate-400 text-xs">${rmRecords.length?'ไม่พบรายการที่ตรงกับตัวกรอง':'ยังไม่มี RM คงเหลือสำหรับวางแผนผลิต'}</td></tr>`;
 
             // คลังรอผลิต = เฉพาะงานที่วางแผนผลิตจาก RM แล้ว แต่ยังไม่ถึง/ยังไม่เสร็จวันผลิต
             // ข้อมูลเก่าที่มีวันผลิตถูก migrate ไป FG แล้ว จึงไม่ถูกนับซ้ำในส่วนนี้
             const today = localDateKey();
             const waitingRows=db.filter(i=>i.plannedFromRM && i.date && i.date >= today && i.status === 'กำลังผลิต').sort((a,b)=>(a.date||'').localeCompare(b.date||''));
             if(waitingBody) waitingBody.innerHTML=waitingRows.map(i=>`<tr class="hover:bg-amber-50/70 dark:hover:bg-amber-950/20"><td class="p-2.5 border border-amber-200 dark:border-amber-900/40 text-center font-mono">${i.receivedDate||'-'}</td><td class="p-2.5 border border-amber-200 dark:border-amber-900/40 font-semibold">${i.project||'-'}</td><td class="p-2.5 border border-amber-200 dark:border-amber-900/40 text-center">${i.size||'-'} / ${i.jacket||'-'}</td><td class="p-2.5 border border-amber-200 dark:border-amber-900/40 text-center font-bold">${Number(i.qty||0)}</td><td class="p-2.5 border border-amber-200 dark:border-amber-900/40 text-center font-mono">${i.date||'-'}</td><td class="p-2.5 border border-amber-200 dark:border-amber-900/40 text-center"><span class="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400">วางแผนผลิตแล้ว</span></td></tr>`).join('')||`<tr><td colspan="6" class="p-6 text-center text-slate-400 text-xs">ไม่มีงานที่รอผลิตจากแผน RM</td></tr>`;
-            const b=document.getElementById('rm-total-badge');if(b){const totalRemaining=rmRecords.reduce((a,r)=>a+Number(r.remainingQty ?? r.qty ?? 0),0);b.textContent=`${newRows.length.toLocaleString('th-TH')} รายการ • คงเหลือ ${totalRemaining.toLocaleString('th-TH')} ท่อน`;}
+            const b=document.getElementById('rm-total-badge');if(b){const totalRemaining=newRows.reduce((a,r)=>a+Number(r.remainingQty ?? r.qty ?? 0),0);b.textContent=`${newRows.length.toLocaleString('th-TH')}${newRows.length!==rmRecords.length?`/${rmRecords.length.toLocaleString('th-TH')}`:''} รายการ • คงเหลือ ${totalRemaining.toLocaleString('th-TH')} ท่อน`;}
             const wb=document.getElementById('waiting-production-badge');if(wb)wb.textContent=`${waitingRows.length.toLocaleString('th-TH')} รายการ`;
         }
 
@@ -4214,6 +4427,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         <div class="flex flex-col items-center gap-1.5 min-w-[130px]">
                             ${imageHtml}
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${statusBadge(g.items[0]?.status || '')}">${status.text}</span>
+                            ${g.items.every(it => it.status === 'รอจัดส่ง') ? `<button type="button" onclick="confirmDeliverGroupedFG(${JSON.stringify(g.items.map(it=>it.id)).replace(/"/g,'&quot;')})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold transition">✅ ส่งมอบแล้ว (${g.qty.toLocaleString('th-TH')})</button>` : ''}
                         </div>
                     </td>
                 </tr>`;
@@ -4224,6 +4438,14 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         // แก้ไขสถานะรายการเดียวแบบเร็ว (ใช้จากหน้าคลัง FG เพื่อยืนยันการส่งของ)
+        function shiftShipDate(delta) {
+            const dp = document.getElementById('ship-date-picker');
+            if (!dp) return;
+            const base = dp.value ? new Date(dp.value + 'T00:00:00') : new Date();
+            base.setDate(base.getDate() + delta);
+            dp.value = base.getFullYear() + '-' + String(base.getMonth()+1).padStart(2,'0') + '-' + String(base.getDate()).padStart(2,'0');
+            renderShipping();
+        }
         function quickSetStatus(id, status) {
             const item = db.find(i => i.id == id);
             if (!item) return;
@@ -4245,7 +4467,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         // --- เพิ่มรายการเข้าคลัง FG เอง (สร้างเป็นงานผลิตสถานะ "รอจัดส่ง" ทันที ไม่ผ่านขั้นตอนกำลังผลิต) ---
         function openAddFGModal(selectedReceiveDate = '') {
             const projSel = document.getElementById('fg-add-project');
-            projSel.innerHTML = projectsList.map(p => `<option value="${p}">${p}</option>`).join('');
+            { setupProjectSelect('fg-add-project', '', false); resetProjectSearch(projSel); fillProjectSelect(projSel); }
             document.getElementById('fg-add-size').innerHTML = getSizeSelectOptionsHtml();
             document.getElementById('fg-add-jacket').value = 'GI';
             const fgThick = document.getElementById('fg-add-thick'); if (fgThick) fgThick.value = '';
@@ -4311,11 +4533,41 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         function getRMSizeName() {
             const sel=document.getElementById('rm-add-size');
             const custom=document.getElementById('rm-add-size-custom');
-            return sel?.value==='CUSTOM' ? (custom?.value||'').trim() : (sel?.value||'').trim();
+            return normalizeSizeName(sel?.value==='CUSTOM' ? (custom?.value||'') : (sel?.value||''));
+        }
+        let rmEditingId = null;
+        function setRMModalMode(editing) {
+            const t=document.getElementById('rm-modal-title'), b=document.getElementById('rm-modal-save-btn');
+            if(t) t.textContent = editing ? '✏️ แก้ไขรายการ RM' : '📦 เพิ่มรายการรับท่อเข้าคลัง RM เอง';
+            const mb=document.getElementById('rm-modal-more-btn'); if(mb) mb.style.display = editing ? 'none' : '';
+            if(b) b.textContent = editing ? '💾 บันทึกการแก้ไข' : '💾 รับเข้าคลัง RM';
+        }
+        function openEditRMModal(rmId) {
+            if (blockIfViewOnly()) return;
+            const item = rmRecords.find(r => Number(r.id) === Number(rmId));
+            if (!item) return;
+            openAddRMModal(item.receivedDate || '');
+            rmEditingId = item.id;
+            setRMModalMode(true);
+            const projSel = document.getElementById('rm-add-project');
+            if (![...projSel.options].some(o => o.value === item.project)) {
+                projSel.insertBefore(new Option(item.project, item.project), projSel.lastElementChild);
+            }
+            projSel.value = item.project;
+            const sizeSel = document.getElementById('rm-add-size');
+            sizeSel.innerHTML = getSizeSelectOptionsHtml(item.size);
+            if (!PIPE_SPECS[item.size]) { checkRMSizeInput(); document.getElementById('rm-add-size-custom').value = item.size; }
+            const jSel = document.getElementById('rm-add-jacket');
+            if (![...jSel.options].some(o => o.value === item.jacket)) jSel.add(new Option(item.jacket, item.jacket));
+            jSel.value = item.jacket || 'ไม่ระบุ';
+            document.getElementById('rm-add-thick').value = (item.thick && item.thick !== 'ไม่ระบุ') ? item.thick : '';
+            document.getElementById('rm-add-qty').value = Number(item.originalQty ?? item.qty ?? 1);
         }
         function openAddRMModal(selectedReceiveDate = '') {
+            rmEditingId = null;
+            setRMModalMode(false);
             const projSel = document.getElementById('rm-add-project');
-            projSel.innerHTML = projectsList.map(p => `<option value="${p}">${p}</option>`).join('') + `<option value="CUSTOM">+ เพิ่มโครงการใหม่...</option>`;
+            setupProjectSelect('rm-add-project', '', true); resetProjectSearch(projSel); fillProjectSelect(projSel);
             const projCustom=document.getElementById('rm-add-project-custom'); if(projCustom){projCustom.value='';projCustom.classList.add('hidden');projCustom.required=false;}
             document.getElementById('rm-add-size').innerHTML = getSizeSelectOptionsHtml();
             const sizeCustom=document.getElementById('rm-add-size-custom'); if(sizeCustom){sizeCustom.value='';sizeCustom.classList.add('hidden');sizeCustom.required=false;}
@@ -4324,9 +4576,31 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('rm-add-qty').value = 1;
             document.getElementById('rm-add-date').value = selectedReceiveDate || localDateKey();
             document.getElementById('add-rm-modal').classList.remove('hidden');
+            setTimeout(()=>{ const q=document.getElementById('rm-add-qty'); if(q){q.focus();q.select();} },50);
         }
-        function closeAddRMModal() { document.getElementById('add-rm-modal').classList.add('hidden'); }
-        function saveAddRMItem() {
+        function deleteRMItem(rmId) {
+            if (blockIfViewOnly()) return;
+            const item = rmRecords.find(r => Number(r.id) === Number(rmId));
+            if (!item) return;
+            if (Number(item.allocatedQty||0) > 0 || item.sourceDbId) {
+                showToast('ลบไม่ได้: RM นี้ถูกย้ายเข้าแผนผลิตแล้ว — ลบแผนผลิตนั้นก่อน หรือใช้ปุ่มแก้ไข', 'error'); return;
+            }
+            if (!confirm(`ลบรายการ RM นี้?\n${item.project} • ${item.size} / ${item.jacket} • ${Number(item.originalQty ?? item.qty ?? 0)} ท่อน`)) return;
+            pushUndoSnapshot('ลบรายการคลัง RM');
+            rmRecords = rmRecords.filter(r => Number(r.id) !== Number(rmId));
+            saveRMRecords();
+            renderRMWarehouse();
+            renderActiveView();
+            showToastWithUndo('ลบรายการ RM แล้ว');
+        }
+        document.addEventListener('keydown', function(e) {
+            const m = document.getElementById('add-rm-modal');
+            if (!m || m.classList.contains('hidden')) return;
+            if (e.key === 'Enter' && e.target && e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON') { e.preventDefault(); saveAddRMItem(); }
+        });
+        function closeAddRMModal() { document.getElementById('add-rm-modal').classList.add('hidden'); rmEditingId = null; setRMModalMode(false); }
+        function saveAddRMItem(keepOpen) {
+            keepOpen = keepOpen === true;
             if (blockIfViewOnly()) return;
             const receivedDate = document.getElementById('rm-add-date').value;
             const project = getRMProjectName();
@@ -4340,19 +4614,56 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             if (!projectsList.includes(project)) { projectsList.push(project); saveProjectsList(); }
             if (!PIPE_SPECS[size]) addPipeSizeToSystem(size, 0, 0);
 
+            // ===== โหมดแก้ไขรายการ RM เดิม =====
+            if (rmEditingId !== null) {
+                const item = rmRecords.find(r => Number(r.id) === Number(rmEditingId));
+                if (!item) { showToast('ไม่พบรายการ RM ที่จะแก้ไข', 'error'); return; }
+                if (!isReasonableDate(receivedDate)) { showToast('วันที่รับท่อดูผิดปกติ กรุณาตรวจสอบอีกครั้ง', 'error'); return; }
+                const allocated = Number(item.allocatedQty || 0);
+                if (qty < allocated) { showToast(`จำนวนรับต้องไม่น้อยกว่าที่ย้ายเข้าผลิตไปแล้ว (${allocated} ท่อน)`, 'error'); return; }
+                const thick = ((document.getElementById('rm-add-thick')?.value || '').trim() || 'ไม่ระบุ');
+                pushUndoSnapshot('แก้ไขรายการคลัง RM');
+                item.project = project; item.size = size; item.jacket = jacket; item.thick = thick;
+                item.receivedDate = receivedDate;
+                item.qty = qty; item.originalQty = qty; item.remainingQty = qty - allocated;
+                item.stage = item.remainingQty > 0 ? 'RM' : 'จ่ายเข้าผลิตหมด';
+                item.status = item.remainingQty > 0 ? 'รับเข้าแล้ว' : 'จ่ายเข้าผลิตหมด';
+                // ตามไปแก้แผนผลิตที่ย้ายมาจาก RM ก้อนนี้ให้ตรงกัน (โครงการ/ไซส์/Jacket/ความหนา)
+                let touched = 0;
+                db.forEach(d => {
+                    const fromThis = (d.sourceRMId != null && Number(d.sourceRMId) === Number(item.id)) ||
+                                     (item.sourceDbId != null && Number(d.id) === Number(item.sourceDbId));
+                    if (!fromThis) return;
+                    d.project = project; d.size = size; d.jacket = jacket; d.thick = thick;
+                    if (item.sourceDbId != null && Number(d.id) === Number(item.sourceDbId)) d.receivedDate = receivedDate;
+                    touched++;
+                });
+                saveRMRecords();
+                if (touched) saveDB(); else localStorage.setItem('gekko_production_db', JSON.stringify(db));
+                rmEditingId = null;
+                closeAddRMModal();
+                renderRMWarehouse();
+                renderActiveView();
+                showToastWithUndo('แก้ไขรายการ RM แล้ว' + (touched ? ` • อัปเดตแผนผลิตที่เชื่อมอยู่ ${touched} รายการ` : ''));
+                return;
+            }
+
             // คนละ batch สามารถมี project/size/thick/jacket/qty/date เหมือนกันได้
             // จึงไม่ใช้ value-signature เป็น unique key; double-click ถูกกันด้วย V83 submit lock
 
+            const dup = rmRecords.find(r => r.project === project && r.size === size && r.jacket === jacket && r.receivedDate === receivedDate && Number(r.originalQty ?? r.qty) === qty);
+            if (dup && !confirm(`มีรายการรับ RM เหมือนกันแล้ว (${project} • ${size} / ${jacket} • ${qty} ท่อน • ${receivedDate})\nต้องการเพิ่มซ้ำอีกรายการใช่หรือไม่?`)) return;
+            try { localStorage.setItem('gekko_last_rm_project', project); localStorage.setItem('gekko_last_rm_jacket', jacket); } catch (_) {}
             pushUndoSnapshot('เพิ่มรายการคลัง RM');
             rmRecords.push({
                 id: getNextRMId(), project, size, thick: ((document.getElementById('rm-add-thick')?.value || '').trim() || 'ไม่ระบุ'), jacket, qty, originalQty: qty, remainingQty: qty, allocatedQty: 0,
                 receivedDate, status: 'รับเข้าแล้ว', stage: 'RM', sourceDbId: null, createdAt: Date.now()
             });
             saveRMRecords();
-            closeAddRMModal();
+            if (keepOpen) { const q = document.getElementById('rm-add-qty'); q.value = 1; setTimeout(() => { q.focus(); q.select(); }, 30); } else closeAddRMModal();
             renderRMWarehouse();
             renderActiveView();
-            showToastWithUndo('รับท่อเข้าคลัง RM แล้ว — ยังไม่เริ่มผลิต');
+            showToastWithUndo('รับท่อเข้าคลัง RM แล้ว — ยังไม่เริ่มผลิต' + (keepOpen ? ' • กรอกรายการต่อไปได้เลย' : ''));
         }
 
         // ===================== RM -> Production Planning =====================
@@ -4728,6 +5039,131 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             openDayDetailModal(targetDate);
         }
 
+
+        // ===== ประวัติรายเดือน: ข้อมูลเก่าเก็บไว้ครบ ไม่ลบ/ไม่ย้าย — ตาราง/Kanban แสดงเดือนนี้ + งานค้างเป็นค่าเริ่มต้น =====
+        const TH_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+        function monthKeyOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+        function itemMonthKey(i) { return String(i.date || i.receivedDate || i.dispatchDate || '').slice(0, 7); }
+        function monthLabel(key) { const m = /^(\d{4})-(\d{2})$/.exec(key); return m ? TH_MONTHS_SHORT[Number(m[2]) - 1] + ' ' + (Number(m[1]) + 543) : key; }
+        function refreshMonthFilter() {
+            const sel = document.getElementById('filter-month'); if (!sel) return;
+            const cnt = {}; db.forEach(i => { const k = itemMonthKey(i); if (/^\d{4}-\d{2}$/.test(k)) cnt[k] = (cnt[k] || 0) + 1; });
+            const nowKey = monthKeyOf(new Date());
+            const keys = Object.keys(cnt).sort().reverse();
+            const sig = keys.join(',') + '|' + keys.map(k => cnt[k]).join(',');
+            if (sel.dataset.sig === sig) return;
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">📅 ดูย้อนหลังรายเดือน…</option><option value="ALL">📚 ทุกเดือน (ล้างช่วงวันที่)</option>'
+                + keys.map(k => '<option value="' + k + '">' + monthLabel(k) + ' (' + cnt[k] + ')' + (k === nowKey ? ' • เดือนนี้' : '') + '</option>').join('');
+            sel.dataset.sig = sig;
+            if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+        }
+        function monthRange(key) {
+            const m = /^(\d{4})-(\d{2})$/.exec(key); if (!m) return null;
+            const last = new Date(Number(m[1]), Number(m[2]), 0).getDate();
+            return [key + '-01', key + '-' + String(last).padStart(2, '0')];
+        }
+        // ใช้ตัวกรองช่วงวันที่ที่มีอยู่แล้วของแอป (gk-v85-date-from/to) — เลือกเดือนแล้วตั้งช่วงให้เอง
+        function applyMonthFilter(key) {
+            const from = document.getElementById('gk-v85-date-from'), to = document.getElementById('gk-v85-date-to'), basis = document.getElementById('gk-v85-date-basis');
+            if (!from || !to) { showToast('ไม่พบตัวกรองช่วงวันที่', 'error'); return; }
+            if (key === '') return;
+            if (key === 'ALL') { from.value = ''; to.value = ''; }
+            else { const r = monthRange(key); if (!r) return; from.value = r[0]; to.value = r[1]; }
+            if (basis) basis.value = 'all';
+            [from, to].forEach(el => el.dispatchEvent(new Event('change', { bubbles: true })));
+            renderActiveView();
+        }
+        function openHistoryModal() {
+            let m = document.getElementById('history-modal');
+            if (!m) {
+                m = document.createElement('div');
+                m.id = 'history-modal';
+                m.className = 'fixed inset-0 z-[90] bg-slate-950/70 backdrop-blur-sm p-4';
+                m.style.cssText = 'display:none;align-items:center;justify-content:center';
+                m.innerHTML = '<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-3xl w-full p-5 shadow-2xl space-y-3 max-h-[90vh] flex flex-col">'
+                    + '<div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3"><div><h3 class="text-base font-bold text-slate-900 dark:text-white">📚 ประวัติรายเดือน</h3><p class="text-[10px] text-slate-500">ข้อมูลเก่าเก็บไว้ครบ ไม่ถูกลบ • กดเดือนเพื่อดูรายการของเดือนนั้นในตาราง</p></div>'
+                    + '<button type="button" onclick="closeHistoryModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button></div>'
+                    + '<div id="history-list" class="overflow-y-auto flex-1"></div></div>';
+                document.body.appendChild(m);
+            }
+            const st = {};
+            db.forEach(i => { const k = itemMonthKey(i); if (!/^\d{4}-\d{2}$/.test(k)) return; const r = st[k] || (st[k] = { n: 0, qty: 0, done: 0, open: 0, proj: new Set(), rm: 0 }); r.n++; const q = Number(i.qty) || 0; r.qty += q; if (i.status === DELIVERED_LABEL) r.done += q; else r.open++; r.proj.add(i.project); });
+            rmRecords.forEach(i => { const k = String(i.receivedDate || '').slice(0, 7); if (!/^\d{4}-\d{2}$/.test(k)) return; const r = st[k] || (st[k] = { n: 0, qty: 0, done: 0, open: 0, proj: new Set(), rm: 0 }); r.rm += Number(i.originalQty ?? i.qty ?? 0); });
+            const keys = Object.keys(st).sort().reverse(), nowKey = monthKeyOf(new Date());
+            const th = 'p-2 text-[11px] font-bold text-slate-500 text-right';
+            document.getElementById('history-list').innerHTML = keys.length
+                ? '<table class="w-full text-xs"><thead><tr class="border-b border-slate-200 dark:border-slate-800"><th class="p-2 text-left text-[11px] font-bold text-slate-500">เดือน</th><th class="' + th + '">รายการผลิต</th><th class="' + th + '">ท่อนรวม</th><th class="' + th + '">ส่งมอบแล้ว</th><th class="' + th + '">ค้าง</th><th class="' + th + '">รับ RM</th><th class="' + th + '">โครงการ</th></tr></thead><tbody>'
+                + keys.map(k => { const r = st[k]; return '<tr class="border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer" onclick="openHistoryMonth(\'' + k + '\')"><td class="p-2 font-bold text-slate-900 dark:text-white">' + monthLabel(k) + (k === nowKey ? ' <span class="text-[9px] text-theme-600">เดือนนี้</span>' : '') + '</td><td class="p-2 text-right">' + r.n + '</td><td class="p-2 text-right font-mono">' + r.qty.toLocaleString('th-TH') + '</td><td class="p-2 text-right font-mono text-emerald-600">' + r.done.toLocaleString('th-TH') + '</td><td class="p-2 text-right ' + (r.open ? 'text-amber-600 font-bold' : 'text-slate-400') + '">' + r.open + '</td><td class="p-2 text-right font-mono text-sky-600">' + r.rm.toLocaleString('th-TH') + '</td><td class="p-2 text-right">' + r.proj.size + '</td></tr>'; }).join('')
+                + '</tbody></table>'
+                : '<p class="text-xs text-slate-400 text-center p-6">ยังไม่มีข้อมูล</p>';
+            m.style.display = 'flex';
+        }
+        function closeHistoryModal() { const m = document.getElementById('history-modal'); if (m) m.style.display = 'none'; }
+        function openHistoryMonth(key) {
+            closeHistoryModal();
+            if (typeof switchView === 'function' && currentViewMode !== 'table' && currentViewMode !== 'kanban') switchView('table');
+            refreshMonthFilter();
+            applyMonthFilter(key);
+        }
+
+
+        // ===== ตรวจข้อมูลผิดปกติ + เตือนสำรองข้อมูล =====
+        function collectDataIssues() {
+            const out = [];
+            const all = db.map(r => ({ t: 'ผลิต', r })).concat(rmRecords.map(r => ({ t: 'RM', r })));
+            const badSize = all.filter(x => x.r.size && !PIPE_SPECS[x.r.size]);
+            if (badSize.length) out.push({ k: 'size-missing', level: 'warn', title: `ไซส์ที่ไม่มีในระบบ ${badSize.length} รายการ`, detail: [...new Set(badSize.map(x => x.r.size))].join(', '), fix: 'openSizeManagerModal()', fixLabel: 'เปิดจัดการไซส์' });
+            const used = new Set(all.map(x => x.r.size));
+            const zero = Object.keys(PIPE_SPECS).filter(k => used.has(k) && !(Number(PIPE_SPECS[k].weight) > 0));
+            if (zero.length) out.push({ k: 'zero-weight', level: 'warn', title: `ไซส์ที่ใช้อยู่แต่ไม่มีน้ำหนัก ${zero.length} ไซส์`, detail: zero.join(', ') + ' — น้ำหนักรวม/การคำนวณรถจะเพี้ยน', fix: 'openSizeManagerModal()', fixLabel: 'เปิดจัดการไซส์' });
+            const missProj = [...new Set(all.map(x => x.r.project).filter(p => p && !projectsList.includes(p)))];
+            if (missProj.length) out.push({ k: 'proj-missing', level: 'info', title: `โครงการที่มีข้อมูลแต่ไม่อยู่ในรายการเลือก ${missProj.length} โครงการ`, detail: missProj.join(', '), fix: 'fixMissingProjects()', fixLabel: 'เพิ่มเข้ารายการให้' });
+            const noQty = db.filter(r => !(Number(r.qty) > 0));
+            if (noQty.length) out.push({ k: 'no-qty', level: 'warn', title: `รายการผลิตที่จำนวนเป็น 0/ว่าง ${noQty.length} รายการ`, detail: noQty.slice(0, 6).map(r => `#${r.id} ${r.project || '-'} ${r.size || '-'}`).join(', ') });
+            const noProj = all.filter(x => !x.r.project);
+            if (noProj.length) out.push({ k: 'no-project', level: 'warn', title: `รายการที่ไม่มีชื่อโครงการ ${noProj.length} รายการ`, detail: noProj.slice(0, 6).map(x => `${x.t} #${x.r.id}`).join(', ') });
+            const badRM = rmRecords.filter(r => Number(r.remainingQty) < 0 || Number(r.remainingQty) > Number(r.originalQty ?? r.qty ?? 0));
+            if (badRM.length) out.push({ k: 'rm-qty', level: 'warn', title: `RM ที่ยอดคงเหลือไม่สอดคล้องกับจำนวนรับ ${badRM.length} รายการ`, detail: badRM.slice(0, 6).map(r => `#${r.id} ${r.project} ${r.size}`).join(', ') });
+            const badDate = all.filter(x => [x.r.date, x.r.receivedDate].some(d => d && !(String(d) >= '2020-01-01' && String(d) <= '2100-12-31')));
+            if (badDate.length) out.push({ k: 'bad-date', level: 'warn', title: `รายการที่วันที่ดูผิดปกติ ${badDate.length} รายการ`, detail: badDate.slice(0, 6).map(x => `${x.t} #${x.r.id}`).join(', ') });
+            return out;
+        }
+        function fixMissingProjects() {
+            const need = [...new Set(db.concat(rmRecords).map(r => r.project).filter(p => p && !projectsList.includes(p)))];
+            if (!need.length) return;
+            need.forEach(p => projectsList.push(p)); saveProjectsList(); showToast(`เพิ่ม ${need.length} โครงการเข้ารายการแล้ว`); openHealthCheck();
+        }
+        function openHealthCheck() {
+            let m = document.getElementById('health-modal');
+            if (!m) {
+                m = document.createElement('div'); m.id = 'health-modal';
+                m.className = 'fixed inset-0 z-[90] bg-slate-950/70 backdrop-blur-sm p-4'; m.style.cssText = 'display:none;align-items:center;justify-content:center';
+                m.innerHTML = '<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-5 shadow-2xl space-y-3 max-h-[90vh] flex flex-col"><div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3"><h3 class="text-base font-bold text-slate-900 dark:text-white">🩺 ตรวจข้อมูล</h3><button type="button" onclick="document.getElementById(\'health-modal\').style.display=\'none\'" class="text-slate-400 hover:text-slate-900 dark:hover:text-white">✕</button></div><div id="health-body" class="overflow-y-auto space-y-2 flex-1"></div><div class="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800"><span id="health-backup-note" class="text-[10px] text-slate-500"></span><button type="button" onclick="exportJSON()" class="text-xs bg-theme-500 hover:bg-theme-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg">💾 สำรองข้อมูลตอนนี้</button></div></div>';
+                document.body.appendChild(m);
+            }
+            const issues = collectDataIssues();
+            document.getElementById('health-body').innerHTML = issues.length ? issues.map(i => '<div class="p-2.5 rounded-lg border ' + (i.level === 'warn' ? 'border-amber-500/40 bg-amber-500/5' : 'border-sky-500/40 bg-sky-500/5') + '"><div class="text-xs font-bold text-slate-900 dark:text-white">' + (i.level === 'warn' ? '⚠️ ' : 'ℹ️ ') + pjEsc(i.title) + '</div>' + (i.detail ? '<div class="text-[11px] text-slate-500 mt-0.5 break-words">' + pjEsc(i.detail) + '</div>' : '') + (i.fix ? '<button type="button" onclick="' + i.fix + '" class="mt-1.5 text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200">' + i.fixLabel + '</button>' : '') + '</div>').join('')
+                : '<div class="p-4 text-center text-sm text-emerald-600 font-bold">✅ ไม่พบความผิดปกติ ข้อมูลเรียบร้อยดี</div>';
+            const lb = Number(localStorage.getItem('gekko_last_backup') || 0);
+            document.getElementById('health-backup-note').textContent = lb ? 'สำรองล่าสุด ' + new Date(lb).toLocaleDateString('th-TH') : 'ยังไม่เคยสำรองข้อมูลจากเครื่องนี้';
+            m.style.display = 'flex';
+        }
+        setTimeout(function () {
+            try {
+                const lb = Number(localStorage.getItem('gekko_last_backup') || 0), today = new Date().toDateString();
+                if (localStorage.getItem('gekko_backup_nag_day') === today || !(db.length || rmRecords.length)) return;
+                if (!lb || Date.now() - lb > 7 * 86400000) {
+                    localStorage.setItem('gekko_backup_nag_day', today);
+                    showToast(lb ? 'เตือน: ไม่ได้สำรองข้อมูลมากกว่า 7 วันแล้ว — กด 🩺 ตรวจข้อมูล แล้วสำรองข้อมูล' : 'เตือน: ยังไม่เคยสำรองข้อมูลจากเครื่องนี้ — กด 🩺 ตรวจข้อมูล แล้วสำรองข้อมูล');
+                }
+            } catch (_) {}
+        }, 4000);
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            ['pj-mgr-modal', 'history-modal', 'health-modal'].forEach(id => { const m = document.getElementById(id); if (m && m.style.display === 'flex') m.style.display = 'none'; });
+        });
+
         function renderActiveView() {
             const search = document.getElementById('search-box').value.toLowerCase();
             const statusF = document.getElementById('filter-status').value;
@@ -4764,6 +5200,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         function renderTable(data) {
+            try { refreshMonthFilter(); } catch (_) {}
             const tbody = document.getElementById('data-table-body');
             tbody.innerHTML = '';
             document.getElementById('table-summary-count').innerText = `แสดง ${data.length} รายการจากทั้งหมด ${db.length} รายการ`;
@@ -5624,7 +6061,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         function exportJSON() {
-            const backup = { version: 2, exportedAt: new Date().toISOString(), production: db, rmRecords, projectsList, calendarNotes };
+            const backup = { version: 3, exportedAt: new Date().toISOString(), production: db, rmRecords, projectsList, calendarNotes, customPipeSpecs, hiddenDefaultSizes, projectsArchived };
+            try { localStorage.setItem('gekko_last_backup', String(Date.now())); } catch (_) {}
             const dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
@@ -5648,6 +6086,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         if (Array.isArray(imported.rmRecords)) rmRecords = imported.rmRecords;
                         if (Array.isArray(imported.projectsList)) projectsList = imported.projectsList;
                         if (imported.calendarNotes && typeof imported.calendarNotes === 'object') calendarNotes = imported.calendarNotes;
+                        if (imported.customPipeSpecs && typeof imported.customPipeSpecs === 'object') { customPipeSpecs = imported.customPipeSpecs; saveCustomPipeSpecs(); }
+                        if (Array.isArray(imported.hiddenDefaultSizes)) { hiddenDefaultSizes = imported.hiddenDefaultSizes; saveHiddenDefaultSizes(); }
+                        if (Array.isArray(imported.projectsArchived)) { projectsArchived = imported.projectsArchived; saveProjectsArchived(); }
+                        rebuildPipeSpecs();
                         normalizeRMRecords();
                         saveRMRecords(); saveProjectsList(); saveCalendarNotes();
                     } else {
@@ -5854,7 +6296,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         function submitNewPipeSize() {
-            const name = document.getElementById('new-size-name').value;
+            const name = normalizeSizeName(document.getElementById('new-size-name').value);
+            if (name && PIPE_SPECS[name]) { showToast(`ไซส์ "${name}" มีอยู่ในระบบแล้ว`, 'error'); return; }
             const weight = document.getElementById('new-size-weight').value;
             const casing = document.getElementById('new-size-casing').value;
             const ok = addPipeSizeToSystem(name, weight, casing);
