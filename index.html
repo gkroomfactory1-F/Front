@@ -169,6 +169,24 @@
             padding-right: 2px;
         }
 
+        /* Timeline v12: แถวสรุปยอด / แถวผลิตรวมกะ / เป้าหมายลากวาง */
+        #timeline-modal #timeline-table tbody tr.timeline-row-สรุป { height: auto !important; }
+        #timeline-modal #timeline-table tr.timeline-row-สรุป td { height: auto !important; vertical-align: middle; }
+        #timeline-modal tr.timeline-row-สรุป .timeline-cell-scroll { height: auto !important; max-height: none !important; overflow: visible !important; }
+        #timeline-modal #timeline-table tbody tr.timeline-row-ผลิต { height: 176px; }
+        #timeline-modal #timeline-table tr.timeline-row-ผลิต td.timeline-data-cell,
+        #timeline-modal #timeline-table tr.timeline-row-ผลิต td.timeline-label-cell { height: 176px; }
+        #timeline-modal tr.timeline-row-ผลิต .timeline-cell-scroll { height: 166px; max-height: 166px; }
+        #timeline-modal.present-mode #timeline-table tbody tr.timeline-row-ผลิต,
+        #timeline-modal.present-mode tr.timeline-row-ผลิต td.timeline-data-cell,
+        #timeline-modal.present-mode tr.timeline-row-ผลิต td.timeline-label-cell { height: 250px; }
+        #timeline-modal.present-mode tr.timeline-row-ผลิต .timeline-cell-scroll { height: 240px; max-height: 240px; }
+        #timeline-table [data-dnd-type] { user-select: none; -webkit-user-drag: element; max-width: 100%; overflow-wrap: anywhere; }
+        #timeline-table[data-drag-cat="recv"] td[data-tl-row="recv"],
+        #timeline-table[data-drag-cat="prod"] td[data-tl-row="prod"],
+        #timeline-table[data-drag-cat="ship"] td[data-tl-row="ship"] { box-shadow: inset 0 0 0 1px rgba(245,158,11,.55); }
+        #timeline-table td.tl-drop-hover { outline: 2px dashed var(--color-500); outline-offset: -2px; background-color: rgba(245,158,11,.14) !important; }
+
         /* วันอาทิตย์: ทำให้ดูจางและเบลอเล็กน้อยเพื่อสื่อว่าเป็นวันหยุด แต่ยังคลิกดูข้อมูลได้ */
         .sunday-muted {
             opacity: 0.42;
@@ -2275,6 +2293,10 @@ service cloud.firestore {
                 <span class="text-[11px] text-slate-400 hidden md:inline-block">ย้อนดูวันรับท่อ / แผนผลิต / วันส่งจริงจากคลัง FG ได้ในหน้าเดียว</span>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+                <select id="timeline-project-select" onchange="onTimelineProjectChange()" class="text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 font-bold dark:text-white max-w-[190px]">
+                    <option value="">ทุกโครงการ</option>
+                </select>
+                <button id="timeline-merge-btn" onclick="toggleTimelineMerge()" title="สลับระหว่างการ์ดผลิตรวมกะ (1 รายการ = 1 การ์ด) กับแยกแถวเช้า/บ่าย/OT" class="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm text-slate-700 dark:text-slate-300">🏭 ผลิต: รวมกะ</button>
                 <select id="timeline-days-select" onchange="onTimelineDaysChange()" class="text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 font-bold dark:text-white">
                     <option value="7">แสดง 7 วัน</option>
                     <option value="14" selected>แสดง 14 วัน</option>
@@ -2297,6 +2319,8 @@ service cloud.firestore {
             <span class="flex items-center gap-1 font-bold text-slate-500 dark:text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>ส่งท่อ (อ้างอิงวันส่งจากคลัง FG)</span>
             <span class="flex items-center gap-1 font-bold text-amber-600 dark:text-amber-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>โน้ตประจำวัน</span>
             <span class="text-slate-400">คลิกที่การ์ดเพื่อเปิดดู/แก้ไขรายการ</span>
+            <span class="text-slate-400">• ลากการ์ดไปวางวันอื่นในแถวเดียวกันได้ (คอมพิวเตอร์) หรือใช้ช่องเลือกวันที่ในการ์ด</span>
+            <span id="timeline-anomaly-badge" class="hidden px-2 py-0.5 rounded-full bg-rose-600 text-white font-black"></span>
         </div>
 
         <div id="timeline-scroll-container" class="min-h-0 min-w-0 flex-1 overflow-auto custom-scrollbar rounded-xl border border-slate-200 dark:border-slate-800" style="overscroll-behavior: contain;">
@@ -2644,6 +2668,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         let fullCalendarYear = new Date().getFullYear();
         let fullCalendarMonth = new Date().getMonth();
         let timelineDaysCount = 14;
+        let timelineProjectFilter = '';
+        let timelineMergeProd = (function () { try { return localStorage.getItem('gekko_timeline_merge') !== '0'; } catch (_) { return true; } })();
         let timelineCenterDate = (function () { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
         // ช่วงวันที่แสดงในไทม์ไลน์จะคำนวณจากวันตรงกลาง (timelineCenterDate) เสมอ เพื่อให้วันปัจจุบัน/วันที่เลือกอยู่กึ่งกลางตาราง
         function getTimelineStartDate() {
@@ -4315,6 +4341,29 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             renderGridCalendar();
             renderTimeline();
             showToast('ย้ายวันรับท่อแล้ว — ปฏิทินและ Timeline อัปเดตทันที');
+        }
+
+        // --- แก้ไขวันผลิตจาก Timeline (การ์ด เช้า/บ่าย/OT) ---
+        // ย้ายทั้งรายการ (ทุกกะของ id เดียวกัน) ไปวันใหม่ เพราะ 1 รายการมีวันผลิตวันเดียว
+        function updateProductionDate(id, newDate) {
+            if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) { renderTimeline(); return; }
+            const item = db.find(i => i.id == id);
+            if (!item) return;
+            newDate = (newDate || '').trim();
+            if (!newDate) { showToast('กรุณาระบุวันที่ผลิต', 'error'); renderTimeline(); return; }
+            if (!isReasonableDate(newDate)) { showToast('วันที่ผลิตดูผิดปกติ กรุณาตรวจสอบอีกครั้ง', 'error'); renderTimeline(); return; }
+            if (newDate === item.date) return;
+            pushUndoSnapshot('แก้ไขวันผลิต (Timeline)');
+            item.date = newDate;
+            saveDB(); // บันทึก + รีเฟรชปฏิทิน/Timeline/Dashboard ทันที
+            // แจ้งเตือนแบบไม่บล็อก: ผลิตหลังวันส่ง / ตรงกับวันอาทิตย์
+            const warns = [];
+            const dd = typeof getDispatchDate === 'function' ? getDispatchDate(item) : '';
+            if (dd && newDate > dd) warns.push('วันผลิตเลยวันส่งท่อ (' + dd + ')');
+            const dow = new Date(newDate + 'T00:00:00').getDay();
+            if (dow === 0) warns.push('ตรงกับวันอาทิตย์');
+            if (warns.length) showToast('ย้ายวันผลิตแล้ว แต่' + warns.join(' และ '), 'error');
+            else showToastWithUndo('ย้ายวันผลิตแล้ว — ปฏิทินและ Timeline อัปเดตทันที');
         }
 
         // --- Compatibility migration: ข้อมูลผลิตเดิมที่มีวันผลิตอยู่แล้ว ไม่ถือเป็น RM ที่รอผลิตอีกต่อไป
@@ -6469,9 +6518,89 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             `;
         }
 
+        // ===== Timeline v12: ตัวกรองโครงการ / รวมกะ / สรุปยอด / เตือนลำดับวัน / ลากวาง =====
+        function onTimelineProjectChange() {
+            const sel = document.getElementById('timeline-project-select');
+            timelineProjectFilter = sel ? sel.value : '';
+            renderTimeline();
+        }
+
+        function toggleTimelineMerge() {
+            timelineMergeProd = !timelineMergeProd;
+            try { localStorage.setItem('gekko_timeline_merge', timelineMergeProd ? '1' : '0'); } catch (_) {}
+            renderTimeline();
+        }
+
+        // ตรวจลำดับวันของรายการ: รับท่อ -> ผลิต -> ส่งท่อ (เช็คเฉพาะเมื่อมีวันที่ทั้งสองฝั่ง)
+        function timelineAnomalies(it) {
+            const out = [];
+            if (!it) return out;
+            const ok = v => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '');
+            const pd = ok(it.date);
+            const rd = ok(it.receivedDate);
+            const dd = ok(typeof getDispatchDate === 'function' ? getDispatchDate(it) : it.dispatchDate);
+            if (pd && rd && pd < rd) out.push('ผลิตก่อนรับท่อ');
+            if (pd && dd && pd > dd) out.push('ผลิตเลยวันส่ง');
+            if (rd && dd && dd < rd) out.push('ส่งก่อนรับท่อ');
+            return out;
+        }
+
+        // ลากการ์ดไปวางวันอื่น (เฉพาะแถวประเภทเดียวกัน: รับท่อ / ผลิต / ส่งท่อ) — ผูกครั้งเดียวกับ table
+        function timelineBindDnD(table) {
+            if (!table || table.__dndBound) return;
+            table.__dndBound = true;
+            let drag = null;
+            const catOf = t => (t === 'recv-rm' || t === 'recv-legacy') ? 'recv' : (t === 'prod' ? 'prod' : (t === 'ship' ? 'ship' : ''));
+            const clearHover = () => table.querySelectorAll('.tl-drop-hover').forEach(el => el.classList.remove('tl-drop-hover'));
+            const resetDrag = () => { drag = null; delete table.dataset.dragCat; clearHover(); };
+
+            // กัน Firefox: ช่องวันที่ที่อยู่ในการ์ด draggable ต้องกด/พิมพ์ได้ตามปกติ
+            table.addEventListener('mousedown', e => {
+                if (!e.target || e.target.tagName !== 'INPUT') return;
+                const chip = e.target.closest('[data-dnd-type]');
+                if (!chip) return;
+                chip.setAttribute('draggable', 'false');
+                window.addEventListener('mouseup', () => chip.setAttribute('draggable', 'true'), { once: true });
+            });
+            table.addEventListener('dragstart', e => {
+                const chip = e.target && e.target.closest ? e.target.closest('[data-dnd-type]') : null;
+                if (!chip) return;
+                drag = { type: chip.dataset.dndType, ids: (chip.dataset.dndIds || '').split(',').filter(Boolean), from: chip.dataset.dndFrom || '' };
+                table.dataset.dragCat = catOf(drag.type);
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', drag.type + ':' + drag.ids.join(',')); } catch (_) {}
+            });
+            table.addEventListener('dragover', e => {
+                if (!drag) return;
+                const cell = e.target.closest ? e.target.closest('td[data-tl-date]') : null;
+                if (!cell || cell.dataset.tlRow !== catOf(drag.type)) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (!cell.classList.contains('tl-drop-hover')) { clearHover(); cell.classList.add('tl-drop-hover'); }
+            });
+            table.addEventListener('dragend', resetDrag);
+            table.addEventListener('drop', e => {
+                if (!drag) return;
+                const cell = e.target.closest ? e.target.closest('td[data-tl-date]') : null;
+                const d = drag;
+                if (!cell || cell.dataset.tlRow !== catOf(d.type)) { resetDrag(); return; }
+                e.preventDefault();
+                const key = cell.dataset.tlDate;
+                resetDrag();
+                if (!key || key === d.from || !d.ids.length) return;
+                if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return;
+                const nid = Number(d.ids[0]);
+                if (d.type === 'recv-rm') updateRMReceiveDate(nid, key);
+                else if (d.type === 'recv-legacy') updateLegacyReceiveDate(nid, key);
+                else if (d.type === 'prod') updateProductionDate(nid, key);
+                else if (d.type === 'ship') updateFGDispatchDateBulk(d.ids.map(Number), key);
+            });
+        }
+
         function renderTimeline() {
             const table = document.getElementById('timeline-table');
             if (!table) return;
+            timelineBindDnD(table);
             const weekdayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
             const days = [];
             const timelineStartDate = getTimelineStartDate();
@@ -6480,66 +6609,163 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 d.setDate(d.getDate() + i);
                 days.push(d);
             }
+            const dayKeys = new Set(days.map(dateToKey));
             const todayKey = dateToKey(new Date());
             const isPresentMode = document.getElementById('timeline-modal').classList.contains('present-mode');
             const colWidth = isPresentMode ? 170 : 108;
+            const fmt = n => Number(n || 0).toLocaleString('th-TH');
+
+            function escapeTimelineText(value) {
+                return String(value ?? '').replace(/[&<>\"']/g, ch => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;'
+                }[ch]));
+            }
+
+            // ---------- ตัวกรองโครงการ ----------
+            const allProjects = [...new Set([...db, ...rmRecords].map(x => (x && x.project) || '').filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+            if (timelineProjectFilter && !allProjects.includes(timelineProjectFilter)) timelineProjectFilter = '';
+            const pSel = document.getElementById('timeline-project-select');
+            if (pSel) {
+                pSel.innerHTML = '<option value="">ทุกโครงการ</option>' + allProjects.map(p => `<option value="${escapeTimelineText(p)}">${escapeTimelineText(p)}</option>`).join('');
+                pSel.value = timelineProjectFilter;
+            }
+            const mBtn = document.getElementById('timeline-merge-btn');
+            if (mBtn) mBtn.textContent = timelineMergeProd ? '🏭 ผลิต: รวมกะ' : '🏭 ผลิต: แยกกะ';
+            const inProject = x => !timelineProjectFilter || ((x && x.project) || '') === timelineProjectFilter;
+            const dbF = db.filter(inProject);
+            const rmF = rmRecords.filter(inProject);
 
             // Timeline แยกเหตุการณ์ชัดเจน:
             // 1) รับท่อ = rmRecords + ข้อมูลเก่าใน db ที่มี receivedDate
             // 2) ผลิต = date + morning/afternoon/OT
             // 3) ส่งท่อ = dispatchDate จากคลัง FG เท่านั้น
             const rowDefs = [
+                { key: 'สรุป', bg: 'bg-slate-100/70 dark:bg-slate-900/60', label: '' },
                 { key: 'รับท่อ', bg: 'bg-sky-50 dark:bg-sky-950/20', label: '📥 รับท่อ (RM)' },
-                { key: 'เช้า', bg: '', label: '🌅 เช้า' },
-                { key: 'บ่าย', bg: '', label: '☀️ บ่าย' },
-                { key: 'OT', bg: '', label: '🌙 OT' },
+                ...(timelineMergeProd
+                    ? [{ key: 'ผลิต', bg: '', label: '🏭 ผลิต<div class="text-[9px] font-semibold text-slate-400">เช้า/บ่าย/OT</div>' }]
+                    : [
+                        { key: 'เช้า', bg: '', label: '🌅 เช้า' },
+                        { key: 'บ่าย', bg: '', label: '☀️ บ่าย' },
+                        { key: 'OT', bg: '', label: '🌙 OT' }
+                    ]),
                 { key: 'ส่งท่อ', bg: 'bg-emerald-50 dark:bg-emerald-950/20', label: '🚚 ส่งท่อ (FG)' },
                 { key: 'โน้ต', bg: 'bg-amber-50 dark:bg-amber-950/10', label: '📝 โน้ตประจำวัน' }
             ];
+            const rowCat = { 'รับท่อ': 'recv', 'ผลิต': 'prod', 'เช้า': 'prod', 'บ่าย': 'prod', 'OT': 'prod', 'ส่งท่อ': 'ship' };
 
             // รวมรายการรับท่อจากทะเบียน RM ใหม่และข้อมูล legacy โดยกันการแสดงซ้ำ
-            const legacyReceiveRows = db.filter(i => i.receivedDate).map(i => ({
+            const legacyReceiveRows = dbF.filter(i => i.receivedDate).map(i => ({
                 ...i,
                 _timelineKey: `db-${i.id}`,
                 _timelineType: 'legacy'
             }));
-            const rmReceiveRows = rmRecords.map(i => ({
+            const rmReceiveRows = rmF.map(i => ({
                 ...i,
                 _timelineKey: `rm-${i.id}`,
                 _timelineType: 'rm'
             }));
             // กันเฉพาะ mirror ที่มี sourceDbId ชัดเจน; ไม่ใช้ project/size/qty เป็น unique key
-            const linkedDbIds = new Set(rmReceiveRows.map(i => Number(i.sourceDbId)).filter(Number.isFinite));
+            const linkedDbIds = new Set(rmRecords.map(i => Number(i.sourceDbId)).filter(Number.isFinite));
             const dedupedLegacyReceiveRows = legacyReceiveRows.filter(i => !linkedDbIds.has(Number(i.id)));
             const allReceiveRows = [ ...dedupedLegacyReceiveRows, ...rmReceiveRows ];
 
+            // ---------- สรุปยอดรายวัน ----------
+            const sums = {};
+            const S = k => (sums[k] ||= { m: 0, a: 0, o: 0, r: 0, s: 0 });
+            dbF.forEach(i => {
+                if (i.date) { const x = S(i.date); x.m += Number(i.morningQty || 0); x.a += Number(i.afternoonQty || 0); x.o += Number(i.otQty || 0); }
+                const dk = getDispatchDate(i);
+                if (dk) S(dk).s += Number(i.qty || 0);
+            });
+            allReceiveRows.forEach(i => { if (i.receivedDate) S(i.receivedDate).r += Number(i.qty || 0); });
+            const rangeTotal = { r: 0, p: 0, s: 0 };
+            days.forEach(d => {
+                const x = sums[dateToKey(d)];
+                if (!x) return;
+                rangeTotal.r += x.r; rangeTotal.p += x.m + x.a + x.o; rangeTotal.s += x.s;
+            });
+
+            // ---------- เตือนลำดับวันผิดปกติ ----------
+            let anomalyCount = 0;
+            dbF.forEach(i => {
+                if (!timelineAnomalies(i).length) return;
+                if ([i.date, i.receivedDate, getDispatchDate(i)].some(v => v && dayKeys.has(v))) anomalyCount++;
+            });
+            const aBadge = document.getElementById('timeline-anomaly-badge');
+            if (aBadge) {
+                aBadge.textContent = `⚠️ ลำดับวันผิดปกติ ${anomalyCount} รายการ (กรอบแดง)`;
+                aBadge.classList.toggle('hidden', anomalyCount === 0);
+            }
+            function anomalyAttrs(list) {
+                const uniq = [...new Set(list)];
+                if (!uniq.length) return { style: '', badge: '', title: '' };
+                return {
+                    style: ';outline:2px solid #f43f5e;outline-offset:-1px',
+                    title: uniq.join(' • '),
+                    badge: `<div class="text-[8px] font-black text-white bg-rose-600 rounded px-1 mt-0.5 leading-tight whitespace-normal" style="overflow-wrap:anywhere;word-break:break-word">⚠️ ${uniq.join('<br>')}</div>`
+                };
+            }
+            function receiveAnomalies(it) {
+                if (it._timelineType === 'legacy') return timelineAnomalies(it);
+                const linked = it.sourceDbId ? db.find(x => Number(x.id) === Number(it.sourceDbId)) : null;
+                return linked ? timelineAnomalies(linked) : [];
+            }
+
+            const dateInputCls = 'w-full text-[9px] font-bold rounded px-1 py-0.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600';
+            const jacketOf = it => (it.jacket && it.jacket !== 'ไม่ระบุ' ? ' ' + it.jacket : '');
+
             function timelineReceiveChip(it) {
                 const col = getProjectColor(it.project);
+                const an = anomalyAttrs(receiveAnomalies(it));
+                const dndType = it.id && it._timelineType === 'rm' ? 'recv-rm' : 'recv-legacy';
                 return `
-                    <div onclick="event.stopPropagation(); openDayDetailModal('${it.receivedDate || ''}')" class="px-1.5 py-1 rounded-md mb-1 cursor-pointer hover:opacity-90 transition" style="background-color: ${col.bg}">
+                    <div draggable="true" data-dnd-type="${dndType}" data-dnd-ids="${it.id}" data-dnd-from="${it.receivedDate || ''}" title="${escapeTimelineText(an.title)}" onclick="event.stopPropagation(); openDayDetailModal('${it.receivedDate || ''}')" class="px-1.5 py-1 rounded-md mb-1 cursor-grab hover:opacity-90 transition" style="background-color: ${col.bg}${an.style}">
                         <div class="text-[9px] truncate font-bold text-white opacity-90 leading-tight">${it.project || '-'}</div>
-                        <div class="text-[10px] font-black text-white leading-tight">${it.size || '-'}${it.jacket && it.jacket !== 'ไม่ระบุ' ? ' ' + it.jacket : ''}</div>
-                        <div class="text-[9px] text-white/85 leading-tight">รับเข้า = ${Number(it.qty || 0).toLocaleString('th-TH')} ท่อน</div>
-                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${it.receivedDate||''}" onchange="${it.id && it._timelineType==='rm' ? `updateRMReceiveDate(${it.id}, this.value)` : `updateLegacyReceiveDate(${it.id}, this.value)`}" class="w-full text-[9px] font-bold rounded px-1 py-0.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600"></div>
+                        <div class="text-[10px] font-black text-white leading-tight">${it.size || '-'}${jacketOf(it)}</div>
+                        <div class="text-[9px] text-white/85 leading-tight">รับเข้า = ${fmt(it.qty)} ท่อน</div>
+                        ${an.badge}
+                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${it.receivedDate||''}" onchange="${it.id && it._timelineType==='rm' ? `updateRMReceiveDate(${it.id}, this.value)` : `updateLegacyReceiveDate(${it.id}, this.value)`}" class="${dateInputCls}"></div>
                     </div>
                 `;
             }
 
+            // โหมดแยกกะ: การ์ดต่อกะ (เช้า/บ่าย/OT)
             function timelineProductionChip(it, shiftLabel, shiftQty) {
                 const col = getProjectColor(it.project);
+                const an = anomalyAttrs(timelineAnomalies(it));
                 return `
-                    <div onclick="event.stopPropagation(); openDayDetailModal('${it.date || ''}')" class="px-1.5 py-1 rounded-md mb-1 cursor-pointer hover:opacity-90 transition" style="background-color: ${col.bg}">
+                    <div draggable="true" data-dnd-type="prod" data-dnd-ids="${it.id}" data-dnd-from="${it.date || ''}" title="${escapeTimelineText(an.title)}" onclick="event.stopPropagation(); openDayDetailModal('${it.date || ''}')" class="px-1.5 py-1 rounded-md mb-1 cursor-grab hover:opacity-90 transition" style="background-color: ${col.bg}${an.style}">
                         <div class="text-[9px] truncate font-bold text-white opacity-90 leading-tight">${it.project || '-'}</div>
-                        <div class="text-[10px] font-black text-white leading-tight">${it.size || '-'}${it.jacket && it.jacket !== 'ไม่ระบุ' ? ' ' + it.jacket : ''}</div>
-                        <div class="text-[9px] text-white/85 leading-tight">${shiftLabel} = ${Number(shiftQty || 0).toLocaleString('th-TH')} ท่อน</div>
+                        <div class="text-[10px] font-black text-white leading-tight">${it.size || '-'}${jacketOf(it)}</div>
+                        <div class="text-[9px] text-white/85 leading-tight">${shiftLabel} = ${fmt(shiftQty)} ท่อน</div>
+                        <div class="text-[8px] text-white/75 leading-tight">แก้วันผลิต (ย้ายทุกกะของรายการนี้)</div>
+                        ${an.badge}
+                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${it.date||''}" onchange="updateProductionDate(${it.id}, this.value)" class="${dateInputCls}"></div>
                     </div>
                 `;
             }
 
-            function escapeTimelineText(value) {
-                return String(value ?? '').replace(/[&<>\"']/g, ch => ({
-                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;'
-                }[ch]));
+            // โหมดรวมกะ: 1 รายการ = 1 การ์ด แสดงเช้า/บ่าย/OT พร้อมกัน และมีช่องวันที่ช่องเดียว
+            function timelineProductionMergedChip(it) {
+                const col = getProjectColor(it.project);
+                const an = anomalyAttrs(timelineAnomalies(it));
+                const m = Number(it.morningQty || 0), a = Number(it.afternoonQty || 0), o = Number(it.otQty || 0);
+                const shiftLines = [
+                    m > 0 ? `<div class="text-[9px] text-white/90 leading-tight">🌅 เช้า ${fmt(m)}</div>` : '',
+                    a > 0 ? `<div class="text-[9px] text-white/90 leading-tight">☀️ บ่าย ${fmt(a)}</div>` : '',
+                    o > 0 ? `<div class="text-[9px] text-white/90 leading-tight">🌙 OT ${fmt(o)}</div>` : ''
+                ].join('');
+                return `
+                    <div draggable="true" data-dnd-type="prod" data-dnd-ids="${it.id}" data-dnd-from="${it.date || ''}" title="${escapeTimelineText(an.title)}" onclick="event.stopPropagation(); openDayDetailModal('${it.date || ''}')" class="px-1.5 py-1 rounded-md mb-1 cursor-grab hover:opacity-90 transition" style="background-color: ${col.bg}${an.style}">
+                        <div class="text-[9px] truncate font-bold text-white opacity-90 leading-tight">${it.project || '-'}</div>
+                        <div class="text-[10px] font-black text-white leading-tight">${it.size || '-'}${jacketOf(it)}</div>
+                        ${shiftLines}
+                        <div class="text-[9px] font-black text-white leading-tight border-t border-white/30 mt-0.5 pt-0.5">รวม ${fmt(m + a + o)} ท่อน</div>
+                        ${an.badge}
+                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${it.date||''}" onchange="updateProductionDate(${it.id}, this.value)" class="${dateInputCls}"></div>
+                    </div>
+                `;
             }
 
             function timelineNoteChip(dateKey) {
@@ -6561,30 +6787,29 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 const dd = getDispatchDate(g.items[0]) || '';
                 const loc = [...new Set(g.items.map(i => i.deliveryLocation).filter(Boolean))].join(' / ');
                 const clickTarget = g.items.length === 1 ? `editItem(${g.items[0].id})` : `openDayDetailModal('${dd}')`;
+                const an = anomalyAttrs(g.items.flatMap(timelineAnomalies));
                 return `
-                    <div onclick="event.stopPropagation(); ${clickTarget}" class="px-1.5 py-1 rounded-md mb-1 cursor-pointer hover:opacity-90 transition" style="background-color: ${col.bg}">
+                    <div draggable="true" data-dnd-type="ship" data-dnd-ids="${ids.join(',')}" data-dnd-from="${dd}" title="${escapeTimelineText(an.title)}" onclick="event.stopPropagation(); ${clickTarget}" class="px-1.5 py-1 rounded-md mb-1 cursor-grab hover:opacity-90 transition" style="background-color: ${col.bg}${an.style}">
                         <div class="text-[9px] truncate font-bold text-white opacity-90 leading-tight">${g.project || '-'}</div>
-                        <div class="text-[10px] font-black text-white leading-tight">${g.size || '-'}${g.jacket && g.jacket !== 'ไม่ระบุ' ? ' ' + g.jacket : ''}</div>
-                        <div class="text-[9px] text-white/85 leading-tight">🚚 ส่ง = ${Number(g.qty || 0).toLocaleString('th-TH')} ท่อน${g.items.length > 1 ? ` (รวม ${g.items.length} รายการ)` : ''}</div>
+                        <div class="text-[10px] font-black text-white leading-tight">${g.size || '-'}${jacketOf(g)}</div>
+                        <div class="text-[9px] text-white/85 leading-tight">🚚 ส่ง = ${fmt(g.qty)} ท่อน${g.items.length > 1 ? ` (รวม ${g.items.length} รายการ)` : ''}</div>
                         <div class="text-[8px] text-white/75 leading-tight">FG กำหนดส่ง: ${dd || '-'}</div>
                         ${loc ? `<div class="text-[8px] text-white/85 truncate">📍 ${loc}</div>` : ''}
-                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${dd}" onchange="updateFGDispatchDateBulk(${idsAttr}, this.value)" class="w-full text-[9px] font-bold rounded px-1 py-0.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600"></div>
+                        ${an.badge}
+                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${dd}" onchange="updateFGDispatchDateBulk(${idsAttr}, this.value)" class="${dateInputCls}"></div>
                     </div>
                 `;
             }
 
-            function timelineShippingChip(it) {
-                const col = getProjectColor(it.project);
-                return `
-                    <div onclick="event.stopPropagation(); editItem(${it.id})" class="px-1.5 py-1 rounded-md mb-1 cursor-pointer hover:opacity-90 transition" style="background-color: ${col.bg}">
-                        <div class="text-[9px] truncate font-bold text-white opacity-90 leading-tight">${it.project || '-'}</div>
-                        <div class="text-[10px] font-black text-white leading-tight">${it.size || '-'}${it.jacket && it.jacket !== 'ไม่ระบุ' ? ' ' + it.jacket : ''}</div>
-                        <div class="text-[9px] text-white/85 leading-tight">🚚 ส่ง = ${Number(it.qty || 0).toLocaleString('th-TH')} ท่อน</div>
-                        <div class="text-[8px] text-white/75 leading-tight">FG กำหนดส่ง: ${getDispatchDate(it) || '-'}</div>
-                        ${it.deliveryLocation ? `<div class="text-[8px] text-white/85 truncate">📍 ${it.deliveryLocation}</div>` : ''}
-                        <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${getDispatchDate(it)||''}" onchange="updateFGDispatchDate(${it.id}, this.value)" class="w-full text-[9px] font-bold rounded px-1 py-0.5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600"></div>
-                    </div>
-                `;
+            function summaryCell(key) {
+                const x = sums[key];
+                const line = (icon, cls, val, sub) => `<div class="flex items-baseline justify-between gap-1"><span class="${cls} font-bold">${icon}</span><span class="${val ? 'font-black text-slate-800 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600'}">${val ? fmt(val) : '-'}</span></div>${sub || ''}`;
+                if (!x) return line('📥 รับ', 'text-sky-600 dark:text-sky-400', 0) + line('🏭 ผลิต', 'text-amber-600 dark:text-amber-400', 0) + line('🚚 ส่ง', 'text-emerald-600 dark:text-emerald-400', 0);
+                const p = x.m + x.a + x.o;
+                const sub = p > 0 ? `<div class="text-[8px] text-slate-400 text-right leading-tight">ช ${fmt(x.m)} • บ ${fmt(x.a)} • OT ${fmt(x.o)}</div>` : '';
+                return line('📥 รับ', 'text-sky-600 dark:text-sky-400', x.r)
+                    + line('🏭 ผลิต', 'text-amber-600 dark:text-amber-400', p, sub)
+                    + line('🚚 ส่ง', 'text-emerald-600 dark:text-emerald-400', x.s);
             }
 
             let headHtml = `<thead><tr>
@@ -6602,29 +6827,37 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
             let bodyHtml = `<tbody>`;
             rowDefs.forEach(row => {
+                const labelHtml = row.key === 'สรุป'
+                    ? `📊 สรุปยอด<div class="text-[9px] font-semibold text-slate-400 whitespace-normal leading-tight mt-0.5">ช่วงนี้<br>รับ ${fmt(rangeTotal.r)}<br>ผลิต ${fmt(rangeTotal.p)}<br>ส่ง ${fmt(rangeTotal.s)}</div>`
+                    : row.label;
                 bodyHtml += `<tr class="${row.bg} timeline-row-${row.key}">
-                    <td class="timeline-label-cell sticky left-0 z-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">${row.label}</td>`;
+                    <td class="timeline-label-cell sticky left-0 z-10 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">${labelHtml}</td>`;
                 days.forEach(d => {
                     const key = dateToKey(d);
                     let cellHtml = '';
 
-                    if (row.key === 'รับท่อ') {
+                    if (row.key === 'สรุป') {
+                        cellHtml = `<div class="text-[10px] leading-snug p-1 space-y-0.5">${summaryCell(key)}</div>`;
+                    } else if (row.key === 'รับท่อ') {
                         const items = allReceiveRows.filter(i => i.receivedDate === key);
                         cellHtml = items.map(timelineReceiveChip).join('');
                     } else if (row.key === 'ส่งท่อ') {
                         // สำคัญ: วันส่งอ่านจาก dispatchDate ใน FG โดยตรง
-                        // รวมรายการที่ โครงการ+ไซส์+แจ็คเก็ต เหมือนกันในวันเดียวกันเป็นการ์ดเดียว (เหมือนตารางคลัง FG) กันการ์ดซ้ำเกลื่อนช่อง
-                        const items = db.filter(i => getDispatchDate(i) === key);
+                        // รวมรายการที่ โครงการ+ไซส์+แจ็คเก็ต เหมือนกันในวันเดียวกันเป็นการ์ดเดียว (เหมือนตารางคลัง FG)
+                        const items = dbF.filter(i => getDispatchDate(i) === key);
                         const groups = groupDisplayRows(items);
                         cellHtml = groups.map(timelineShippingChipGroup).join('');
+                    } else if (row.key === 'ผลิต') {
+                        const items = dbF.filter(i => i.date === key && (Number(i.morningQty || 0) + Number(i.afternoonQty || 0) + Number(i.otQty || 0)) > 0);
+                        cellHtml = items.map(timelineProductionMergedChip).join('');
                     } else if (row.key === 'เช้า') {
-                        const items = db.filter(i => i.date === key && Number(i.morningQty || 0) > 0);
+                        const items = dbF.filter(i => i.date === key && Number(i.morningQty || 0) > 0);
                         cellHtml = items.map(i => timelineProductionChip(i, 'เช้า', i.morningQty)).join('');
                     } else if (row.key === 'บ่าย') {
-                        const items = db.filter(i => i.date === key && Number(i.afternoonQty || 0) > 0);
+                        const items = dbF.filter(i => i.date === key && Number(i.afternoonQty || 0) > 0);
                         cellHtml = items.map(i => timelineProductionChip(i, 'บ่าย', i.afternoonQty)).join('');
                     } else if (row.key === 'OT') {
-                        const items = db.filter(i => i.date === key && Number(i.otQty || 0) > 0);
+                        const items = dbF.filter(i => i.date === key && Number(i.otQty || 0) > 0);
                         cellHtml = items.map(i => timelineProductionChip(i, 'OT', i.otQty)).join('');
                     } else if (row.key === 'โน้ต') {
                         cellHtml = timelineNoteChip(key);
@@ -6632,8 +6865,9 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
                     const cellClickFn = row.key === 'รับท่อ' ? `openAddRMModal('${key}')` : `openDayDetailModal('${key}')`;
                     const rmAddHint = row.key === 'รับท่อ' ? `<button type="button" onclick="event.stopPropagation(); openAddRMModal('${key}')" title="เพิ่มรายการรับ RM วันที่นี้" class="w-full text-[9px] font-bold text-sky-600 dark:text-sky-400 border border-dashed border-sky-300 dark:border-sky-800 rounded-md py-1 hover:bg-sky-50 dark:hover:bg-sky-950/30 transition">+ รับ RM</button>` : '';
-                    bodyHtml += `<td onclick="${cellClickFn}" class="timeline-data-cell align-top border border-slate-200 dark:border-slate-800 p-1 cursor-pointer hover:bg-theme-500/5 transition ${d.getDay() === 0 ? 'sunday-muted' : ''}" style="min-width:${colWidth}px">
-                        <div class="timeline-cell-scroll">${cellHtml}${row.key === 'รับท่อ' ? rmAddHint : (cellHtml ? '' : '<div class="min-h-[38px]"></div>')}</div>
+                    const filler = row.key === 'สรุป' ? '' : (cellHtml ? '' : '<div class="min-h-[38px]"></div>');
+                    bodyHtml += `<td onclick="${cellClickFn}" data-tl-date="${key}" data-tl-row="${rowCat[row.key] || ''}" class="timeline-data-cell align-top border border-slate-200 dark:border-slate-800 p-1 cursor-pointer hover:bg-theme-500/5 transition ${d.getDay() === 0 ? 'sunday-muted' : ''}" style="min-width:${colWidth}px">
+                        <div class="timeline-cell-scroll">${cellHtml}${row.key === 'รับท่อ' ? rmAddHint : filler}</div>
                     </td>`;
                 });
                 bodyHtml += `</tr>`;
