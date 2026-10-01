@@ -185,6 +185,7 @@
         #timeline-table[data-drag-cat="recv"] td[data-tl-row="recv"],
         #timeline-table[data-drag-cat="prod"] td[data-tl-row="prod"],
         #timeline-table[data-drag-cat="ship"] td[data-tl-row="ship"] { box-shadow: inset 0 0 0 1px rgba(245,158,11,.55); }
+        #timeline-table td.tl-today-col { background-image: linear-gradient(rgba(245,158,11,.09), rgba(245,158,11,.09)); }
         #timeline-table td.tl-drop-hover { outline: 2px dashed var(--color-500); outline-offset: -2px; background-color: rgba(245,158,11,.14) !important; }
 
         /* วันอาทิตย์: ทำให้ดูจางและเบลอเล็กน้อยเพื่อสื่อว่าเป็นวันหยุด แต่ยังคลิกดูข้อมูลได้ */
@@ -2313,6 +2314,23 @@ service cloud.firestore {
             </div>
         </div>
 
+        <div class="flex items-center gap-2 mb-3 flex-wrap" id="timeline-tools-row">
+            <input id="timeline-search-input" type="search" oninput="onTimelineSearch(this.value)" placeholder="🔍 ค้นหา โครงการ / ไซส์ / แจ็คเก็ต / สถานที่ส่ง" class="text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 font-semibold dark:text-white w-full sm:w-72">
+            <select id="timeline-status-select" onchange="onTimelineStatusChange()" class="text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 font-bold dark:text-white">
+                <option value="">ทุกสถานะ</option>
+            </select>
+            <label class="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400">ไปวันที่
+                <input id="timeline-goto-date" type="date" onchange="timelineGoToDate(this.value)" class="text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 font-bold dark:text-white">
+            </label>
+            <button id="timeline-capacity-btn" onclick="setTimelineCapacity()" title="ตั้งกำลังผลิตสูงสุดต่อวัน เพื่อเตือนวันที่ผลิตเกิน" class="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm text-slate-700 dark:text-slate-300">⚙️ กำลังผลิต: ไม่ตั้ง</button>
+            <button onclick="openTimelineShiftModal()" title="ย้ายงานทั้งวันไปวันใหม่ในครั้งเดียว" class="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm text-slate-700 dark:text-slate-300">↔️ เลื่อนทั้งวัน</button>
+            <button onclick="undoLastAction()" title="ย้อนกลับการแก้ไขล่าสุด" class="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm text-slate-700 dark:text-slate-300">↩️ ย้อนกลับ</button>
+            <button onclick="copyTimelineSummary()" title="คัดลอกสรุปช่วงที่แสดงเป็นข้อความ" class="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm text-slate-700 dark:text-slate-300">📋 คัดลอกสรุป</button>
+            <button onclick="exportTimelineCsv()" title="ส่งออกช่วงที่แสดงเป็นไฟล์ CSV" class="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-sm text-slate-700 dark:text-slate-300">⬇️ CSV</button>
+            <button id="timeline-clear-filter-btn" onclick="clearTimelineFilters()" class="hidden px-3 py-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-800 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 transition shadow-sm">✖ ล้างตัวกรอง</button>
+            <span class="text-[10px] text-slate-400 hidden lg:inline">คีย์ลัด: ← → เลื่อนช่วงวัน • Home = วันนี้</span>
+        </div>
+
         <div class="flex items-center gap-3 mb-3 text-[10px] flex-wrap">
             <span class="flex items-center gap-1 font-bold text-slate-500 dark:text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>รับท่อ (วัตถุดิบเข้า)</span>
             <span class="flex items-center gap-1 font-bold text-slate-500 dark:text-slate-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>แผนผลิต เช้า/บ่าย/OT (กำลังผลิต)</span>
@@ -2627,6 +2645,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             if (qSize) { const cur = qSize.value; qSize.innerHTML = getSizeSelectOptionsHtml(); qSize.value = PIPE_SPECS[cur] ? cur : ''; }
         }
 
+        // [เก็บโค้ดเดิมไว้] พาเลตต์ 8 สีเดิม (ไม่ได้ใช้แล้ว เพราะ getProjectColor ด้านล่างแจกสีไม่ซ้ำแทน)
         const PROJECT_PALETTE = [
             { bg: '#3B82F6', text: '#FFFFFF', lightBg: 'rgba(59, 130, 246, 0.12)', border: '#3B82F6' },
             { bg: '#10B981', text: '#FFFFFF', lightBg: 'rgba(16, 185, 129, 0.12)', border: '#10B981' },
@@ -2637,15 +2656,131 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             { bg: '#F97316', text: '#FFFFFF', lightBg: 'rgba(249, 115, 22, 0.12)', border: '#F97316' },
             { bg: '#64748B', text: '#FFFFFF', lightBg: 'rgba(100, 116, 139, 0.12)', border: '#64748B' }
         ];
-
-        function getProjectColor(projectName) {
+        // [เก็บโค้ดเดิมไว้] ตัวเลือกสีแบบแฮชชื่อ (เปลี่ยนชื่อเป็น getProjectColorLegacy ไม่ถูกเรียกใช้)
+        function getProjectColorLegacy(projectName) {
             if (!projectName) return PROJECT_PALETTE[0];
             let hash = 0;
             for (let i = 0; i < projectName.length; i++) {
                 hash = projectName.charCodeAt(i) + ((hash << 5) - hash);
             }
-            const idx = Math.abs(hash) % PROJECT_PALETTE.length;
-            return PROJECT_PALETTE[idx];
+            return PROJECT_PALETTE[Math.abs(hash) % PROJECT_PALETTE.length];
+        }
+
+        // ===== สีโครงการ: แจกสีไม่ซ้ำ + จำไว้ไม่ให้เปลี่ยนเอง =====
+        // 24 สีที่ต่างกันชัด เรียงให้สีที่อยู่ติดกันในลิสต์ห่างกันมาก (โครงการแรก ๆ จะไม่มีทางคล้ายกัน)
+        // ทุกสีเข้มพอให้ตัวหนังสือขาวอ่านออก
+        const PROJECT_BASE_COLORS = [
+            '#2563EB', // น้ำเงิน
+            '#DC2626', // แดง
+            '#059669', // เขียวมรกต
+            '#C26A00', // ส้มอำพัน
+            '#7C3AED', // ม่วง
+            '#0E7490', // ฟ้าน้ำทะเล
+            '#DB2777', // ชมพูเข้ม
+            '#568F0C', // เขียวมะนาว
+            '#92400E', // น้ำตาล
+            '#4F46E5', // คราม
+            '#0F766E', // เขียวหยก
+            '#D9480F', // ส้มอิฐ
+            '#A21CAF', // ม่วงแดง
+            '#0369A1', // ฟ้าเข้ม
+            '#BE123C', // แดงกุหลาบ
+            '#4D7C0F', // เขียวใบไม้
+            '#B45309', // ทอง
+            '#6D28D9', // ม่วงเข้ม
+            '#047857', // เขียวป่า
+            '#C026D3', // บานเย็น
+            '#1D4ED8', // น้ำเงินเข้ม
+            '#9A3412', // สนิม
+            '#475569', // เทาน้ำเงิน
+            '#BE185D'  // ชมพูแดง
+        ];
+        const PROJECT_COLOR_MAP_KEY = 'gekko_project_color_map';
+        let projectColorMap = (function () {
+            try { const m = JSON.parse(localStorage.getItem(PROJECT_COLOR_MAP_KEY) || '{}'); return (m && typeof m === 'object') ? m : {}; }
+            catch (_) { return {}; }
+        })();
+        let _projectColorCache = {};
+
+        function _hexToRgba(hex, a) {
+            const n = parseInt(hex.slice(1), 16);
+            return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+        }
+        function _hslToHex(h, s, l) {
+            s /= 100; l /= 100;
+            const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+            const f = n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))));
+            return '#' + [f(0), f(8), f(4)].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+        }
+        // สีลำดับที่ i: 24 สีแรกจากชุดหลัก หลังจากนั้นสร้างจากมุมสีทอง (golden angle) สลับความสว่าง
+        function _colorByIndex(i) {
+            if (i < PROJECT_BASE_COLORS.length) return PROJECT_BASE_COLORS[i];
+            const j = i - PROJECT_BASE_COLORS.length;
+            return _hslToHex((j * 137.508 + 20) % 360, 62 + (j % 2) * 8, 34 + (j % 3) * 5);
+        }
+        function _makeProjectColor(hex) {
+            return { bg: hex, text: '#FFFFFF', lightBg: _hexToRgba(hex, 0.12), border: hex };
+        }
+        function _saveProjectColorMap() {
+            try { localStorage.setItem(PROJECT_COLOR_MAP_KEY, JSON.stringify(projectColorMap)); } catch (_) {}
+        }
+        // เลือก "ช่องสี" ที่ยังไม่ถูกใช้ก่อน ถ้าใช้ครบแล้วค่อยใช้ซ้ำช่องที่ถูกใช้น้อยที่สุด
+        function _pickFreeSlot() {
+            const used = {};
+            Object.values(projectColorMap).forEach(i => { used[i] = (used[i] || 0) + 1; });
+            let best = 0, bestCount = Infinity;
+            for (let i = 0; i < 400; i++) {
+                const c = used[i] || 0;
+                if (c === 0) return i;
+                if (c < bestCount) { bestCount = c; best = i; }
+            }
+            return best;
+        }
+        // ผูกสีให้โครงการที่ยังไม่มีสี โดยเรียงตามชื่อ (ทุกเครื่องจะได้สีใกล้เคียงกัน)
+        function ensureProjectColors(names) {
+            let changed = false;
+            const list = [...new Set((names || []).filter(n => typeof n === 'string' && n && projectColorMap[n] === undefined))]
+                .sort((a, b) => a.localeCompare(b, 'th'));
+            list.forEach(n => { projectColorMap[n] = _pickFreeSlot(); changed = true; });
+            if (changed) { _saveProjectColorMap(); _projectColorCache = {}; }
+        }
+        function getProjectColor(projectName) {
+            if (!projectName) return _makeProjectColor(PROJECT_BASE_COLORS[0]);
+            const name = String(projectName);
+            if (projectColorMap[name] === undefined) {
+                projectColorMap[name] = _pickFreeSlot();
+                _saveProjectColorMap();
+            }
+            const idx = projectColorMap[name];
+            if (typeof idx === 'string' && /^#[0-9a-fA-F]{6}$/.test(idx)) {
+                return _projectColorCache[idx] || (_projectColorCache[idx] = _makeProjectColor(idx.toUpperCase()));
+            }
+            return _projectColorCache[idx] || (_projectColorCache[idx] = _makeProjectColor(_colorByIndex(idx)));
+        }
+        // ถ้าสีที่เลือกเองอ่อนเกินไปจนตัวหนังสือขาวอ่านไม่ออก ให้ผสมดำเพิ่มจนอ่านได้
+        function _ensureReadableHex(hex) {
+            const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+            let h = hex, guard = 0;
+            while (1.05 / (lum(h) + 0.05) < 3.6 && guard++ < 30) {
+                const c = [1, 3, 5].map(i => Math.max(0, Math.round(parseInt(h.substr(i, 2), 16) * 0.92)));
+                h = '#' + c.map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+            }
+            return h;
+        }
+        function setProjectCustomColor(name, hex) {
+            if (!name || !/^#[0-9a-fA-F]{6}$/.test(String(hex))) return false;
+            projectColorMap[name] = _ensureReadableHex(String(hex).toUpperCase());
+            _saveProjectColorMap(); _projectColorCache = {};
+            return true;
+        }
+
+        // ย้ายสีตามชื่อใหม่ตอนเปลี่ยนชื่อโครงการ (สีไม่กระโดด)
+        function renameProjectColor(oldName, newName) {
+            if (projectColorMap[oldName] !== undefined) {
+                if (projectColorMap[newName] === undefined) projectColorMap[newName] = projectColorMap[oldName];
+                delete projectColorMap[oldName];
+                _saveProjectColorMap(); _projectColorCache = {};
+            }
         }
 
         const PALETTES = {
@@ -2669,6 +2804,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         let fullCalendarMonth = new Date().getMonth();
         let timelineDaysCount = 14;
         let timelineProjectFilter = '';
+        let timelineSearch = '';
+        let timelineStatusFilter = '';
+        let timelineCapacity = (function () { try { return Math.max(0, Number(localStorage.getItem('gekko_timeline_capacity')) || 0); } catch (_) { return 0; } })();
+        let timelineLastView = null;
         let timelineMergeProd = (function () { try { return localStorage.getItem('gekko_timeline_merge') !== '0'; } catch (_) { return true; } })();
         let timelineCenterDate = (function () { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
         // ช่วงวันที่แสดงในไทม์ไลน์จะคำนวณจากวันตรงกลาง (timelineCenterDate) เสมอ เพื่อให้วันปัจจุบัน/วันที่เลือกอยู่กึ่งกลางตาราง
@@ -3265,11 +3404,27 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 const badges = (s.open ? badge('งานค้าง ' + s.open, 'bg-amber-500/15 text-amber-700 dark:text-amber-400') : '') + (s.rm ? badge('RM คงเหลือ ' + s.rm.toLocaleString('th-TH'), 'bg-sky-500/15 text-sky-700 dark:text-sky-400') : '')
                     + (!s.open && !s.rm ? badge(s.total ? 'ไม่มีงานค้าง' : 'ยังไม่มีข้อมูล', 'bg-slate-500/15 text-slate-500') : '') + (arch ? badge('เลิกใช้แล้ว', 'bg-rose-500/10 text-rose-500') : '');
                 return '<div class="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-800 ' + (arch ? 'opacity-60' : '') + '">'
-                    + '<div class="min-w-0"><div class="text-xs font-bold text-slate-900 dark:text-white break-words">' + pjEsc(p) + '</div><div class="flex flex-wrap gap-1 mt-1">' + badges + (s.last ? '<span class="text-[10px] text-slate-400">ล่าสุด ' + s.last + '</span>' : '') + '</div></div>'
+                    + '<div class="min-w-0 flex items-start gap-2"><button type="button" title="Change project color" aria-label="Change project color" onclick="pjMgrCycleColor(' + idx + ')" class="shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 border-white dark:border-slate-700 shadow ring-1 ring-slate-300 dark:ring-slate-600 hover:scale-125 transition" style="background:' + getProjectColor(p).bg + '"></button><input type="color" title="เลือกสีเอง" aria-label="เลือกสีเอง" value="' + getProjectColor(p).bg.toLowerCase() + '" onchange="pjMgrSetColor(' + idx + ', this.value)" class="shrink-0 mt-0.5 w-4 h-4 p-0 border-0 bg-transparent cursor-pointer opacity-70 hover:opacity-100" style="width:16px;height:16px"><div class="min-w-0"><div class="text-xs font-bold text-slate-900 dark:text-white break-words">' + pjEsc(p) + '</div><div class="flex flex-wrap gap-1 mt-1">' + badges + (s.last ? '<span class="text-[10px] text-slate-400">ล่าสุด ' + s.last + '</span>' : '') + '</div></div></div>'
                     + '<div class="flex gap-1 shrink-0"><button type="button" class="' + btn + '" onclick="pjMgrAction(\'' + (arch ? 'restore' : 'archive') + '\',' + idx + ')">' + (arch ? '↩ ใช้อีกครั้ง' : '📁 เลิกใช้') + '</button>'
                     + '<button type="button" class="' + btn + '" onclick="pjMgrAction(\'rename\',' + idx + ')">✏️ ชื่อ</button>'
                     + (s.total === 0 ? '<button type="button" class="' + btn + ' !text-rose-500" onclick="pjMgrAction(\'delete\',' + idx + ')">🗑</button>' : '') + '</div></div>';
             }).join('') || '<p class="text-xs text-slate-400 text-center p-4">ไม่พบโครงการ</p>';
+        }
+        // กดจุดสีหน้าโครงการเพื่อเปลี่ยนสี (ข้ามไปสีถัดไปที่ยังไม่มีใครใช้)
+        function pjMgrCycleColor(idx) {
+            const name = pjMgrRows[idx]; if (!name) return;
+            const used = new Set(Object.entries(projectColorMap).filter(([k]) => k !== name).map(([, v]) => v));
+            let cur = (projectColorMap[name] === undefined || typeof projectColorMap[name] === 'string') ? -1 : projectColorMap[name], next = cur;
+            for (let step = 1; step <= 400; step++) { const c = (cur + step + 400) % 400; if (!used.has(c)) { next = c; break; } }
+            projectColorMap[name] = next; _saveProjectColorMap(); _projectColorCache = {};
+            renderProjectManager();
+            try { renderActiveView(); } catch (_) {}
+        }
+        function pjMgrSetColor(idx, hex) {
+            const name = pjMgrRows[idx]; if (!name) return;
+            if (!setProjectCustomColor(name, hex)) return;
+            renderProjectManager();
+            try { renderActiveView(); } catch (_) {}
         }
         function pjMgrAction(kind, idx) {
             if (blockIfViewOnly()) return;
@@ -3295,6 +3450,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 if (merge && !confirm('มีโครงการ "' + nv + '" อยู่แล้ว — รวม "' + name + '" เข้าด้วยกัน?')) return;
                 pushUndoSnapshot('เปลี่ยนชื่อโครงการ');
                 db.forEach(i => { if (i.project === name) i.project = nv; });
+                try { renameProjectColor(name, nv); } catch (_) {}
                 rmRecords.forEach(i => { if (i.project === name) i.project = nv; });
                 const wasArch = projectsArchived.includes(name);
                 projectsList = merge ? projectsList.filter(x => x !== name) : projectsList.map(x => x === name ? nv : x);
@@ -6110,7 +6266,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
 
         function exportJSON() {
-            const backup = { version: 3, exportedAt: new Date().toISOString(), production: db, rmRecords, projectsList, calendarNotes, customPipeSpecs, hiddenDefaultSizes, projectsArchived };
+            const backup = { version: 3, exportedAt: new Date().toISOString(), production: db, rmRecords, projectsList, calendarNotes, customPipeSpecs, hiddenDefaultSizes, projectsArchived, projectColorMap };
             try { localStorage.setItem('gekko_last_backup', String(Date.now())); } catch (_) {}
             const dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
             const dlAnchor = document.createElement('a');
@@ -6138,6 +6294,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         if (imported.customPipeSpecs && typeof imported.customPipeSpecs === 'object') { customPipeSpecs = imported.customPipeSpecs; saveCustomPipeSpecs(); }
                         if (Array.isArray(imported.hiddenDefaultSizes)) { hiddenDefaultSizes = imported.hiddenDefaultSizes; saveHiddenDefaultSizes(); }
                         if (Array.isArray(imported.projectsArchived)) { projectsArchived = imported.projectsArchived; saveProjectsArchived(); }
+                        if (imported.projectColorMap && typeof imported.projectColorMap === 'object' && !Array.isArray(imported.projectColorMap)) { projectColorMap = imported.projectColorMap; _projectColorCache = {}; _saveProjectColorMap(); }
                         rebuildPipeSpecs();
                         normalizeRMRecords();
                         saveRMRecords(); saveProjectsList(); saveCalendarNotes();
@@ -6312,6 +6469,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             pushUndoSnapshot('แก้ไขชื่อโครงการ');
             projectsList[idx] = trimmed;
             db.forEach(i => { if (i.project === oldName) i.project = trimmed; });
+            try { renameProjectColor(oldName, trimmed); } catch (_) {}
             saveProjectsList();
             saveDB();
             renderProjectOptions();
@@ -6464,6 +6622,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('timeline-modal').classList.remove('hidden');
             document.getElementById('timeline-days-select').value = String(timelineDaysCount);
             renderTimeline();
+            timelineScrollToCenter();
         }
 
         function closeTimelineModal() {
@@ -6505,6 +6664,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             d.setHours(0, 0, 0, 0);
             timelineCenterDate = d;
             renderTimeline();
+            timelineScrollToCenter();
         }
 
         function timelineItemChip(it) {
@@ -6517,6 +6677,265 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 </div>
             `;
         }
+
+        // ===== Timeline v13: ค้นหา / สถานะ / กำลังผลิต / ไปวันที่ / เลื่อนทั้งวัน / คัดลอกสรุป / CSV / คีย์ลัด =====
+        const TL_TH_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+        const TL_TH_DAYS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+        function tlThaiDate(key, withDow) {
+            const d = new Date(key + 'T00:00:00');
+            if (isNaN(d.getTime())) return key || '-';
+            return (withDow ? TL_TH_DAYS[d.getDay()] + ' ' : '') + d.getDate() + ' ' + TL_TH_MONTHS[d.getMonth()];
+        }
+        function tlNum(n) { return Number(n || 0).toLocaleString('th-TH'); }
+
+        // ตัวกรองรวม: โครงการ + คำค้นหา (โครงการ/ไซส์/แจ็คเก็ต/ความหนา/สถานที่ส่ง) + สถานะ (เฉพาะรายการใน db)
+        function timelineMatchesFilter(x, isDb) {
+            if (!x) return false;
+            if (timelineProjectFilter && (x.project || '') !== timelineProjectFilter) return false;
+            const q = (timelineSearch || '').trim().toLowerCase();
+            if (q) {
+                const hay = [x.project, x.size, x.jacket, x.thick, x.deliveryLocation].map(v => String(v || '').toLowerCase()).join(' ');
+                if (!q.split(/\s+/).every(t => hay.includes(t))) return false;
+            }
+            if (isDb && timelineStatusFilter && (x.status || '') !== timelineStatusFilter) return false;
+            return true;
+        }
+
+        let __tlSearchTimer = null;
+        function onTimelineSearch(v) {
+            timelineSearch = v || '';
+            clearTimeout(__tlSearchTimer);
+            __tlSearchTimer = setTimeout(renderTimeline, 150);
+        }
+        function onTimelineStatusChange() {
+            const sel = document.getElementById('timeline-status-select');
+            timelineStatusFilter = sel ? sel.value : '';
+            renderTimeline();
+        }
+        function clearTimelineFilters() {
+            timelineProjectFilter = ''; timelineSearch = ''; timelineStatusFilter = '';
+            const si = document.getElementById('timeline-search-input');
+            if (si) si.value = '';
+            renderTimeline();
+        }
+
+        function timelineScrollToCenter() {
+            const sc = document.getElementById('timeline-scroll-container');
+            const th = document.querySelector('#timeline-table th[data-tl-center]');
+            if (!sc || !th) return;
+            sc.scrollLeft = Math.max(0, th.offsetLeft - sc.clientWidth / 2 + th.offsetWidth / 2 + 45);
+        }
+        function timelineGoToDate(v) {
+            if (!v) return;
+            const d = new Date(v + 'T00:00:00');
+            if (isNaN(d.getTime())) return;
+            timelineCenterDate = d;
+            renderTimeline();
+            timelineScrollToCenter();
+        }
+
+        function setTimelineCapacity() {
+            const raw = window.prompt('กำลังผลิตสูงสุดต่อวัน (ท่อน)\nใส่ 0 หรือเว้นว่างเพื่อปิดการเตือน', timelineCapacity > 0 ? String(timelineCapacity) : '');
+            if (raw === null) return;
+            const n = Math.floor(Number(String(raw).replace(/,/g, '').trim() || 0));
+            timelineCapacity = Number.isFinite(n) && n > 0 ? n : 0;
+            try { localStorage.setItem('gekko_timeline_capacity', String(timelineCapacity)); } catch (_) {}
+            renderTimeline();
+            showToast(timelineCapacity > 0 ? `ตั้งกำลังผลิต ${tlNum(timelineCapacity)} ท่อน/วัน — วันที่เกินจะขึ้นสีแดงในแถวสรุป` : 'ปิดการเตือนกำลังผลิตแล้ว');
+        }
+
+        // ---------- คัดลอกสรุปเป็นข้อความ (วางใน LINE ได้) ----------
+        function timelineBuildSummaryText() {
+            const v = timelineLastView;
+            if (!v) return '';
+            const first = v.days[0], last = v.days[v.days.length - 1];
+            const lines = [];
+            const filt = [];
+            if (timelineProjectFilter) filt.push('โครงการ: ' + timelineProjectFilter);
+            if (timelineSearch.trim()) filt.push('ค้นหา: ' + timelineSearch.trim());
+            if (timelineStatusFilter) filt.push('สถานะ: ' + timelineStatusFilter);
+            lines.push(`📊 แผนงานท่อ ${tlThaiDate(first)} – ${tlThaiDate(last)}${filt.length ? ' (' + filt.join(' • ') + ')' : ''}`);
+            let any = false;
+            v.days.forEach(key => {
+                const recv = v.allReceiveRows.filter(i => i.receivedDate === key);
+                const prod = v.dbF.filter(i => i.date === key && (Number(i.morningQty || 0) + Number(i.afternoonQty || 0) + Number(i.otQty || 0)) > 0);
+                const ship = groupDisplayRows(v.dbF.filter(i => getDispatchDate(i) === key));
+                if (!recv.length && !prod.length && !ship.length) return;
+                any = true;
+                lines.push('');
+                lines.push(`📅 ${tlThaiDate(key, true)}`);
+                const jk = it => (it.jacket && it.jacket !== 'ไม่ระบุ' ? ' ' + it.jacket : '');
+                recv.forEach(i => lines.push(`  📥 รับ: ${i.project || '-'} ${i.size || '-'}${jk(i)} = ${tlNum(i.qty)} ท่อน`));
+                prod.forEach(i => {
+                    const m = Number(i.morningQty || 0), a = Number(i.afternoonQty || 0), o = Number(i.otQty || 0);
+                    const parts = [m > 0 ? `เช้า ${tlNum(m)}` : '', a > 0 ? `บ่าย ${tlNum(a)}` : '', o > 0 ? `OT ${tlNum(o)}` : ''].filter(Boolean).join(' / ');
+                    lines.push(`  🏭 ผลิต: ${i.project || '-'} ${i.size || '-'}${jk(i)} = ${tlNum(m + a + o)} ท่อน (${parts})`);
+                });
+                ship.forEach(g => {
+                    const loc = [...new Set(g.items.map(i => i.deliveryLocation).filter(Boolean))].join(' / ');
+                    lines.push(`  🚚 ส่ง: ${g.project || '-'} ${g.size || '-'}${jk(g)} = ${tlNum(g.qty)} ท่อน${loc ? ' → ' + loc : ''}`);
+                });
+            });
+            if (!any) lines.push('', '(ไม่มีรายการในช่วงนี้)');
+            return lines.join('\n');
+        }
+        function timelineCopyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+            return new Promise((resolve, reject) => {
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+                    document.body.appendChild(ta); ta.select();
+                    const ok = document.execCommand('copy');
+                    ta.remove();
+                    ok ? resolve() : reject(new Error('copy failed'));
+                } catch (e) { reject(e); }
+            });
+        }
+        function copyTimelineSummary() {
+            const text = timelineBuildSummaryText();
+            if (!text) { showToast('ยังไม่มีข้อมูลให้คัดลอก', 'error'); return; }
+            timelineCopyToClipboard(text).then(
+                () => showToast('คัดลอกสรุปแล้ว — วางใน LINE / อีเมลได้เลย'),
+                () => { window.prompt('คัดลอกข้อความนี้ (Ctrl+C):', text); }
+            );
+        }
+
+        // ---------- ส่งออก CSV (ช่วงวันที่ + ตัวกรองที่แสดงอยู่) ----------
+        function timelineBuildCsv() {
+            const v = timelineLastView;
+            if (!v) return '';
+            const set = new Set(v.days);
+            const rows = [];
+            const typeOrder = { 'รับท่อ': 1, 'ผลิต': 2, 'ส่งท่อ': 3 };
+            v.allReceiveRows.forEach(i => { if (set.has(i.receivedDate)) rows.push(['รับท่อ', i.receivedDate, i.project, i.size, i.thick, i.jacket, '', '', '', i.qty, '', i.status || '', '']); });
+            v.dbF.forEach(i => {
+                const an = timelineAnomalies(i).join(' | ');
+                const m = Number(i.morningQty || 0), a = Number(i.afternoonQty || 0), o = Number(i.otQty || 0);
+                if (set.has(i.date) && m + a + o > 0) rows.push(['ผลิต', i.date, i.project, i.size, i.thick, i.jacket, m, a, o, m + a + o, '', i.status || '', an]);
+                const dd = getDispatchDate(i);
+                if (set.has(dd)) rows.push(['ส่งท่อ', dd, i.project, i.size, i.thick, i.jacket, '', '', '', i.qty, i.deliveryLocation || '', i.status || '', an]);
+            });
+            rows.sort((x, y) => (x[1] < y[1] ? -1 : x[1] > y[1] ? 1 : typeOrder[x[0]] - typeOrder[y[0]]));
+            const esc = c => { const s = String(c ?? ''); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+            const head = ['ประเภท', 'วันที่', 'โครงการ', 'ไซส์', 'ความหนา', 'แจ็คเก็ต', 'เช้า', 'บ่าย', 'OT', 'จำนวน(ท่อน)', 'สถานที่ส่ง', 'สถานะ', 'หมายเหตุลำดับวัน'];
+            return [head, ...rows].map(r => r.map(esc).join(',')).join('\r\n');
+        }
+        function exportTimelineCsv() {
+            const csv = timelineBuildCsv();
+            const v = timelineLastView;
+            if (!csv || !v) { showToast('ยังไม่มีข้อมูลให้ส่งออก', 'error'); return; }
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `timeline_${v.days[0]}_to_${v.days[v.days.length - 1]}.csv`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+            showToast('ส่งออก CSV แล้ว (เปิดด้วย Excel ได้ ภาษาไทยไม่เพี้ยน)');
+        }
+
+        // ---------- เลื่อนงานทั้งวัน ----------
+        function timelineShiftCollect(from, types) {
+            const out = { prod: [], ship: [], recvRm: [], recvLegacy: [] };
+            if (!from) return out;
+            if (types.prod) out.prod = db.filter(i => i.date === from && (Number(i.morningQty || 0) + Number(i.afternoonQty || 0) + Number(i.otQty || 0)) > 0 && timelineMatchesFilter(i, true));
+            if (types.ship) out.ship = db.filter(i => getDispatchDate(i) === from && timelineMatchesFilter(i, true));
+            if (types.recv) {
+                out.recvRm = rmRecords.filter(r => r.receivedDate === from && timelineMatchesFilter(r, false));
+                const linked = new Set(rmRecords.map(r => Number(r.sourceDbId)).filter(Number.isFinite));
+                out.recvLegacy = db.filter(i => i.receivedDate === from && !linked.has(Number(i.id)) && timelineMatchesFilter(i, true));
+            }
+            return out;
+        }
+        function timelineShiftTypes() {
+            const g = id => !!(document.getElementById(id) && document.getElementById(id).checked);
+            return { prod: g('tl-shift-prod'), ship: g('tl-shift-ship'), recv: g('tl-shift-recv') };
+        }
+        function timelineShiftPreview() {
+            const from = (document.getElementById('tl-shift-from') || {}).value || '';
+            const to = (document.getElementById('tl-shift-to') || {}).value || '';
+            const c = timelineShiftCollect(from, timelineShiftTypes());
+            const nRecv = c.recvRm.length + c.recvLegacy.length;
+            const total = c.prod.length + c.ship.length + nRecv;
+            const pv = document.getElementById('tl-shift-preview');
+            if (pv) pv.textContent = `จะย้าย: ผลิต ${c.prod.length} • ส่งท่อ ${c.ship.length} • รับท่อ ${nRecv} รายการ`;
+            const btn = document.getElementById('tl-shift-apply');
+            if (btn) { const ok = total > 0 && to && to !== from; btn.disabled = !ok; btn.classList.toggle('opacity-40', !ok); }
+        }
+        function openTimelineShiftModal() {
+            const old = document.getElementById('timeline-shift-modal');
+            if (old) old.remove();
+            const today = dateToKey(new Date());
+            const m = document.createElement('div');
+            m.id = 'timeline-shift-modal';
+            m.className = 'fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4';
+            const inp = 'w-full mt-1 text-sm rounded-lg px-2 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white';
+            const chk = (id, label, on) => `<label class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200"><input type="checkbox" id="${id}" ${on ? 'checked' : ''} onchange="timelineShiftPreview()"> ${label}</label>`;
+            m.innerHTML = `
+                <div class="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-5">
+                    <div class="text-lg font-black text-slate-900 dark:text-white mb-1">↔️ เลื่อนงานทั้งวัน</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">ย้ายทุกรายการของวันที่เลือกไปวันใหม่ในครั้งเดียว (เฉพาะรายการที่ตรงกับตัวกรองที่เลือกอยู่) ย้อนกลับได้</div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-300">จากวันที่<input type="date" id="tl-shift-from" value="${today}" oninput="timelineShiftPreview()" class="${inp}"></label>
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-300">ไปวันที่<input type="date" id="tl-shift-to" oninput="timelineShiftPreview()" class="${inp}"></label>
+                    </div>
+                    <div class="flex flex-wrap gap-4 mb-3">${chk('tl-shift-prod', '🏭 ผลิต', true)}${chk('tl-shift-ship', '🚚 ส่งท่อ', false)}${chk('tl-shift-recv', '📥 รับท่อ', false)}</div>
+                    <div id="tl-shift-preview" class="text-xs font-bold text-amber-600 dark:text-amber-400 mb-2"></div>
+                    <div class="text-[10px] text-slate-400 mb-4">หมายเหตุ: งาน "กำลังผลิต" ที่ย้ายไปวันที่ผ่านมาแล้ว ระบบเดิมจะย้ายเข้าคลัง FG ให้อัตโนมัติ</div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="closeTimelineShiftModal()" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">ยกเลิก</button>
+                        <button type="button" id="tl-shift-apply" onclick="applyTimelineShift()" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-theme-500 text-slate-950 hover:bg-theme-600 transition">✅ ย้ายเลย</button>
+                    </div>
+                </div>`;
+            m.addEventListener('click', e => { if (e.target === m) closeTimelineShiftModal(); });
+            document.body.appendChild(m);
+            timelineShiftPreview();
+        }
+        function closeTimelineShiftModal() {
+            const m = document.getElementById('timeline-shift-modal');
+            if (m) m.remove();
+        }
+        function applyTimelineShift() {
+            if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return;
+            const from = document.getElementById('tl-shift-from').value;
+            const to = document.getElementById('tl-shift-to').value;
+            if (!to) { showToast('กรุณาเลือกวันที่ปลายทาง', 'error'); return; }
+            if (!isReasonableDate(to)) { showToast('วันที่ปลายทางดูผิดปกติ กรุณาตรวจสอบอีกครั้ง', 'error'); return; }
+            if (to === from) { showToast('วันต้นทางและปลายทางเป็นวันเดียวกัน', 'error'); return; }
+            const c = timelineShiftCollect(from, timelineShiftTypes());
+            const nRecv = c.recvRm.length + c.recvLegacy.length;
+            const total = c.prod.length + c.ship.length + nRecv;
+            if (!total) { showToast('ไม่พบรายการให้ย้าย', 'error'); return; }
+            pushUndoSnapshot('เลื่อนงานทั้งวัน (Timeline)');
+            const todayKey = typeof localDateKey === 'function' ? localDateKey() : dateToKey(new Date());
+            c.prod.forEach(i => { i.date = to; });
+            c.ship.forEach(i => {
+                i.dispatchDate = to;
+                if (i.__legacyDispatchDate === true) delete i.__legacyDispatchDate;
+                if (i.status === 'ส่งมอบแล้ว' && to > todayKey) i.status = 'รอจัดส่ง';
+            });
+            c.recvRm.forEach(r => {
+                r.receivedDate = to;
+                if (r.sourceDbId) { const l = db.find(x => Number(x.id) === Number(r.sourceDbId)); if (l) l.receivedDate = to; }
+            });
+            c.recvLegacy.forEach(i => { i.receivedDate = to; });
+            if (c.recvRm.length) saveRMRecords();
+            saveDB();
+            closeTimelineShiftModal();
+            showToastWithUndo(`เลื่อน ${total} รายการจาก ${tlThaiDate(from)} ไป ${tlThaiDate(to)} แล้ว`);
+        }
+
+        // ---------- คีย์ลัดในหน้า Timeline: ← → เลื่อนช่วงวัน, Home = วันนี้ ----------
+        document.addEventListener('keydown', function (e) {
+            const tl = document.getElementById('timeline-modal');
+            if (!tl || tl.classList.contains('hidden')) return;
+            const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+            if (['input', 'textarea', 'select'].includes(tag) || e.ctrlKey || e.altKey || e.metaKey) return;
+            if (document.getElementById('timeline-shift-modal')) return;
+            if (e.key === 'ArrowLeft') { e.preventDefault(); changeTimelineRange(-1); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); changeTimelineRange(1); }
+            else if (e.key === 'Home') { e.preventDefault(); goToTimelineToday(); }
+        });
 
         // ===== Timeline v12: ตัวกรองโครงการ / รวมกะ / สรุปยอด / เตือนลำดับวัน / ลากวาง =====
         function onTimelineProjectChange() {
@@ -6631,9 +7050,20 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             }
             const mBtn = document.getElementById('timeline-merge-btn');
             if (mBtn) mBtn.textContent = timelineMergeProd ? '🏭 ผลิต: รวมกะ' : '🏭 ผลิต: แยกกะ';
-            const inProject = x => !timelineProjectFilter || ((x && x.project) || '') === timelineProjectFilter;
-            const dbF = db.filter(inProject);
-            const rmF = rmRecords.filter(inProject);
+            // สถานะ: ดึงตัวเลือกจากข้อมูลจริง
+            const allStatuses = [...new Set(db.map(x => (x && x.status) || '').filter(Boolean))];
+            if (timelineStatusFilter && !allStatuses.includes(timelineStatusFilter)) timelineStatusFilter = '';
+            const stSel = document.getElementById('timeline-status-select');
+            if (stSel) {
+                stSel.innerHTML = '<option value="">ทุกสถานะ</option>' + allStatuses.map(t => `<option value="${escapeTimelineText(t)}">${escapeTimelineText(t)}</option>`).join('');
+                stSel.value = timelineStatusFilter;
+            }
+            const capBtn = document.getElementById('timeline-capacity-btn');
+            if (capBtn) capBtn.textContent = timelineCapacity > 0 ? `⚙️ กำลังผลิต: ${fmt(timelineCapacity)}/วัน` : '⚙️ กำลังผลิต: ไม่ตั้ง';
+            const clrBtn = document.getElementById('timeline-clear-filter-btn');
+            if (clrBtn) clrBtn.classList.toggle('hidden', !(timelineProjectFilter || timelineSearch.trim() || timelineStatusFilter));
+            const dbF = db.filter(x => timelineMatchesFilter(x, true));
+            const rmF = rmRecords.filter(x => timelineMatchesFilter(x, false));
 
             // Timeline แยกเหตุการณ์ชัดเจน:
             // 1) รับท่อ = rmRecords + ข้อมูลเก่าใน db ที่มี receivedDate
@@ -6788,6 +7218,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 const loc = [...new Set(g.items.map(i => i.deliveryLocation).filter(Boolean))].join(' / ');
                 const clickTarget = g.items.length === 1 ? `editItem(${g.items[0].id})` : `openDayDetailModal('${dd}')`;
                 const an = anomalyAttrs(g.items.flatMap(timelineAnomalies));
+                const allDone = g.items.every(i => i.status === 'ส่งมอบแล้ว');
+                const statusLine = `<div class="text-[8px] font-black leading-tight ${allDone ? 'text-white' : 'text-white/90'}">${allDone ? '✅ ส่งมอบแล้ว' : '⏳ รอจัดส่ง'}</div>`;
                 return `
                     <div draggable="true" data-dnd-type="ship" data-dnd-ids="${ids.join(',')}" data-dnd-from="${dd}" title="${escapeTimelineText(an.title)}" onclick="event.stopPropagation(); ${clickTarget}" class="px-1.5 py-1 rounded-md mb-1 cursor-grab hover:opacity-90 transition" style="background-color: ${col.bg}${an.style}">
                         <div class="text-[9px] truncate font-bold text-white opacity-90 leading-tight">${g.project || '-'}</div>
@@ -6795,6 +7227,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         <div class="text-[9px] text-white/85 leading-tight">🚚 ส่ง = ${fmt(g.qty)} ท่อน${g.items.length > 1 ? ` (รวม ${g.items.length} รายการ)` : ''}</div>
                         <div class="text-[8px] text-white/75 leading-tight">FG กำหนดส่ง: ${dd || '-'}</div>
                         ${loc ? `<div class="text-[8px] text-white/85 truncate">📍 ${loc}</div>` : ''}
+                        ${statusLine}
                         ${an.badge}
                         <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${dd}" onchange="updateFGDispatchDateBulk(${idsAttr}, this.value)" class="${dateInputCls}"></div>
                     </div>
@@ -6802,13 +7235,19 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             }
 
             function summaryCell(key) {
-                const x = sums[key];
-                const line = (icon, cls, val, sub) => `<div class="flex items-baseline justify-between gap-1"><span class="${cls} font-bold">${icon}</span><span class="${val ? 'font-black text-slate-800 dark:text-slate-100' : 'text-slate-300 dark:text-slate-600'}">${val ? fmt(val) : '-'}</span></div>${sub || ''}`;
-                if (!x) return line('📥 รับ', 'text-sky-600 dark:text-sky-400', 0) + line('🏭 ผลิต', 'text-amber-600 dark:text-amber-400', 0) + line('🚚 ส่ง', 'text-emerald-600 dark:text-emerald-400', 0);
+                const x = sums[key] || { m: 0, a: 0, o: 0, r: 0, s: 0 };
                 const p = x.m + x.a + x.o;
-                const sub = p > 0 ? `<div class="text-[8px] text-slate-400 text-right leading-tight">ช ${fmt(x.m)} • บ ${fmt(x.a)} • OT ${fmt(x.o)}</div>` : '';
+                const over = timelineCapacity > 0 && p > timelineCapacity;
+                const line = (icon, cls, val, valCls, sub) => `<div class="flex items-baseline justify-between gap-1"><span class="${cls} font-bold">${icon}</span><span class="${val ? (valCls || 'font-black text-slate-800 dark:text-slate-100') : 'text-slate-300 dark:text-slate-600'}">${val ? fmt(val) : '-'}</span></div>${sub || ''}`;
+                let sub = p > 0 ? `<div class="text-[8px] text-slate-400 text-right leading-tight">ช ${fmt(x.m)} • บ ${fmt(x.a)} • OT ${fmt(x.o)}</div>` : '';
+                if (timelineCapacity > 0 && p > 0) {
+                    const pct = Math.round(p / timelineCapacity * 100);
+                    const color = pct > 100 ? 'bg-rose-500' : pct >= 85 ? 'bg-amber-500' : 'bg-emerald-500';
+                    sub += `<div class="h-1 rounded bg-slate-200 dark:bg-slate-700 overflow-hidden mt-0.5"><div class="h-full ${color}" style="width:${Math.min(100, pct)}%"></div></div>`
+                        + `<div class="text-[8px] text-right leading-tight font-bold ${over ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}">${pct}%${over ? ' • เกิน ' + fmt(p - timelineCapacity) : ''}</div>`;
+                }
                 return line('📥 รับ', 'text-sky-600 dark:text-sky-400', x.r)
-                    + line('🏭 ผลิต', 'text-amber-600 dark:text-amber-400', p, sub)
+                    + line('🏭 ผลิต', 'text-amber-600 dark:text-amber-400', p, over ? 'font-black text-rose-600 dark:text-rose-400' : '', sub)
                     + line('🚚 ส่ง', 'text-emerald-600 dark:text-emerald-400', x.s);
             }
 
@@ -6818,7 +7257,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 const key = dateToKey(d);
                 const isSun = d.getDay() === 0;
                 const isToday = key === todayKey;
-                headHtml += `<th class="sticky top-0 z-10 border border-slate-200 dark:border-slate-800 p-1.5 text-center font-mono ${isToday ? 'bg-theme-500 text-slate-950' : isSun ? 'bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 sunday-muted' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'}" style="min-width:${colWidth}px">
+                const isCenter = key === dateToKey(timelineCenterDate);
+                headHtml += `<th ${isToday ? 'data-tl-today="1"' : ''} ${isCenter ? 'data-tl-center="1"' : ''} class="sticky top-0 z-10 border border-slate-200 dark:border-slate-800 p-1.5 text-center font-mono ${isToday ? 'bg-theme-500 text-slate-950' : isSun ? 'bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 sunday-muted' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'}" style="min-width:${colWidth}px">
                     <div class="text-sm font-black">${d.getDate()}</div>
                     <div class="text-[9px] font-bold opacity-80">${weekdayNames[d.getDay()]}</div>
                 </th>`;
@@ -6866,7 +7306,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                     const cellClickFn = row.key === 'รับท่อ' ? `openAddRMModal('${key}')` : `openDayDetailModal('${key}')`;
                     const rmAddHint = row.key === 'รับท่อ' ? `<button type="button" onclick="event.stopPropagation(); openAddRMModal('${key}')" title="เพิ่มรายการรับ RM วันที่นี้" class="w-full text-[9px] font-bold text-sky-600 dark:text-sky-400 border border-dashed border-sky-300 dark:border-sky-800 rounded-md py-1 hover:bg-sky-50 dark:hover:bg-sky-950/30 transition">+ รับ RM</button>` : '';
                     const filler = row.key === 'สรุป' ? '' : (cellHtml ? '' : '<div class="min-h-[38px]"></div>');
-                    bodyHtml += `<td onclick="${cellClickFn}" data-tl-date="${key}" data-tl-row="${rowCat[row.key] || ''}" class="timeline-data-cell align-top border border-slate-200 dark:border-slate-800 p-1 cursor-pointer hover:bg-theme-500/5 transition ${d.getDay() === 0 ? 'sunday-muted' : ''}" style="min-width:${colWidth}px">
+                    bodyHtml += `<td onclick="${cellClickFn}" data-tl-date="${key}" data-tl-row="${rowCat[row.key] || ''}" class="timeline-data-cell align-top border border-slate-200 dark:border-slate-800 p-1 cursor-pointer hover:bg-theme-500/5 transition ${key === todayKey ? 'tl-today-col' : ''} ${d.getDay() === 0 ? 'sunday-muted' : ''}" style="min-width:${colWidth}px">
                         <div class="timeline-cell-scroll">${cellHtml}${row.key === 'รับท่อ' ? rmAddHint : filler}</div>
                     </td>`;
                 });
@@ -6874,6 +7314,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             });
             bodyHtml += `</tbody>`;
 
+            timelineLastView = { days: days.map(dateToKey), dbF, allReceiveRows };
             table.innerHTML = headHtml + bodyHtml;
         }
 
@@ -7300,6 +7741,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             setThemeColor(currentThemeColor, true);
             applyDarkMode();
             try { if (typeof gqSetGreeting === 'function') gqSetGreeting(); } catch (_) {}
+            try { ensureProjectColors([].concat(projectsList, db.map(r => r.project), rmRecords.map(r => r.project))); } catch (_) {}
             renderProjectOptions();
             const kanbanDatePicker = document.getElementById('kanban-date-filter');
             if (kanbanDatePicker && !kanbanDatePicker.value) kanbanDatePicker.value = localDateKey();
@@ -14270,6 +14712,205 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 })();
 </script>
 <!-- ================= END GEKKO V85.7 DEFAULT DATE RANGE (ADDITIVE) ================= -->
+
+
+<!-- ================= GEKKO V86 PROJECT COLOR PACK (ADDITIVE) ================= -->
+<style id="gekko-v86-style">
+#pj-legend-bar{display:flex;align-items:center;gap:6px;margin:0 0 10px 0;padding:6px 8px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc}
+html.dark #pj-legend-bar{background:#0b1220;border-color:#1e293b}
+#pj-legend-bar.pjl-hidden-body .pjl-scroll{display:none}
+#pj-legend-bar .pjl-title{font-size:10px;font-weight:800;color:#64748b;white-space:nowrap}
+html.dark #pj-legend-bar .pjl-title{color:#94a3b8}
+#pj-legend-bar .pjl-scroll{display:flex;gap:6px;overflow-x:auto;flex:1 1 auto;min-width:0;padding:2px 0;scrollbar-width:thin}
+#pj-legend-bar .pjl-chip{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;max-width:240px;padding:4px 9px;border-radius:999px;border:1.5px solid #cbd5e1;background:#fff;color:#334155;font-size:11px;font-weight:700;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+html.dark #pj-legend-bar .pjl-chip{background:#0f172a;color:#e2e8f0;border-color:#334155}
+#pj-legend-bar .pjl-chip:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,.12)}
+#pj-legend-bar .pjl-chip:focus-visible{outline:2px solid #f59e0b;outline-offset:2px}
+#pj-legend-bar .pjl-chip.pjl-active{color:#fff;box-shadow:0 4px 12px rgba(15,23,42,.25)}
+#pj-legend-bar .pjl-dot{width:10px;height:10px;border-radius:999px;flex:0 0 10px}
+#pj-legend-bar .pjl-chip.pjl-active .pjl-dot{background:#fff !important}
+#pj-legend-bar .pjl-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pj-legend-bar .pjl-cnt{font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;background:rgba(100,116,139,.16)}
+#pj-legend-bar .pjl-chip.pjl-active .pjl-cnt{background:rgba(255,255,255,.25)}
+#pj-legend-bar .pjl-tool{flex:0 0 auto;border:1px solid #cbd5e1;background:#fff;color:#64748b;border-radius:8px;padding:3px 7px;font-size:10px;font-weight:800;cursor:pointer}
+html.dark #pj-legend-bar .pjl-tool{background:#0f172a;border-color:#334155;color:#94a3b8}
+#pj-legend-bar .pjl-tool:hover{border-color:#f59e0b}
+@media print{#pj-legend-bar{display:none !important}}
+</style>
+<script id="gekko-v86-script">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V86_PATCHED) return;
+  window.__GEKKO_V86_PATCHED = true;
+
+  var HIDE_KEY = 'gekko_pj_legend_hidden';
+  function isHidden(){ try { return localStorage.getItem(HIDE_KEY) === '1'; } catch(_) { return false; } }
+  function setHidden(v){ try { localStorage.setItem(HIDE_KEY, v ? '1' : '0'); } catch(_) {} }
+  function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+  function ensureBar(){
+    var bar = document.getElementById('pj-legend-bar');
+    if (bar) return bar;
+    var anchor = document.getElementById('bulk-toolbar');
+    if (!anchor || !anchor.parentNode) return null;
+    bar = document.createElement('div');
+    bar.id = 'pj-legend-bar';
+    bar.setAttribute('role', 'group');
+    bar.setAttribute('aria-label', 'สีโครงการ');
+    anchor.parentNode.insertBefore(bar, anchor);
+    bar.addEventListener('click', onBarClick);
+    return bar;
+  }
+
+  function currentFilter(){
+    var f = document.getElementById('filter-project');
+    return f ? f.value : '';
+  }
+
+  function legendNames(){
+    var st = {};
+    try { st = getProjectStats(); } catch(_) { st = {}; }
+    var arch = []; try { arch = projectsArchived || []; } catch(_) {}
+    var names = Object.keys(st).filter(function(n){ return n && arch.indexOf(n) < 0 && st[n] && st[n].total > 0; });
+    names.sort(function(a, b){
+      return (st[b].open - st[a].open) || String(a).localeCompare(String(b), 'th');
+    });
+    return { names: names, st: st };
+  }
+
+  function renderLegend(){
+    var bar = ensureBar(); if (!bar) return;
+    var info = legendNames(), names = info.names, st = info.st, cur = currentFilter();
+    if (!names.length) { bar.style.display = 'none'; return; }
+    bar.style.display = '';
+    var hidden = isHidden();
+    bar.classList.toggle('pjl-hidden-body', hidden);
+    var html = '<span class="pjl-title">🎨 สีโครงการ</span><div class="pjl-scroll">';
+    html += '<button type="button" class="pjl-chip' + (cur === '' ? ' pjl-active' : '') + '" data-pj="" aria-pressed="' + (cur === '') + '"' + (cur === '' ? ' style="background:#334155;border-color:#334155"' : '') + '><span class="pjl-name">ทั้งหมด</span></button>';
+    names.forEach(function(n){
+      var col = getProjectColor(n), act = (cur === n), s = st[n];
+      var tip = n + ' • งานค้าง ' + s.open + ' • ทั้งหมด ' + s.total + (s.rm ? ' • RM คงเหลือ ' + Number(s.rm).toLocaleString('th-TH') : '');
+      html += '<button type="button" class="pjl-chip' + (act ? ' pjl-active' : '') + '" data-pj="' + esc(n) + '" aria-pressed="' + act + '" title="' + esc(tip) + '"'
+        + (act ? ' style="background:' + col.bg + ';border-color:' + col.bg + '"' : ' style="border-color:' + col.bg + '"') + '>'
+        + '<span class="pjl-dot" style="background:' + col.bg + '"></span><span class="pjl-name">' + esc(n) + '</span>'
+        + (s.open ? '<span class="pjl-cnt">' + s.open + '</span>' : '') + '</button>';
+    });
+    html += '</div><button type="button" class="pjl-tool" data-act="reshuffle" title="แจกสีใหม่ให้ทุกโครงการ (สีที่เลือกเองจะถูกล้าง)">↺ สุ่มสีใหม่</button>'
+      + '<button type="button" class="pjl-tool" data-act="toggle" title="ซ่อน/แสดงแถบสี">' + (hidden ? 'แสดง' : 'ซ่อน') + '</button>';
+    bar.innerHTML = html;
+  }
+
+  function applyFilter(name){
+    var f = document.getElementById('filter-project'); if (!f) return;
+    if (name && ![].some.call(f.options, function(o){ return o.value === name; })) {
+      var o = document.createElement('option'); o.value = name; o.textContent = name; f.appendChild(o);
+    }
+    f.value = name;
+    try { renderActiveView(); } catch(_) {}
+    renderLegend();
+    scheduleLegend();
+  }
+
+  function onBarClick(ev){
+    var t = ev.target && ev.target.closest ? ev.target.closest('button') : null;
+    if (!t) return;
+    var act = t.getAttribute('data-act');
+    if (act === 'toggle') { setHidden(!isHidden()); renderLegend(); return; }
+    if (act === 'reshuffle') {
+      if (!confirm('แจกสีใหม่ให้ทุกโครงการ? (สีที่เลือกเองไว้จะถูกล้าง)')) return;
+      try {
+        projectColorMap = {}; _projectColorCache = {};
+        _saveProjectColorMap();
+        ensureProjectColors([].concat(projectsList, db.map(function(r){ return r.project; }), rmRecords.map(function(r){ return r.project; })));
+      } catch(_) {}
+      try { renderActiveView(); } catch(_) { renderLegend(); }
+      return;
+    }
+    if (t.hasAttribute('data-pj')) {
+      var n = t.getAttribute('data-pj');
+      applyFilter(currentFilter() === n ? '' : n);
+    }
+  }
+
+  // แถบสีด้านซ้ายของแถวในตาราง ช่วยแยกโครงการเร็วขึ้นแม้สีป้ายใกล้กัน
+  function stripeTableRows(){
+    var body = document.getElementById('data-table-body'); if (!body) return;
+    [].forEach.call(body.querySelectorAll('tr'), function(tr){
+      var sp = tr.querySelector('span[style*="background-color"]');
+      if (sp && sp.style.backgroundColor) tr.style.boxShadow = 'inset 4px 0 0 ' + sp.style.backgroundColor;
+    });
+  }
+
+  var legendTimer = null;
+  function scheduleLegend(){
+    clearTimeout(legendTimer);
+    legendTimer = setTimeout(function(){ try { renderLegend(); } catch(e) {} }, 80);
+  }
+  function afterRender(){
+    try { renderLegend(); } catch(e) { console.warn('legend', e); }
+    try { stripeTableRows(); } catch(e) { console.warn('stripe', e); }
+    // บางจังหวะโค้ดเดิมรีเซ็ตตัวกรองชั่วคราวระหว่างวาด จึงวาดแถบซ้ำอีกครั้งหลังนิ่งแล้ว
+    scheduleLegend();
+  }
+  (function watchFilter(){
+    var f = document.getElementById('filter-project');
+    if (f && !f.__v86) { f.__v86 = true; f.addEventListener('change', scheduleLegend); }
+  })();
+
+  // บางจังหวะตารางถูกวาดหลังฟังก์ชัน render จบ จึงคอยดูการเปลี่ยนของ tbody แล้วใส่แถบสีซ้ำ (ไม่วนลูป เพราะแก้แค่ style ของ tr)
+  (function watchTable(){
+    var body = document.getElementById('data-table-body');
+    if (!body || typeof MutationObserver === 'undefined' || body.__v86obs) return;
+    var queued = false;
+    var obs = new MutationObserver(function(){
+      if (queued) return; queued = true;
+      setTimeout(function(){ queued = false; try { stripeTableRows(); } catch(e) {} }, 0);
+    });
+    obs.observe(body, { childList: true });
+    body.__v86obs = obs;
+  })();
+
+  // คอยดูทุกมุมมอง (ตาราง/บอร์ด/ปฏิทิน/คลัง/ขนส่ง) ถ้ามีการวาดใหม่ให้รีเฟรชแถบสี
+  // ใช้วิธีนี้แทนการพึ่งการห่อฟังก์ชัน เพราะแพตช์เดิมบางตัวติดตั้งทีหลังและแทนที่ renderActiveView
+  (function watchViews(){
+    if (typeof MutationObserver === 'undefined') return;
+    [].forEach.call(document.querySelectorAll('[id$="-view-container"]'), function(el){
+      if (el.__v86obs) return;
+      var o = new MutationObserver(scheduleLegend);
+      o.observe(el, { childList: true, subtree: true });
+      el.__v86obs = o;
+    });
+  })();
+
+  // ห่อ renderActiveView แบบไม่ลบของเดิม
+  if (typeof window.renderActiveView === 'function' && !window.renderActiveView.__v86) {
+    var prev = window.renderActiveView;
+    var wrapped = function(){
+      var r;
+      // finally: ถ้าฟังก์ชันเดิมมี error (เช่นกราฟโหลดไม่ขึ้น) แถบสีก็ยังอัปเดต และ error เดิมยังถูกโยนต่อเหมือนเดิม
+      try { r = prev.apply(this, arguments); }
+      finally { afterRender(); }
+      return r;
+    };
+    wrapped.__v86 = true;
+    window.renderActiveView = wrapped;
+  }
+
+  // คีย์ลัด "/" โฟกัสช่องค้นหา (ไม่ทำงานตอนกำลังพิมพ์หรือกด Ctrl/Alt/Meta)
+  document.addEventListener('keydown', function(e){
+    if (e.key !== '/' || e.ctrlKey || e.altKey || e.metaKey) return;
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (['input','textarea','select'].indexOf(tag) >= 0 || (e.target && e.target.isContentEditable)) return;
+    var box = document.getElementById('search-box');
+    if (box && box.offsetParent !== null) { e.preventDefault(); box.focus(); box.select(); }
+  });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', afterRender);
+  else afterRender();
+  window.addEventListener('load', function(){ setTimeout(afterRender, 300); });
+})();
+</script>
+<!-- ================= END GEKKO V86 PROJECT COLOR PACK (ADDITIVE) ================= -->
 
 </body>
 </html>
