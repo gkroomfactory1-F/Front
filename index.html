@@ -15591,9 +15591,11 @@ try{applyOv();buildEst()}catch(e){console.warn(e)}badge();window.gekkoOps={open,
     ctx.parts.forEach(function (p, i) {
       if (i === 0) {
         h += '<div class="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 p-2.5">'
-          + '<div class="text-[11px] font-black text-emerald-700 dark:text-emerald-400 mb-1">🚚 ส่งวันเดิม • ' + esc(thai(p.date)) + '</div>'
+          + '<div class="text-[11px] font-black text-emerald-700 dark:text-emerald-400 mb-1">🚚 ส่วนแรก • วันเดิม ' + esc(thai(ctx.base)) + ' (เปลี่ยนวันส่งได้)</div>'
           + '<div class="flex items-center gap-2"><input id="sp-q-0" type="number" min="1" step="1" inputmode="numeric" value="' + esc(p.qty) + '" oninput="splitShipInput(0,\'q\',this)" class="' + INP + '">'
-          + '<span class="text-xs font-bold text-slate-500 whitespace-nowrap">เส้น</span></div></div>';
+          + '<span class="text-xs font-bold text-slate-500 whitespace-nowrap">เส้น</span></div>'
+          + '<input id="sp-d-0" type="date" value="' + esc(p.date) + '" oninput="splitShipInput(0,\'d\',this)" class="' + INP + ' mt-2">'
+          + '</div>';
       } else {
         h += '<div class="rounded-xl border border-slate-300 dark:border-slate-700 p-2.5">'
           + '<div class="flex items-center justify-between mb-1"><div class="text-[11px] font-black text-slate-600 dark:text-slate-300">📦 ส่วนที่แยกไปวันอื่น #' + i + '</div>'
@@ -15718,7 +15720,7 @@ try{applyOv();buildEst()}catch(e){console.warn(e)}badge();window.gekkoOps={open,
       + '<div class="text-lg font-black text-slate-900 dark:text-white mb-1">✂️ แบ่งส่งหลายวัน</div>'
       + '<div class="text-sm font-black text-slate-800 dark:text-slate-100">' + esc(it0.project || '-') + ' • ' + esc(it0.size || '-') + esc(jk) + '</div>'
       + '<div class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">ยอดรอส่ง ' + fmt(total) + ' เส้น • กำหนดส่งเดิม ' + esc(thai(base)) + '</div>'
-      + '<div class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">ตัวอย่าง: ผลิต 30 เส้น ส่งวันเดิม 25 → ใส่ 25 ในช่องบน ส่วนที่เหลือ 5 เส้นจะเติมให้เอง แล้วเลือกวันส่งใหม่</div>'
+      + '<div class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">ตัวอย่าง: ผลิต 30 เส้น ส่ง 8 ต.ค. 15 เส้น + 15 ต.ค. อีก 15 เส้น → ใส่ 15 ช่องบน เลือกวันส่งของแต่ละก้อนได้เอง ส่วนที่เหลือจะเติมให้อัตโนมัติ</div>'
       + '<div id="sp-rows" class="space-y-2 mb-2">' + rowsHtml() + '</div>'
       + '<button type="button" onclick="splitShipAdd()" class="text-xs font-bold text-sky-600 dark:text-sky-400 mb-2">➕ แบ่งเพิ่มอีกวัน</button>'
       + '<div id="sp-summary" class="text-xs font-black mb-3"></div>'
@@ -15811,8 +15813,9 @@ try{applyOv();buildEst()}catch(e){console.warn(e)}badge();window.gekkoOps={open,
     box.className = 'mt-1 rounded bg-white dark:bg-slate-900 p-1.5 space-y-1 text-slate-900 dark:text-white';
     box.setAttribute('onclick', 'event.stopPropagation()');
     box.innerHTML =
-      '<div class="flex items-center gap-1"><span class="text-[9px] font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">ส่งวันเดิม</span>'
+      '<div class="flex items-center gap-1"><span class="text-[9px] font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">ส่งก้อนแรก</span>'
       + '<input id="sp-q-0" type="number" min="1" step="1" value="' + esc(total) + '" oninput="splitShipInput(0,\'q\',this)" class="' + C + '"></div>'
+      + '<input id="sp-d-0" type="date" value="' + esc(base) + '" oninput="splitShipInput(0,\'d\',this)" class="' + C + '">'
       + '<div class="text-[9px] font-black">ที่เหลือส่งวันที่</div>'
       + '<div class="grid grid-cols-2 gap-1">'
       + '<input id="sp-q-1" type="number" min="1" step="1" placeholder="เส้น" oninput="splitShipInput(1,\'q\',this)" class="' + C + '">'
