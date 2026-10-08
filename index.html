@@ -6305,7 +6305,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             const dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `GEKKO_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            dlAnchor.setAttribute("download", `GEKKO_Backup_${(typeof localDateKey==='function'?localDateKey():new Date().toISOString().slice(0,10))}.json`);
             dlAnchor.click();
         }
 
@@ -6354,7 +6354,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `GEKKO_Report_${new Date().toISOString().slice(0,10)}.csv`;
+            a.download = `GEKKO_Report_${(typeof localDateKey==='function'?localDateKey():new Date().toISOString().slice(0,10))}.csv`;
             a.click();
         }
 
@@ -7265,6 +7265,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         ${statusLine}
                         ${an.badge}
                         <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${dd}" onchange="updateFGDispatchDateBulk(${idsAttr}, this.value)" class="${dateInputCls}"></div>
+                        ${(!allDone && g.qty >= 2 && dd) ? `<div class="mt-1" onclick="event.stopPropagation()"><button type="button" onclick="openSplitShipInline(${idsAttr}, this)" title="แบ่งยอดส่งเป็นหลายวัน เช่น ส่ง 25 วันนี้ ที่เหลือส่งวันอื่น" class="w-full text-[9px] font-black rounded px-1 py-0.5 bg-white/90 text-emerald-700 hover:bg-white border border-emerald-300">✂️ แบ่งส่งหลายวัน</button></div>` : ''}
                     </div>
                 `;
             }
@@ -7758,7 +7759,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         }
         function exportFactoryData(){
             const payload={version:1,exportedAt:new Date().toISOString(),settings:factorySettings,downtimeLogs,manpowerLogs,production:db};
-            const a=document.createElement('a'); a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(payload,null,2)); a.download=`GEKKO_Factory_Control_Tower_${new Date().toISOString().slice(0,10)}.json`; a.click();
+            const a=document.createElement('a'); a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(payload,null,2)); a.download=`GEKKO_Factory_Control_Tower_${(typeof localDateKey==='function'?localDateKey():new Date().toISOString().slice(0,10))}.json`; a.click();
         }
 
         // --- ย้ายสถานะอัตโนมัติ: งานที่ถึงวันผลิต (date) แล้วแต่ยัง "กำลังผลิต" อยู่ ให้ถือว่าผลิตเสร็จ ย้ายเข้าคลัง FG อัตโนมัติ ---
@@ -8201,7 +8202,7 @@ const SDX_STATE = window.__gekkoSmartDashboardV2State || (window.__gekkoSmartDas
 const SDX={
  num(v){const n=Number(v);return Number.isFinite(n)?n:0}, pos(v){const n=Number(v);return Number.isFinite(n)&&n>0?n:0}, fmt(v,d=0){return SDX.num(v).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d})}, pct(v,d=1){return Number.isFinite(v)?`${v.toFixed(d)}%`:'—'},
  today(){try{return typeof localDateKey==='function'?localDateKey():new Date().toISOString().slice(0,10)}catch(_){return new Date().toISOString().slice(0,10)}},
- addDays(k,n){const d=new Date(k+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}, dateKey(v){const s=String(v||'');return /^\d{4}-\d{2}-\d{2}$/.test(s)?s:''},
+ addDays(k,n){/* FIX44: เดิม return d.toISOString().slice(0,10) (UTC) ทำให้วันเพี้ยนไป 1 วันในเวลาไทย */const d=new Date(k+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}, dateKey(v){const s=String(v||'');return /^\d{4}-\d{2}-\d{2}$/.test(s)?s:''},
  hdate(k){if(!k)return '—';const d=new Date(k+'T00:00:00');return d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})}, money(v){return `฿${SDX.fmt(v,0)}`}, esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))},
  sizeRaw(v){return String(v??'').trim().replace(/[“”]/g,'"')}, normalizeSize(v){let s=SDX.sizeRaw(v).replace(/\s+/g,'').replace(/"$/,'');const a={'0.5':'1/2','0.75':'3/4','1.25':'1-1/4','1.5':'1-1/2','2.5':'2-1/2'};return a[s]||s},
  jacket(v){const s=String(v??'').trim().toUpperCase();if(s.includes('HDPE'))return 'HDPE';if(s.includes('ALU'))return 'ALU';if(s==='SS'||s.includes('STAINLESS'))return 'SS';if(s.includes('GI')||s.includes('GALV'))return 'GI';return s},
@@ -12390,8 +12391,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
   window.gkV70SyncNow=async function(){if(!STATE.cloudReady){showToast?.('ยังไม่ได้เชื่อมต่อออนไลน์','error');return;}if(fb?.auth?.currentUser?.isAnonymous){showToast?.('👁️ โหมดดูอย่างเดียว — ไม่สามารถสั่งซิงค์ข้อมูลขึ้นคลาวด์ได้','error');return;}try{setCloudStatus?.('connecting','🔄 กำลังตรวจและซิงค์เฉพาะรายการที่เปลี่ยน...');await syncCollection('production','production_db',db,STATE.dbShadow,STATE.dbMeta);await syncCollection('rm','rm_records',rmRecords,STATE.rmShadow,STATE.rmMeta);await syncCollection('downtime','downtime_logs',downtimeLogs,STATE.dtShadow,STATE.dtMeta);await syncCollection('manpower','manpower_logs',manpowerLogs,STATE.mpShadow,STATE.mpMeta);await safeProjectsWrite();await safePipeSpecsWrite();await safeNotesWrite();await safeFactoryWrite();setBadge('☁️ ซิงค์ล่าสุดเรียบร้อย');renderGkV70Health?.();showToast?.('ซิงค์ข้อมูลที่เปลี่ยนล่าสุดแล้ว');}catch(e){console.error(e);setCloudStatus?.('error');}};
 
   function issueScan(){
-    const issues=[];const idSet=new Set();const sigCount=new Map();
-    (db||[]).forEach(r=>{const id=String(r.id);if(idSet.has(id))issues.push(`Production ID ซ้ำ: ${id}`);idSet.add(id);if(!String(r.project||'').trim())issues.push(`Production ID ${id}: ไม่มีโครงการ`);if(!String(r.date||'').trim())issues.push(`Production ID ${id}: ไม่มีวันที่ผลิต`);if(!String(r.size||'').trim())issues.push(`Production ID ${id}: ไม่มีขนาดท่อ`);if(r.qty===undefined||r.qty===null||r.qty==='')issues.push(`Production ID ${id}: ไม่มีจำนวนผลิต`);const qty=Number(r.qty||0);const shiftKeys=['morningQty','afternoonQty','otQty'];const hasShift=shiftKeys.some(k=>r[k]!==undefined&&r[k]!==null&&r[k]!=='');const sum=shiftKeys.reduce((a,k)=>a+Number(r[k]||0),0);if(hasShift&&qty!==sum)issues.push(`Production ID ${id}: qty (${qty}) ไม่เท่ากับ เช้า+บ่าย+OT (${sum})`);if([r.morningQty,r.afternoonQty,r.otQty,r.qty].some(v=>v!==undefined&&v!==null&&v!==''&&Number(v)<0))issues.push(`Production ID ${id}: พบจำนวนติดลบ`);if(r.date&&r.receivedDate&&String(r.receivedDate)>String(r.date))issues.push(`Production ID ${id}: วันรับท่อมากกว่าวันผลิต`);const sig=`${r.project}|${r.size}|${r.thick}|${r.jacket}|${r.date}|${r.qty}|${r.deliveryLocation||''}`.toLowerCase();sigCount.set(sig,(sigCount.get(sig)||0)+1);});
+    const issues=[];const idSet=new Set();const sigCount=new Map();const splitParents=new Set((db||[]).filter(x=>x&&x.splitFromId!=null).map(x=>String(x.splitFromId)));
+    (db||[]).forEach(r=>{const id=String(r.id);if(idSet.has(id))issues.push(`Production ID ซ้ำ: ${id}`);idSet.add(id);if(!String(r.project||'').trim())issues.push(`Production ID ${id}: ไม่มีโครงการ`);if(!String(r.date||'').trim()&&r.splitFromId==null)issues.push(`Production ID ${id}: ไม่มีวันที่ผลิต`);if(!String(r.size||'').trim())issues.push(`Production ID ${id}: ไม่มีขนาดท่อ`);if(r.qty===undefined||r.qty===null||r.qty==='')issues.push(`Production ID ${id}: ไม่มีจำนวนผลิต`);const qty=Number(r.qty||0);const shiftKeys=['morningQty','afternoonQty','otQty'];const hasShift=shiftKeys.some(k=>r[k]!==undefined&&r[k]!==null&&r[k]!=='');const sum=shiftKeys.reduce((a,k)=>a+Number(r[k]||0),0);if(hasShift&&qty!==sum)issues.push(`Production ID ${id}: qty (${qty}) ไม่เท่ากับ เช้า+บ่าย+OT (${sum})`);if([r.morningQty,r.afternoonQty,r.otQty,r.qty].some(v=>v!==undefined&&v!==null&&v!==''&&Number(v)<0))issues.push(`Production ID ${id}: พบจำนวนติดลบ`);if(r.date&&r.receivedDate&&String(r.receivedDate)>String(r.date))issues.push(`Production ID ${id}: วันรับท่อมากกว่าวันผลิต`);const sig=`${r.project}|${r.size}|${r.thick}|${r.jacket}|${r.date}|${r.qty}|${r.deliveryLocation||''}${(r.splitFromId!=null||splitParents.has(id))?'|ส่ง:'+(r.dispatchDate||''):''}`.toLowerCase();sigCount.set(sig,(sigCount.get(sig)||0)+1);});
     sigCount.forEach((n,s)=>{if(n>1)issues.push(`Production รายการเหมือนกัน ${n} รายการ: ${s}`)});
     const rmIds=new Set();const rmSig=new Map();(rmRecords||[]).forEach(r=>{const id=String(r.id);if(rmIds.has(id))issues.push(`RM ID ซ้ำ: ${id}`);rmIds.add(id);if(!String(r.project||'').trim())issues.push(`RM ID ${id}: ไม่มีโครงการ`);if(!String(r.receivedDate||'').trim())issues.push(`RM ID ${id}: ไม่มีวันที่รับ`);if(!String(r.size||'').trim())issues.push(`RM ID ${id}: ไม่มีขนาดท่อ`);if(r.originalQty===undefined&&r.qty===undefined)issues.push(`RM ID ${id}: ไม่มียอดรับ`);const original=Number(r.originalQty??r.qty??0),remaining=Number(r.remainingQty??r.qty??0),allocated=Number(r.allocatedQty??0);if(original<0||remaining<0||allocated<0)issues.push(`RM ID ${id}: พบยอดติดลบ`);if(allocated+remaining>original)issues.push(`RM ID ${id}: allocated + remaining มากกว่ายอดรับ`);const sig=`${r.project}|${r.size}|${r.thick}|${r.jacket}|${r.receivedDate}|${original}`.toLowerCase();rmSig.set(sig,(rmSig.get(sig)||0)+1);});
     rmSig.forEach((n,s)=>{if(n>1)issues.push(`RM รายการเหมือนกัน ${n} รายการ: ${s}`)});
@@ -15463,7 +15464,7 @@ const fz=s=>/^[\d\/\-\. ]+$/.test(String(s))?s+'"':s,lbl=k=>{const t=String(k).s
 const LS=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(_){return d}};
 const SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(_){}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{/* FIX44: เดิม new Date().toISOString().slice(0,10) → ได้วันเมื่อวานช่วง 00:00–07:00 เวลาไทย */try{if(typeof localDateKey==='function')return localDateKey()}catch(_){}const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const CH0=()=>window.__GEKKO_GQ_MASTER,CH=()=>window.__GEKKO_GQ_MASTER.chemical, hash=s=>{let h=5381;for(const c of String(s))h=((h<<5)+h+c.charCodeAt(0))|0;return String(h)};
 const hasPin=()=>false;let role='sup';
 const isSup=()=>role==='sup';
@@ -15554,5 +15555,301 @@ function nag(){const old=document.getElementById('gkp-nag');if(old)old.remove();
 try{applyOv();buildEst()}catch(e){console.warn(e)}badge();window.gekkoOps={open,auditBom};
 })();
 </script>
+<style id="fix40-split-style">
+/* FIX40: ตอนเปิดฟอร์มแบ่งส่งในการ์ด ให้ช่องแถวส่งท่อสูงขึ้นเองจนเห็นฟอร์มครบ */
+#timeline-modal .timeline-cell-scroll:has(#sp-inline) { height: auto !important; max-height: 340px !important; }
+#timeline-modal #sp-inline input { min-width: 0; }
+</style>
+<!-- ================= FIX40: แบ่งส่งท่อหลายวัน (Timeline) =================
+     เพิ่มปุ่ม "✂️ แบ่งส่งหลายวัน" ที่การ์ดส่งท่อใน Timeline: แตกรายการเดิมเป็นหลายรายการ
+     แต่ละรายการมี dispatchDate ของตัวเอง ยอดรวม/ยอดผลิตแต่ละกะไม่เปลี่ยน ย้อนกลับได้ (Undo)
+     ไม่แก้/ไม่ลบโค้ดเดิม — ใช้ db / getNextDbId / saveDB / pushUndoSnapshot เดิมทั้งหมด ================= -->
+<script>
+(function () {
+  'use strict';
+  var ctx = null;
+  var INP = 'w-full text-sm rounded-lg px-2 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white';
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { return Number(n || 0).toLocaleString('th-TH'); }
+  function thai(key) { try { return typeof tlThaiDate === 'function' ? tlThaiDate(key) : key; } catch (_) { return key; } }
+  function dateAdd(key, n) {
+    var d = new Date(key + 'T00:00:00');
+    if (isNaN(d.getTime())) d = new Date();
+    d.setDate(d.getDate() + n);
+    return localDateKey(d);
+  }
+  function findItems(ids) {
+    return (ids || []).map(function (id) { return db.find(function (i) { return Number(i.id) === Number(id); }); }).filter(Boolean);
+  }
+  function qtyOf(i) { return Number(i && (i.qty || i.remainingQty) || 0) || 0; }
+  function failQc(list) { return list.some(function (i) { return i.qc && i.qc !== 'Passed'; }); }
+  function lastIdx() { return ctx.parts.length - 1; }
+
+  function rowsHtml() {
+    var h = '';
+    ctx.parts.forEach(function (p, i) {
+      if (i === 0) {
+        h += '<div class="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/20 p-2.5">'
+          + '<div class="text-[11px] font-black text-emerald-700 dark:text-emerald-400 mb-1">🚚 ส่งวันเดิม • ' + esc(thai(p.date)) + '</div>'
+          + '<div class="flex items-center gap-2"><input id="sp-q-0" type="number" min="1" step="1" inputmode="numeric" value="' + esc(p.qty) + '" oninput="splitShipInput(0,\'q\',this)" class="' + INP + '">'
+          + '<span class="text-xs font-bold text-slate-500 whitespace-nowrap">เส้น</span></div></div>';
+      } else {
+        h += '<div class="rounded-xl border border-slate-300 dark:border-slate-700 p-2.5">'
+          + '<div class="flex items-center justify-between mb-1"><div class="text-[11px] font-black text-slate-600 dark:text-slate-300">📦 ส่วนที่แยกไปวันอื่น #' + i + '</div>'
+          + (ctx.parts.length > 2 ? '<button type="button" onclick="splitShipRemove(' + i + ')" class="text-[11px] font-bold text-rose-500">✕ เอาออก</button>' : '') + '</div>'
+          + '<div class="grid grid-cols-2 gap-2">'
+          + '<div class="flex items-center gap-1"><input id="sp-q-' + i + '" type="number" min="1" step="1" inputmode="numeric" value="' + esc(p.qty) + '" placeholder="จำนวน" oninput="splitShipInput(' + i + ',\'q\',this)" class="' + INP + '"><span class="text-xs font-bold text-slate-500">เส้น</span></div>'
+          + '<input id="sp-d-' + i + '" type="date" value="' + esc(p.date) + '" oninput="splitShipInput(' + i + ',\'d\',this)" class="' + INP + '">'
+          + '</div></div>';
+      }
+    });
+    return h;
+  }
+
+  function sumQty() { return ctx.parts.reduce(function (s, p) { return s + (Number(p.qty) || 0); }, 0); }
+
+  function validate() {
+    var seen = {};
+    for (var i = 0; i < ctx.parts.length; i++) {
+      var p = ctx.parts[i], q = Number(p.qty);
+      if (!Number.isInteger(q) || q < 1) return 'จำนวนทุกส่วนต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป';
+      if (!p.date) return 'กรุณาเลือกวันที่ส่งของทุกส่วน';
+      if (!isReasonableDate(p.date)) return 'วันที่ส่งท่อดูผิดปกติ กรุณาตรวจสอบอีกครั้ง';
+      if (seen[p.date]) return 'มีวันที่ส่งซ้ำกัน (' + thai(p.date) + ') — รวมจำนวนเป็นส่วนเดียวกันก่อน';
+      seen[p.date] = true;
+    }
+    if (sumQty() !== ctx.total) return 'ยอดรวมต้องเท่ากับ ' + fmt(ctx.total) + ' เส้น';
+    return '';
+  }
+
+  function refresh() {
+    if (!ctx) return;
+    var sum = sumQty(), diff = ctx.total - sum;
+    var sumEl = document.getElementById('sp-summary');
+    if (sumEl) {
+      var txt = 'รวม ' + fmt(sum) + ' / ' + fmt(ctx.total) + ' เส้น';
+      if (diff === 0) { txt += ' ✅ ครบ'; sumEl.className = 'text-xs font-black text-emerald-600 dark:text-emerald-400 mb-3'; }
+      else { txt += diff > 0 ? ' ⚠️ ยังขาดอีก ' + fmt(diff) : ' ⚠️ เกินมา ' + fmt(-diff); sumEl.className = 'text-xs font-black text-amber-600 dark:text-amber-400 mb-3'; }
+      try { var td = localDateKey(); if (ctx.parts.some(function (p) { return p.date && p.date <= td; })) txt += ' • ⚠️ วันที่ ≤ วันนี้ = นับ "ส่งมอบแล้ว" ทันที'; } catch (_) {}
+      sumEl.textContent = txt;
+    }
+    var btn = document.getElementById('sp-apply');
+    if (btn) { var bad = !!validate(); btn.disabled = bad; btn.classList.toggle('opacity-40', bad); }
+  }
+
+  function autofill() {
+    var last = lastIdx();
+    if (last < 1 || ctx.parts[last].touched) return;
+    var others = 0;
+    for (var i = 0; i < last; i++) others += Number(ctx.parts[i].qty) || 0;
+    var rem = ctx.total - others;
+    ctx.parts[last].qty = rem > 0 ? String(rem) : '';
+    var el = document.getElementById('sp-q-' + last);
+    if (el) el.value = ctx.parts[last].qty;
+  }
+
+  function redraw() {
+    var box = document.getElementById('sp-rows');
+    if (box) box.innerHTML = rowsHtml();
+    refresh();
+  }
+
+  window.splitShipInput = function (i, kind, el) {
+    if (!ctx || !ctx.parts[i]) return;
+    if (kind === 'q') {
+      ctx.parts[i].qty = el.value;
+      if (i > 0 && i === lastIdx()) ctx.parts[i].touched = true;
+      autofill();
+    } else {
+      ctx.parts[i].date = el.value;
+    }
+    refresh();
+  };
+
+  window.splitShipAdd = function () {
+    if (!ctx) return;
+    if (ctx.parts.length >= 8) { showToast('แบ่งได้สูงสุด 8 ส่วนต่อครั้ง', 'error'); return; }
+    ctx.parts[lastIdx()].touched = true;
+    var prevDate = ctx.parts[lastIdx()].date || ctx.base;
+    ctx.parts.push({ qty: '', date: dateAdd(prevDate, 1), touched: false });
+    autofill();
+    redraw();
+  };
+
+  window.splitShipRemove = function (i) {
+    if (!ctx || i < 1 || ctx.parts.length <= 2) return;
+    ctx.parts.splice(i, 1);
+    ctx.parts[lastIdx()].touched = false;
+    autofill();
+    redraw();
+  };
+
+  window.closeSplitShipModal = function () {
+    var m = document.getElementById('split-ship-modal');
+    if (m) m.remove();
+    var ip = document.getElementById('sp-inline');
+    if (ip) ip.remove();
+    ctx = null;
+  };
+
+  window.openSplitShipModal = function (ids) {
+    if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return;
+    var all = findItems(ids);
+    var items = all.filter(function (i) { return i.status !== 'ส่งมอบแล้ว'; });
+    if (!items.length) { showToast('รายการนี้ส่งมอบแล้ว แบ่งส่งไม่ได้', 'error'); return; }
+    if (failQc(items)) { showToast('รายการนี้ QC ไม่ผ่าน/รอตัดสิน แบ่งส่งไม่ได้ (กันตัวเลข QC ในแดชบอร์ดเพี้ยน)', 'error'); return; }
+    var total = items.reduce(function (s, i) { return s + qtyOf(i); }, 0);
+    if (total < 2) { showToast('ต้องมีอย่างน้อย 2 เส้นถึงจะแบ่งส่งได้', 'error'); return; }
+    var base = getDispatchDate(items[0]) || '';
+    if (!base) { showToast('รายการนี้ยังไม่มีวันส่ง — กำหนดวันส่งที่คลัง FG ก่อน', 'error'); return; }
+    closeSplitShipModal();
+    ctx = {
+      ids: items.map(function (i) { return i.id; }), total: total, base: base,
+      parts: [{ qty: String(total), date: base, touched: true }, { qty: '', date: dateAdd(base, 1), touched: false }]
+    };
+    var it0 = items[0];
+    var jk = (it0.jacket && it0.jacket !== 'ไม่ระบุ') ? ' ' + it0.jacket : '';
+    var m = document.createElement('div');
+    m.id = 'split-ship-modal';
+    m.className = 'fixed inset-0 z-[85] flex items-center justify-center bg-black/60 p-4';
+    m.innerHTML =
+      '<div class="w-full max-w-md max-h-[92vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-5">'
+      + '<div class="text-lg font-black text-slate-900 dark:text-white mb-1">✂️ แบ่งส่งหลายวัน</div>'
+      + '<div class="text-sm font-black text-slate-800 dark:text-slate-100">' + esc(it0.project || '-') + ' • ' + esc(it0.size || '-') + esc(jk) + '</div>'
+      + '<div class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">ยอดรอส่ง ' + fmt(total) + ' เส้น • กำหนดส่งเดิม ' + esc(thai(base)) + '</div>'
+      + '<div class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">ตัวอย่าง: ผลิต 30 เส้น ส่งวันเดิม 25 → ใส่ 25 ในช่องบน ส่วนที่เหลือ 5 เส้นจะเติมให้เอง แล้วเลือกวันส่งใหม่</div>'
+      + '<div id="sp-rows" class="space-y-2 mb-2">' + rowsHtml() + '</div>'
+      + '<button type="button" onclick="splitShipAdd()" class="text-xs font-bold text-sky-600 dark:text-sky-400 mb-2">➕ แบ่งเพิ่มอีกวัน</button>'
+      + '<div id="sp-summary" class="text-xs font-black mb-3"></div>'
+      + '<div class="text-[10px] text-slate-400 mb-4">ระบบจะแตกรายการเดิมเป็นหลายรายการ ยอดรวมและยอดผลิตแต่ละกะไม่เปลี่ยน • ย้อนกลับได้ด้วยปุ่ม Undo</div>'
+      + '<div class="flex justify-end gap-2">'
+      + '<button type="button" onclick="closeSplitShipModal()" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">ยกเลิก</button>'
+      + '<button type="button" id="sp-apply" onclick="applySplitShip()" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-theme-500 text-slate-950 hover:bg-theme-600 transition">✅ แบ่งส่งเลย</button>'
+      + '</div></div>';
+    m.addEventListener('click', function (e) { if (e.target === m) closeSplitShipModal(); });
+    document.body.appendChild(m);
+    autofill();
+    refresh();
+  };
+
+  // แยก shift เช้า/บ่าย/OT ตามลำดับ (เช้า→บ่าย→OT) ผลรวมแต่ละกะของทุกชิ้นเท่ากับของเดิมเสมอ
+  function makeShiftTaker(it) {
+    var left = { m: Number(it.morningQty) || 0, a: Number(it.afternoonQty) || 0, o: Number(it.otQty) || 0 };
+    return {
+      take: function (q) {
+        var r = { m: 0, a: 0, o: 0 }, need = q;
+        ['m', 'a', 'o'].forEach(function (k) { var t = Math.min(left[k], need); r[k] = t; left[k] -= t; need -= t; });
+        return r;
+      },
+      rest: function () { return left; }
+    };
+  }
+
+  // ใช้ตรรกะแยกจริงแยกเป็นฟังก์ชัน เพื่อทดสอบได้ — คืนจำนวนรายการใหม่ที่สร้าง
+  window.__splitShipCore = function (items, parts) {
+    var pi = 0, partLeft = parts[0].qty, created = 0;
+    items.forEach(function (it) {
+      var left = qtyOf(it), segs = [];
+      while (left > 0 && pi < parts.length) {
+        var take = Math.min(left, partLeft);
+        segs.push({ pi: pi, qty: take });
+        left -= take; partLeft -= take;
+        if (partLeft === 0) { pi++; partLeft = pi < parts.length ? parts[pi].qty : 0; }
+      }
+      if (!segs.length) return;
+      var hadMirror = (typeof rmRecords !== 'undefined') && rmRecords.some(function (r) { return Number(r.sourceDbId) === Number(it.id); });
+      var baseCopy = (function () { var o = {}; Object.keys(it).forEach(function (k) { if (k !== 'shippingImage') o[k] = it[k]; }); return JSON.parse(JSON.stringify(o)); })();
+      var taker = makeShiftTaker(it);
+      var linked = (it.sourceRMId != null) ? Number(it.sourceRMQty != null ? it.sourceRMQty : it.qty) : null;
+      var first = taker.take(segs[0].qty);
+      for (var s = 1; s < segs.length; s++) {
+        var sh = taker.take(segs[s].qty);
+        var c = JSON.parse(JSON.stringify(baseCopy));
+        c.id = getNextDbId();
+        c.qty = segs[s].qty;
+        c.morningQty = sh.m; c.afternoonQty = sh.a; c.otQty = sh.o;
+        if (typeof c.remainingQty !== 'undefined') c.remainingQty = segs[s].qty;
+        c.dispatchDate = parts[segs[s].pi].date;
+        delete c.__legacyDispatchDate;
+        c.shippingImage = '';
+        c.splitFromId = it.id;
+        if (hadMirror) c.receivedDate = ''; // กัน RM mirror นับรับท่อซ้ำใน Timeline
+        if (linked !== null) { var l = Math.min(segs[s].qty, linked); c.sourceRMQty = l; linked -= l; }
+        db.push(c);
+        created++;
+      }
+      var rest = taker.rest();
+      it.qty = segs[0].qty;
+      it.morningQty = first.m + rest.m; it.afternoonQty = first.a + rest.a; it.otQty = first.o + rest.o;
+      if (typeof it.remainingQty !== 'undefined') it.remainingQty = segs[0].qty;
+      it.dispatchDate = parts[segs[0].pi].date;
+      if (it.__legacyDispatchDate === true) delete it.__legacyDispatchDate;
+      if (linked !== null) it.sourceRMQty = linked;
+    });
+    return created;
+  };
+
+  // แก้ในตารางไทม์ไลน์เลย: กางฟอร์มเล็กใต้ปุ่มในการ์ด (ไม่เด้งหน้าต่าง)
+  window.openSplitShipInline = function (ids, btn) {
+    if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return;
+    var had = document.getElementById('sp-inline');
+    var sameBtn = !!(had && btn && had.previousElementSibling === btn.parentNode); // ต้องเช็คก่อนลบ panel
+    closeSplitShipModal();
+    if (sameBtn) return; // กดซ้ำ = ปิด
+    var items = findItems(ids).filter(function (i) { return i.status !== 'ส่งมอบแล้ว'; });
+    if (!items.length) { showToast('รายการนี้ส่งมอบแล้ว แบ่งส่งไม่ได้', 'error'); return; }
+    if (failQc(items)) { showToast('รายการนี้ QC ไม่ผ่าน/รอตัดสิน แบ่งส่งไม่ได้ (กันตัวเลข QC ในแดชบอร์ดเพี้ยน)', 'error'); return; }
+    var total = items.reduce(function (s, i) { return s + qtyOf(i); }, 0);
+    var base = getDispatchDate(items[0]) || '';
+    if (total < 2 || !base || !btn) { showToast('แบ่งส่งไม่ได้ (ต้องมีอย่างน้อย 2 เส้นและมีวันส่ง)', 'error'); return; }
+    ctx = { ids: items.map(function (i) { return i.id; }), total: total, base: base,
+      parts: [{ qty: String(total), date: base, touched: true }, { qty: '', date: dateAdd(base, 1), touched: false }] };
+    var C = 'w-full text-[10px] font-bold rounded px-1 py-0.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-600';
+    var box = document.createElement('div');
+    box.id = 'sp-inline';
+    box.className = 'mt-1 rounded bg-white dark:bg-slate-900 p-1.5 space-y-1 text-slate-900 dark:text-white';
+    box.setAttribute('onclick', 'event.stopPropagation()');
+    box.innerHTML =
+      '<div class="flex items-center gap-1"><span class="text-[9px] font-black text-emerald-700 dark:text-emerald-400 whitespace-nowrap">ส่งวันเดิม</span>'
+      + '<input id="sp-q-0" type="number" min="1" step="1" value="' + esc(total) + '" oninput="splitShipInput(0,\'q\',this)" class="' + C + '"></div>'
+      + '<div class="text-[9px] font-black">ที่เหลือส่งวันที่</div>'
+      + '<div class="grid grid-cols-2 gap-1">'
+      + '<input id="sp-q-1" type="number" min="1" step="1" placeholder="เส้น" oninput="splitShipInput(1,\'q\',this)" class="' + C + '">'
+      + '<input id="sp-d-1" type="date" value="' + esc(ctx.parts[1].date) + '" oninput="splitShipInput(1,\'d\',this)" class="' + C + '"></div>'
+      + '<div id="sp-summary" class="text-[9px] font-black leading-tight"></div>'
+      + '<div class="flex gap-1"><button type="button" id="sp-apply" onclick="applySplitShip()" class="flex-1 text-[9px] font-black rounded px-1 py-0.5 bg-emerald-600 text-white">✅ แบ่ง</button>'
+      + '<button type="button" onclick="closeSplitShipModal()" class="text-[9px] font-black rounded px-1.5 py-0.5 border border-slate-300 dark:border-slate-600">✕</button></div>';
+    btn.parentNode.insertAdjacentElement('afterend', box);
+    autofill();
+    refresh();
+    try { box.scrollIntoView({ block: 'nearest' }); } catch (_) {}
+  };
+
+  window.applySplitShip = function () {
+    if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return;
+    if (!ctx) return;
+    var err = validate();
+    if (err) { showToast(err, 'error'); return; }
+    var items = findItems(ctx.ids);
+    var total = items.reduce(function (s, i) { return s + qtyOf(i); }, 0);
+    if (failQc(items)) { showToast('รายการนี้ QC ไม่ผ่าน/รอตัดสิน แบ่งส่งไม่ได้ (กันตัวเลข QC ในแดชบอร์ดเพี้ยน)', 'error'); return; }
+    if (items.length !== ctx.ids.length || total !== ctx.total || items.some(function (i) { return i.status === 'ส่งมอบแล้ว'; })) {
+      showToast('ข้อมูลรายการเปลี่ยนไประหว่างแก้ไข กรุณาเปิดหน้าต่างแบ่งส่งใหม่อีกครั้ง', 'error');
+      closeSplitShipModal();
+      return;
+    }
+    var parts = ctx.parts.map(function (p) { return { qty: Number(p.qty), date: p.date }; });
+    var label = (items[0].project || '-') + ' ' + (items[0].size || '-');
+    pushUndoSnapshot('แบ่งส่งท่อหลายวัน (Timeline)');
+    window.__splitShipCore(items, parts);
+    saveDB();
+    closeSplitShipModal();
+    showToastWithUndo('แบ่งส่ง ' + label + ': ' + parts.map(function (p) { return fmt(p.qty) + ' เส้น → ' + thai(p.date); }).join(' • '));
+  };
+})();
+</script>
+<!-- ================= END FIX40 ================= -->
+
 </body>
 </html>
