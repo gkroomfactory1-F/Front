@@ -7265,7 +7265,8 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         ${statusLine}
                         ${an.badge}
                         <div class="mt-1" onclick="event.stopPropagation()"><input type="date" value="${dd}" onchange="updateFGDispatchDateBulk(${idsAttr}, this.value)" class="${dateInputCls}"></div>
-                        ${(!allDone && g.qty >= 2 && dd) ? `<div class="mt-1" onclick="event.stopPropagation()"><button type="button" onclick="openSplitShipInline(${idsAttr}, this)" title="แบ่งยอดส่งเป็นหลายวัน เช่น ส่ง 25 วันนี้ ที่เหลือส่งวันอื่น" class="w-full text-[9px] font-black rounded px-1 py-0.5 bg-white/90 text-emerald-700 hover:bg-white border border-emerald-300">✂️ แบ่งส่งหลายวัน</button></div>` : ''}
+                        ${(!allDone && g.qty >= 2 && dd) ? `<div class="mt-1" onclick="event.stopPropagation()"><button type="button" onclick="openQuickSplit(${idsAttr})" title="แยกบางส่วนไปส่งวันอื่น (เปิดป๊อปอัพ)" class="w-full text-[9px] font-black rounded px-1 py-0.5 bg-white/90 text-emerald-700 hover:bg-white border border-emerald-300">✂️ แยกส่ง</button></div>` : ''}
+                        ${(false /* FIX47: ซ่อนปุ่มเดิม ใช้ป๊อปอัพ openQuickSplit แทน (เรียกฟอร์มเต็มได้จากลิงก์ในป๊อปอัพ) */ && !allDone && g.qty >= 2 && dd) ? `<div class="mt-1" onclick="event.stopPropagation()"><button type="button" onclick="openSplitShipInline(${idsAttr}, this)" title="แบ่งยอดส่งเป็นหลายวัน เช่น ส่ง 25 วันนี้ ที่เหลือส่งวันอื่น" class="w-full text-[9px] font-black rounded px-1 py-0.5 bg-white/90 text-emerald-700 hover:bg-white border border-emerald-300">✂️ แบ่งส่งหลายวัน</button></div>` : ''}
                     </div>
                 `;
             }
@@ -15559,6 +15560,8 @@ try{applyOv();buildEst()}catch(e){console.warn(e)}badge();window.gekkoOps={open,
 /* FIX40: ตอนเปิดฟอร์มแบ่งส่งในการ์ด ให้ช่องแถวส่งท่อสูงขึ้นเองจนเห็นฟอร์มครบ */
 #timeline-modal .timeline-cell-scroll:has(#sp-inline) { height: auto !important; max-height: 340px !important; }
 #timeline-modal #sp-inline input { min-width: 0; }
+#timeline-modal .timeline-cell-scroll:has([data-qs]) { height: auto !important; max-height: 340px !important; }
+#timeline-modal [data-qs] { min-width: 0; }
 </style>
 <!-- ================= FIX40: แบ่งส่งท่อหลายวัน (Timeline) =================
      เพิ่มปุ่ม "✂️ แบ่งส่งหลายวัน" ที่การ์ดส่งท่อใน Timeline: แตกรายการเดิมเป็นหลายรายการ
@@ -15849,6 +15852,154 @@ try{applyOv();buildEst()}catch(e){console.warn(e)}badge();window.gekkoOps={open,
     saveDB();
     closeSplitShipModal();
     showToastWithUndo('แบ่งส่ง ' + label + ': ' + parts.map(function (p) { return fmt(p.qty) + ' เส้น → ' + thai(p.date); }).join(' • '));
+  };
+
+  // FIX45: ปุ่ม "✂️ แยกเลย" บนการ์ด Timeline — แยกบางส่วนไปวันอื่นทีละก้อน ไม่ต้องจัดสรรครบทั้งล็อตในครั้งเดียว
+  window.quickSplitShip = function (ids, btn) {
+    if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return;
+    var wrap = btn && btn.parentNode;
+    if (!wrap) return;
+    var qEl = wrap.querySelector('[data-qs="q"]'), dEl = wrap.querySelector('[data-qs="d"]');
+    if (!qEl || !dEl) return;
+    var items = findItems(ids).filter(function (i) { return i.status !== 'ส่งมอบแล้ว'; });
+    if (!items.length) { showToast('รายการนี้ส่งมอบแล้ว แยกส่งไม่ได้', 'error'); return; }
+    if (failQc(items)) { showToast('รายการนี้ QC ไม่ผ่าน/รอตัดสิน แยกส่งไม่ได้ (กันตัวเลข QC ในแดชบอร์ดเพี้ยน)', 'error'); return; }
+    var total = items.reduce(function (s, i) { return s + qtyOf(i); }, 0);
+    var cur = getDispatchDate(items[0]) || '';
+    var n = Number(qEl.value), date = dEl.value;
+    if (!cur) { showToast('รายการนี้ยังไม่มีวันส่ง — กำหนดวันส่งก่อน', 'error'); return; }
+    if (!Number.isInteger(n) || n < 1 || n >= total) { showToast('จำนวนที่แยกต้องเป็นจำนวนเต็ม 1–' + fmt(total - 1) + ' เส้น (ยอดรอส่ง ' + fmt(total) + ')', 'error'); return; }
+    if (!date) { showToast('เลือกวันส่งของก้อนที่แยกก่อน', 'error'); return; }
+    if (!isReasonableDate(date)) { showToast('วันที่ส่งท่อดูผิดปกติ กรุณาตรวจสอบอีกครั้ง', 'error'); return; }
+    if (date === cur) { showToast('เป็นวันเดียวกับวันส่งเดิม — เลือกวันอื่น', 'error'); return; }
+    var label = (items[0].project || '-') + ' ' + (items[0].size || '-');
+    pushUndoSnapshot('แยกส่งท่อบางส่วน (Timeline)');
+    window.__splitShipCore(items, [{ qty: total - n, date: cur }, { qty: n, date: date }]);
+    saveDB();
+    var td = ''; try { td = localDateKey(); } catch (_) {}
+    showToastWithUndo('แยก ' + label + ': ' + fmt(n) + ' เส้น → ' + thai(date) + (td && date <= td ? ' (นับส่งมอบแล้ว)' : '') + ' • เหลือ ' + fmt(total - n) + ' เส้น ' + thai(cur));
+  };
+
+  // FIX47: ป๊อปอัพ "✂️ แยกส่ง" — เล็ก กรอกแค่ จำนวน + วัน (มีปุ่มลัด) การ์ด Timeline เหลือปุ่มเดียว ไม่รก
+  var qctx = null;
+  function qsClose() { var m = document.getElementById('qs-modal'); if (m) m.remove(); qctx = null; }
+  window.closeQuickSplit = qsClose;
+
+  function qsErr() {
+    if (!qctx) return 'x';
+    var n = Number(qctx.qty);
+    if (!Number.isInteger(n) || n < 1 || n >= qctx.total) return 'ใส่จำนวนเส้นที่จะแยก (1–' + fmt(qctx.total - 1) + ')';
+    if (!qctx.date) return 'เลือกวันส่งของก้อนที่แยก';
+    if (!isReasonableDate(qctx.date)) return 'วันที่ดูผิดปกติ ตรวจสอบอีกครั้ง';
+    if (qctx.date === qctx.cur) return 'เป็นวันเดียวกับวันส่งเดิม เลือกวันอื่น';
+    return '';
+  }
+
+  function qsRefresh() {
+    if (!qctx) return;
+    var err = qsErr(), pv = document.getElementById('qs-preview'), btn = document.getElementById('qs-apply');
+    if (pv) {
+      if (err) { pv.textContent = err; pv.className = 'text-[11px] font-bold text-amber-600 dark:text-amber-400 min-h-[2.4rem] mt-2'; }
+      else {
+        var n = Number(qctx.qty), td = '';
+        try { td = localDateKey(); } catch (_) {}
+        pv.textContent = '✔ เหลือ ' + fmt(qctx.total - n) + ' เส้น ส่ง ' + thai(qctx.cur) + ' • แยก ' + fmt(n) + ' เส้น → ' + thai(qctx.date) + (td && qctx.date <= td ? ' (นับส่งมอบแล้ว)' : '');
+        pv.className = 'text-[11px] font-bold text-emerald-600 dark:text-emerald-400 min-h-[2.4rem] mt-2';
+      }
+    }
+    if (btn) { btn.disabled = !!err; btn.classList.toggle('opacity-40', !!err); }
+  }
+
+  window.quickSplitInput = function (kind, el) {
+    if (!qctx) return;
+    if (kind === 'q') qctx.qty = el.value; else qctx.date = el.value;
+    qsRefresh();
+  };
+
+  window.quickSplitPreset = function (kind, val) {
+    if (!qctx) return;
+    var id = kind === 'q' ? 'qs-q' : 'qs-d', el = document.getElementById(id);
+    var v = kind === 'q' ? String(val) : dateAdd(qctx.cur, Number(val));
+    if (kind === 'q') qctx.qty = v; else qctx.date = v;
+    if (el) el.value = v;
+    qsRefresh();
+  };
+
+  window.quickSplitToFull = function () {
+    var ids = qctx && qctx.ids;
+    qsClose();
+    if (ids) window.openSplitShipModal(ids);
+  };
+
+  window.openQuickSplit = function (ids) {
+    if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return;
+    var items = findItems(ids).filter(function (i) { return i.status !== 'ส่งมอบแล้ว'; });
+    if (!items.length) { showToast('รายการนี้ส่งมอบแล้ว แยกส่งไม่ได้', 'error'); return; }
+    if (failQc(items)) { showToast('รายการนี้ QC ไม่ผ่าน/รอตัดสิน แยกส่งไม่ได้ (กันตัวเลข QC ในแดชบอร์ดเพี้ยน)', 'error'); return; }
+    var total = items.reduce(function (s, i) { return s + qtyOf(i); }, 0);
+    var cur = getDispatchDate(items[0]) || '';
+    if (total < 2) { showToast('ต้องมีอย่างน้อย 2 เส้นถึงจะแยกส่งได้', 'error'); return; }
+    if (!cur) { showToast('รายการนี้ยังไม่มีวันส่ง — กำหนดวันส่งก่อน', 'error'); return; }
+    qsClose(); closeSplitShipModal();
+    qctx = { ids: items.map(function (i) { return i.id; }), total: total, cur: cur, qty: '', date: dateAdd(cur, 1) };
+    var it0 = items[0], jk = (it0.jacket && it0.jacket !== 'ไม่ระบุ') ? ' ' + it0.jacket : '';
+    var chip = 'px-2 py-1 rounded-lg text-[11px] font-bold border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800';
+    var half = Math.max(1, Math.floor(total / 2));
+    var m = document.createElement('div');
+    m.id = 'qs-modal';
+    m.className = 'fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4';
+    m.innerHTML =
+      '<div class="w-full max-w-xs rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl p-4">'
+      + '<div class="flex items-start justify-between gap-2"><div class="min-w-0">'
+      + '<div class="text-base font-black text-slate-900 dark:text-white">✂️ แยกส่ง</div>'
+      + '<div class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">' + esc(it0.project || '-') + ' • ' + esc(it0.size || '-') + esc(jk) + '</div>'
+      + '<div class="text-[11px] text-slate-500 dark:text-slate-400">รอส่ง ' + fmt(total) + ' เส้น • ส่ง ' + esc(thai(cur)) + '</div></div>'
+      + '<button type="button" onclick="closeQuickSplit()" class="text-slate-400 hover:text-slate-600 text-lg leading-none">✕</button></div>'
+      + '<div class="mt-3 text-[11px] font-black text-slate-600 dark:text-slate-300">แยกกี่เส้น</div>'
+      + '<div class="flex items-center gap-2"><input id="qs-q" type="number" min="1" max="' + (total - 1) + '" step="1" inputmode="numeric" placeholder="จำนวนเส้น" oninput="quickSplitInput(\'q\',this)" class="' + INP + '">'
+      + '<button type="button" onclick="quickSplitPreset(\'q\',' + half + ')" class="' + chip + ' whitespace-nowrap">ครึ่ง ' + fmt(half) + '</button></div>'
+      + '<div class="mt-2 text-[11px] font-black text-slate-600 dark:text-slate-300">ไปส่งวันที่</div>'
+      + '<input id="qs-d" type="date" value="' + esc(qctx.date) + '" oninput="quickSplitInput(\'d\',this)" class="' + INP + '">'
+      + '<div class="flex gap-1.5 mt-1.5">'
+      + '<button type="button" onclick="quickSplitPreset(\'d\',1)" class="' + chip + '">+1 วัน</button>'
+      + '<button type="button" onclick="quickSplitPreset(\'d\',3)" class="' + chip + '">+3 วัน</button>'
+      + '<button type="button" onclick="quickSplitPreset(\'d\',7)" class="' + chip + '">+7 วัน</button></div>'
+      + '<div id="qs-preview"></div>'
+      + '<div class="flex items-center justify-between gap-2 mt-2">'
+      + '<button type="button" onclick="quickSplitToFull()" class="text-[11px] font-bold text-sky-600 dark:text-sky-400 text-left">แบ่งหลายวันพร้อมกัน →</button>'
+      + '<div class="flex gap-2"><button type="button" onclick="closeQuickSplit()" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">ยกเลิก</button>'
+      + '<button type="button" id="qs-apply" onclick="quickSplitApply()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white">✂️ แยกเลย</button></div></div></div>';
+    m.addEventListener('click', function (e) { if (e.target === m) qsClose(); });
+    m.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); qsClose(); }
+      else if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') { e.preventDefault(); window.quickSplitApply(); }
+    });
+    document.body.appendChild(m);
+    qsRefresh();
+    var q = document.getElementById('qs-q'); if (q) { try { q.focus(); } catch (_) {} }
+  };
+
+  window.quickSplitApply = function () {
+    if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return;
+    if (!qctx) return;
+    var err = qsErr();
+    if (err) { showToast(err, 'error'); return; }
+    var items = findItems(qctx.ids).filter(function (i) { return i.status !== 'ส่งมอบแล้ว'; });
+    var total = items.reduce(function (s, i) { return s + qtyOf(i); }, 0);
+    if (items.length !== qctx.ids.length || total !== qctx.total || (getDispatchDate(items[0]) || '') !== qctx.cur) {
+      showToast('ข้อมูลรายการเปลี่ยนไประหว่างแก้ไข กรุณากดแยกส่งใหม่อีกครั้ง', 'error');
+      qsClose();
+      return;
+    }
+    if (failQc(items)) { showToast('รายการนี้ QC ไม่ผ่าน/รอตัดสิน แยกส่งไม่ได้ (กันตัวเลข QC ในแดชบอร์ดเพี้ยน)', 'error'); return; }
+    var n = Number(qctx.qty), date = qctx.date, cur = qctx.cur;
+    var label = (items[0].project || '-') + ' ' + (items[0].size || '-');
+    pushUndoSnapshot('แยกส่งท่อบางส่วน (Timeline)');
+    window.__splitShipCore(items, [{ qty: total - n, date: cur }, { qty: n, date: date }]);
+    saveDB();
+    qsClose();
+    var td = ''; try { td = localDateKey(); } catch (_) {}
+    showToastWithUndo('แยก ' + label + ': ' + fmt(n) + ' เส้น → ' + thai(date) + (td && date <= td ? ' (นับส่งมอบแล้ว)' : '') + ' • เหลือ ' + fmt(total - n) + ' เส้น ' + thai(cur));
   };
 })();
 </script>
