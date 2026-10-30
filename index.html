@@ -18687,5 +18687,301 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
 })();
 
 </script>
+
+<!-- ================= GEKKO V93 FILTER CLARITY (ADDITIVE): ทำให้ตัวกรองบอกสถานะตรงกับที่เห็นจริง ================= -->
+<script id="gekko-v93-filter-clarity">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V93_FILTER_CLARITY) return;
+
+  const BASIS = { production:'วันผลิต', received:'วันรับท่อ', dispatch:'วันส่งท่อ', fg:'วันรับ FG' };
+  function dm(key){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(key||''); return m ? (Number(m[3])+'/'+Number(m[2])) : ''; }
+  function mode(){ try{ return (typeof currentViewMode!=='undefined') ? currentViewMode : 'table'; }catch(_){ return 'table'; } }
+  function val(id){ const el=document.getElementById(id); return el ? (el.value||'') : ''; }
+
+  // รวมรายการตัวกรองที่ "ทำงานอยู่จริง" เป็นข้อความ เพื่อให้ผู้ใช้เห็นว่าอะไรกำลังกรองอยู่
+  function activeParts(V){
+    const s = V.state, parts = [];
+    const st = val('filter-status'), pj = val('filter-project'), q = val('search-box').trim();
+    if (st) parts.push('สถานะ: ' + st);
+    if (pj) parts.push('โครงการ: ' + pj);
+    if (q) parts.push('ค้นหา: "' + q + '"');
+    if (s.from || s.to) {
+      const b = BASIS[s.basis] ? ' (' + BASIS[s.basis] + ')' : '';
+      parts.push('วันที่ ' + (dm(s.from) || '…') + '–' + (dm(s.to) || '…') + b);
+    } else if (s.basis && s.basis !== 'all') {
+      parts.push('กรองตาม' + BASIS[s.basis]);
+    }
+    if (s.size && s.size !== '__ALL__') parts.push('ขนาด: ' + s.size);
+    if (s.jacket && s.jacket !== '__ALL__') parts.push('Jacket: ' + s.jacket);
+    const S2 = window.GekkoV85_2 && window.GekkoV85_2.state;
+    if (S2) {
+      if (S2.qc && S2.qc !== '__ALL__') parts.push('QC: ' + S2.qc);
+      if (S2.thick && S2.thick !== '__ALL__') parts.push('ความหนา: ' + S2.thick);
+      if (S2.location && S2.location !== '__ALL__') parts.push('สถานที่ส่ง: ' + S2.location);
+    }
+    // วันที่ของบอร์ด Kanban มีผลเฉพาะตอนอยู่หน้า Kanban เท่านั้น ไม่นับตอนอยู่หน้าอื่น (กันตัวเลขงงว่ากรองอะไรอยู่)
+    if (mode() === 'kanban' && val('kanban-date-filter')) parts.push('วันที่บอร์ด: ' + dm(val('kanban-date-filter')));
+    return parts;
+  }
+
+  function monthOfRange(from, to){
+    const m = /^(\d{4})-(\d{2})-01$/.exec(from || '');
+    if (!m || !to) return '';
+    const key = m[1] + '-' + m[2];
+    const r = (typeof monthRange === 'function') ? monthRange(key) : null;
+    return (r && r[0] === from && r[1] === to) ? key : '';
+  }
+
+  // ให้ช่อง "ดูย้อนหลังรายเดือน" แสดงเดือนที่ใช้อยู่จริงเสมอ (เดิมค้างข้อความเดิมแม้ล้าง/เปลี่ยนวันที่แล้ว)
+  function syncMonthSelect(V){
+    const sel = document.getElementById('filter-month'); if (!sel) return;
+    const from = V.state.from, to = V.state.to;
+    let want;
+    if (!from && !to) want = 'ALL';
+    else want = monthOfRange(from, to) || 'CUSTOM';
+    Array.from(sel.querySelectorAll('option[value="CUSTOM"]')).forEach(function(o){ if (want !== 'CUSTOM') o.remove(); });
+    if (want === 'CUSTOM' && !sel.querySelector('option[value="CUSTOM"]')) {
+      const o = document.createElement('option'); o.value = 'CUSTOM'; o.textContent = '📅 ช่วงวันที่กำหนดเอง';
+      sel.insertBefore(o, sel.options[1] || null);
+    }
+    if (Array.from(sel.options).some(function(o){ return o.value === want; })) sel.value = want;
+  }
+
+  function boot(tries){
+    const V = window.GekkoV85;
+    const ready = V && typeof V.updateMeta === 'function' && typeof V.activeCount === 'function' &&
+                  window.GekkoV85_2 && document.getElementById('gk-v85-filter-meta') && document.getElementById('filter-month');
+    if (!ready) { if (tries < 50) setTimeout(function(){ boot(tries + 1); }, 300); return; }
+    if (window.__GEKKO_V93_FILTER_CLARITY) return;
+    window.__GEKKO_V93_FILTER_CLARITY = true;
+
+    // 1) ตัวนับตัวกรอง: ไม่นับวันที่ Kanban ที่ซ่อนอยู่นอกหน้า Kanban
+    const prevActive = V.activeCount;
+    V.activeCount = function(){
+      let n = prevActive.apply(this, arguments);
+      if (mode() !== 'kanban' && val('kanban-date-filter')) n -= 1;
+      return Math.max(0, n);
+    };
+
+    // 2) ตัวเลขในช่องเลือกเดือน = จำนวนรายการที่ตัวกรองเดือนนั้นจะแสดงจริง (ใช้กติกาเดียวกับตัวกรองวันที่)
+    if (typeof window.refreshMonthFilter === 'function') {
+      window.refreshMonthFilter = function(){
+        const sel = document.getElementById('filter-month'); if (!sel) return;
+        const rows = V.getDb();
+        const keys = new Set();
+        rows.forEach(function(i){ const k = itemMonthKey(i); if (/^\d{4}-\d{2}$/.test(k)) keys.add(k); });
+        const nowKey = monthKeyOf(new Date());
+        const cnt = {};
+        keys.forEach(function(k){
+          const r = monthRange(k);
+          cnt[k] = r ? rows.filter(function(i){ return V.dateMatch(i, { from: r[0], to: r[1], basis: 'all' }); }).length : 0;
+        });
+        const sorted = Array.from(keys).sort().reverse();
+        const sig = sorted.join(',') + '|' + sorted.map(function(k){ return cnt[k]; }).join(',') + '|v93';
+        if (sel.dataset.sig === sig) return;
+        sel.innerHTML = '<option value="">📅 ดูย้อนหลังรายเดือน…</option><option value="ALL">📚 ทุกเดือน (ล้างช่วงวันที่)</option>'
+          + sorted.map(function(k){ return '<option value="' + k + '">' + monthLabel(k) + ' (' + cnt[k] + ')' + (k === nowKey ? ' • เดือนนี้' : '') + '</option>'; }).join('');
+        sel.dataset.sig = sig;
+      };
+    }
+
+    // 3) สรุปตัวกรองเป็นข้อความ + ซิงก์ช่องเลือกเดือน ทุกครั้งที่สรุปตัวกรองอัปเดต
+    const prevMeta = V.updateMeta;
+    V.updateMeta = function(){
+      const r = prevMeta.apply(this, arguments);
+      try {
+        const meta = document.getElementById('gk-v85-filter-meta');
+        const pill = meta && Array.from(meta.querySelectorAll('.gk-v85-filter-pill')).find(function(p){ return /^🔎/.test(p.textContent || ''); });
+        if (pill) {
+          const parts = activeParts(V);
+          if (parts.length) {
+            pill.textContent = '🔎 ใช้ตัวกรอง ' + parts.length + ' จุด: ' + parts.join(' • ');
+            pill.title = parts.join('\n');
+            pill.classList.add('active');
+          } else {
+            pill.textContent = '🔎 ยังไม่ได้ใช้ตัวกรองเพิ่มเติม';
+            pill.title = '';
+            pill.classList.remove('active');
+          }
+        }
+        if (typeof window.refreshMonthFilter === 'function') window.refreshMonthFilter();
+        syncMonthSelect(V);
+      } catch (e) { console.warn('V93 filter clarity:', e); }
+      return r;
+    };
+    try { V.updateMeta(); } catch (_) {}
+  }
+  boot(0);
+})();
+</script>
+
+<!-- ================= GEKKO V94 CALC MODAL LAYOUT FIX (ADDITIVE CSS): เครื่องมือคำนวณแยก — กรอบ Cap ไม่ให้เลื่อนซ้อน 2 ชั้น และเต็มความสูง ================= -->
+<style id="gekko-v94-calc-modal-fix">
+/* เดิม: แผงนอกเลื่อนได้ + iframe มี min-height 600px + เลื่อนในตัวเอง => แถบเลื่อนซ้อนกัน 2 ชั้น และฟอร์มโดนตัดครึ่ง
+   ใหม่: แท็บ Cap เป็น flex column ให้กรอบ iframe กินพื้นที่ที่เหลือพอดี เลื่อนในกรอบเดียว */
+#gqcalc-modal #gqcalc-pane-cap.gqcalc-active{display:flex;flex-direction:column;overflow:auto}
+#gqcalc-modal #gqcalc-pane-cap .gqcalc-note{flex:0 0 auto}
+#gqcalc-modal #gqcalc-cap-frame{flex:1 1 auto;height:auto;min-height:360px;width:100%}
+@media(max-width:640px){#gqcalc-modal #gqcalc-cap-frame{height:auto;min-height:55vh}}
+</style>
+
+<!-- ================= GEKKO V95 FLOATING-BUTTON CLICK-THROUGH (ADDITIVE): ปุ่มลอยมุมจอไม่บังปุ่ม/ช่องกรอกด้านล่างอีก ================= -->
+<script id="gekko-v95-fab-passthrough">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V95_FAB_PASSTHROUGH) return;
+  window.__GEKKO_V95_FAB_PASSTHROUGH = true;
+
+  /* ปัญหาเดิม: ปุ่มลอย 3 อัน (📈 Insights Plus, 🟢 ภาพรวมปกติ, 🧰 เครื่องมือ) ลอยทับเนื้อหาตลอดเวลา
+     เลื่อนหน้าไปจุดไหนก็อาจไปทับปุ่ม/ช่องเลือก/ช่องกรอก ทำให้กดแล้วไม่ติด (คลิกไปโดนปุ่มลอยแทน)
+     วิธีแก้: ถ้าตำแหน่งที่ชี้อยู่ "มีปุ่ม/ช่องกรอกอยู่ข้างใต้" ให้คลิกทะลุปุ่มลอยไปหาของข้างใต้ (ปุ่มลอยจางลงเป็นสัญญาณ)
+     ถ้าข้างใต้ว่าง ปุ่มลอยกดได้ตามปกติ ไม่แตะโค้ด/ลอจิกเดิมของปุ่มลอย */
+  const IDS = ['ip-fab', 'ip-status-badge', 'gkp-btn'];
+  const INTERACTIVE = 'button,a[href],input:not([type="hidden"]),select,textarea,label,summary,[onclick],[role="button"]';
+
+  function fabEls(){ return IDS.map(function(i){ return document.getElementById(i); }).filter(Boolean); }
+  function inFab(el){ return fabEls().some(function(f){ return f === el || f.contains(el); }); }
+  function inside(f, x, y){ const r = f.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; }
+  function interactiveAncestor(el){
+    for (let n = el; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
+      try { if (n.matches(INTERACTIVE)) return n; } catch (_) {}
+    }
+    return null;
+  }
+  // หาของที่อยู่ "ใต้" ปุ่มลอย ณ จุดนั้น (ข้ามตัวปุ่มลอยเอง)
+  function underneath(x, y){
+    const stack = document.elementsFromPoint(x, y);
+    for (let i = 0; i < stack.length; i++) { if (!inFab(stack[i])) return stack[i]; }
+    return null;
+  }
+  function targetUnder(x, y){ const u = underneath(x, y); return u ? interactiveAncestor(u) : null; }
+
+  // เมาส์: ตัดสินใจทุกครั้งที่เมาส์ขยับอยู่เหนือปุ่มลอย
+  function update(x, y){
+    fabEls().forEach(function(f){
+      if (!inside(f, x, y)) { if (f.style.pointerEvents) f.style.pointerEvents = ''; if (f.dataset.v95) { f.style.opacity = f.dataset.v95op; delete f.dataset.v95; delete f.dataset.v95op; } return; }
+      const t = targetUnder(x, y);
+      if (t) {
+        if (!f.dataset.v95) { f.dataset.v95 = '1'; f.dataset.v95op = f.style.opacity || ''; }
+        f.style.pointerEvents = 'none'; f.style.opacity = '0.35';
+      } else {
+        f.style.pointerEvents = '';
+        if (f.dataset.v95) { f.style.opacity = f.dataset.v95op; delete f.dataset.v95; delete f.dataset.v95op; }
+      }
+    });
+  }
+  document.addEventListener('pointermove', function(e){ if (e.pointerType === 'touch') return; update(e.clientX, e.clientY); }, { passive: true, capture: true });
+  window.addEventListener('scroll', function(){ fabEls().forEach(function(f){ f.style.pointerEvents = ''; if (f.dataset.v95) { f.style.opacity = f.dataset.v95op; delete f.dataset.v95; delete f.dataset.v95op; } }); }, { passive: true });
+
+  // จอสัมผัส: ไม่มีการขยับเมาส์ล่วงหน้า จึงดักตอนแตะ ถ้าใต้ปุ่มลอยมีปุ่ม/ช่องกรอก ส่งการแตะต่อให้ของข้างใต้
+  document.addEventListener('click', function(e){
+    if (!inFab(e.target)) return;
+    if (!e.clientX && !e.clientY) return;               // กดด้วยคีย์บอร์ด ไม่ยุ่ง
+    const t = targetUnder(e.clientX, e.clientY);
+    if (!t) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    try {
+      const tag = t.tagName, type = (t.type || '').toLowerCase();
+      if (tag === 'SELECT' || (tag === 'INPUT' && /^(date|time|month|week|datetime-local|color)$/.test(type))) { t.focus(); if (typeof t.showPicker === 'function') t.showPicker(); }
+      else if (tag === 'TEXTAREA' || (tag === 'INPUT' && /^(text|search|number|email|tel|url|password)$/.test(type))) { t.focus(); }
+      else { t.click(); }
+    } catch (_) { try { t.click(); } catch (__) {} }
+  }, true);
+})();
+</script>
+
+<!-- ================= GEKKO V97 DATA & FORM SAFETY (ADDITIVE) =================
+     1) ช่องบังคับกรอกที่ถูกซ่อน (เช่น ช่องชื่อโครงการใหม่) ไม่ปล่อยให้บล็อกปุ่มบันทึกเงียบๆ อีก
+     2) ข้อมูลเก่าที่ไม่มีช่อง Jacket แสดงเป็น "ไม่ระบุ" แทนคำว่า (undefined)
+     3) ตัวอักษร < > ในชื่อโครงการ/สถานที่/โน้ต ไม่ถูกตีเป็นโค้ด HTML (กันหน้าแตกและกันสคริปต์แฝง) -->
+<script id="gekko-v97-data-form-safety">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V97_SAFETY) return;
+  window.__GEKKO_V97_SAFETY = true;
+
+  /* ---------- 1) hidden required fields ---------- */
+  function isHidden(el){
+    if (!el) return false;
+    if (el.offsetParent !== null) return false;
+    const cs = getComputedStyle(el);
+    return cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden';
+  }
+  document.addEventListener('click', function(e){
+    const btn = e.target && e.target.closest ? e.target.closest('button,input[type="submit"]') : null;
+    if (!btn) return;
+    const type = (btn.getAttribute('type') || (btn.tagName === 'BUTTON' ? 'submit' : '')).toLowerCase();
+    if (type !== 'submit' || !btn.form) return;
+    try {
+      btn.form.querySelectorAll(':required').forEach(function(el){
+        // ช่องที่ผู้ใช้มองไม่เห็นกรอกไม่ได้ ห้ามให้บล็อกการบันทึก
+        if (isHidden(el)) el.required = false;
+      });
+    } catch (_) {}
+  }, true);
+
+  /* ---------- 2+3) normalize data ---------- */
+  const FW = { '<': '\uFF1C', '>': '\uFF1E' };
+  function clean(str){ return str.replace(/[<>]/g, function(c){ return FW[c]; }); }
+  function cleanObj(o){
+    if (!o || typeof o !== 'object') return;
+    Object.keys(o).forEach(function(k){
+      const v = o[k];
+      if (typeof v === 'string') {
+        if (v.indexOf('<') === -1 && v.indexOf('>') === -1) return;
+        if (v.slice(0, 5) === 'data:') return;               // รูป base64
+        o[k] = clean(v);
+      }
+    });
+  }
+  function fixRows(arr, withJacket){
+    if (!Array.isArray(arr)) return;
+    for (let i = 0; i < arr.length; i++) {
+      const it = arr[i];
+      if (!it || typeof it !== 'object') continue;
+      cleanObj(it);
+      if (withJacket && (it.jacket === undefined || it.jacket === null)) it.jacket = 'ไม่ระบุ';
+    }
+  }
+  function fixStrList(arr){
+    if (!Array.isArray(arr)) return;
+    for (let i = 0; i < arr.length; i++) if (typeof arr[i] === 'string' && /[<>]/.test(arr[i])) arr[i] = clean(arr[i]);
+  }
+  function normalizeAll(){
+    try { if (typeof db !== 'undefined') fixRows(db, true); } catch (_) {}
+    try { if (typeof rmRecords !== 'undefined') fixRows(rmRecords, true); } catch (_) {}
+    try { if (typeof downtimeLogs !== 'undefined') fixRows(downtimeLogs, false); } catch (_) {}
+    try { if (typeof manpowerLogs !== 'undefined') fixRows(manpowerLogs, false); } catch (_) {}
+    try { if (typeof projectsList !== 'undefined') fixStrList(projectsList); } catch (_) {}
+    try { if (typeof calendarNotes !== 'undefined') cleanObj(calendarNotes); } catch (_) {}
+  }
+  window.gekkoNormalizeData = normalizeAll;
+
+  function wrap(name){
+    const prev = window[name];
+    if (typeof prev !== 'function' || prev.__v97) return false;
+    const w = function(){ normalizeAll(); return prev.apply(this, arguments); };
+    w.__v97 = true;
+    window[name] = w;
+    return true;
+  }
+  // จุดที่ข้อมูลไหลผ่านก่อนแสดงผล/ก่อนบันทึก (แพตช์รุ่นอื่นอาจแทนที่ฟังก์ชันเหล่านี้ภายหลัง จึงตรวจและห่อซ้ำเป็นระยะ)
+  const HOOKS = ['saveDB', 'saveRMRecords', 'saveCalendarNotes', 'renderActiveView', 'initApp', 'switchView', 'updateCharts',
+    'openFactoryControlTower', 'openShipGalleryQuick', 'openAlertCenterQuick', 'openCompareQuick', 'openFullCalendar',
+    'openGridCalendarQuick', 'openTimelineQuick', 'openHealthCheck', 'openSmartDashboard', 'openInsightsPlus', 'openTruckPlan', 'gqOpen'];
+  function ensureHooks(){ HOOKS.forEach(wrap); }
+  let tries = 0;
+  (function boot(){
+    tries++;
+    const ok = typeof db !== 'undefined' && typeof window.renderActiveView === 'function' && typeof window.saveDB === 'function';
+    if (!ok) { if (tries < 60) setTimeout(boot, 250); return; }
+    normalizeAll();
+    ensureHooks();
+    try { window.renderActiveView(); } catch (_) {}
+    setInterval(function(){ ensureHooks(); normalizeAll(); }, 700);
+  })();
+})();
+</script>
 </body>
 </html>
