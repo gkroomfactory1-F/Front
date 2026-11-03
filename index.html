@@ -2180,13 +2180,13 @@ service cloud.firestore {
       <div><label class="text-[11px] font-bold">เคมี/ท่อน (กก.)</label><input id="fc-chem-kg" type="number" min="0" step="0.01" class="fc-input" /></div>
       <div><label class="text-[11px] font-bold">ขนส่ง/เที่ยว (฿)</label><input id="fc-truck-cost" type="number" min="0" step="0.01" class="fc-input" /></div>
       <div><label class="text-[11px] font-bold">ประเภทรถที่ใช้คำนวณเที่ยว</label>
-        <select id="fc-truck-type" onchange="setTruckTypeSetting(this.value)" class="fc-input">
+        <select id="fc-truck-type" onchange="setTruckTypeSetting(this.value)" class="fc-input" disabled title="ล็อกไว้ที่ 6 ล้อเฮี๊ยบ เพื่อให้ทุกหน้าคิดเที่ยวรถตรงกัน">
           <option value="truck6Full">รถ 6 ล้อ (เต็มคัน)</option>
           <option value="truck6Crane">รถ 6 ล้อ (มีเครน)</option>
           <option value="truck10Full">รถ 10 ล้อ (เต็มคัน)</option>
           <option value="truck10Crane">รถ 10 ล้อ (มีเครน)</option>
         </select>
-        <p class="text-[9px] text-slate-400 mt-1">เปลี่ยนตรงนี้จะมีผลกับการคำนวณจำนวนเที่ยวรถทั้งแอปทันที เดิมระบบใช้ค่า "6 ล้อ เต็มคัน" คงที่ ไม่ตรงกับรถที่ใช้จริงเสมอไป</p>
+        <p class="text-[9px] text-slate-400 mt-1">ล็อกไว้ที่ รถ 6 ล้อ (มีเครน/เฮี๊ยบ) — ทุกหน้า (หน้าแรก, Dashboard, Command Center) ใช้มาตรฐานเดียวกัน เพื่อไม่ให้จำนวนเที่ยวแต่ละหน้าไม่ตรงกัน</p>
       </div>
       <div><label class="text-[11px] font-bold">Target/ชม. (ท่อน)</label><input id="fc-target-hour" type="number" min="0" step="0.01" class="fc-input" /></div>
       <div><label class="text-[11px] font-bold">Target รวม (ท่อน)</label><input id="fc-target-total" type="number" min="0" step="1" class="fc-input" /></div>
@@ -2600,9 +2600,12 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
         const DEFAULT_PIPE_SPECS = {
             '1/2"': { weight: 16, casing: 85, truck6Crane: 270, truck6Full: 312, truck10Crane: null, truck10Full: 647 },
             '3/4"': { weight: 20, casing: 91, truck6Crane: 209, truck6Full: 250, truck10Crane: null, truck10Full: 580 },
+            // v11: ไซส์เพิ่มใหม่ (ค่าประมาณ ต้องยืนยัน) น้ำหนัก=ค่าเฉลี่ยระหว่างไซส์ข้างเคียง, casing ตาม BOM; ความจุรถ 0 = ยังไม่ทราบ (ระบบไม่เดาเที่ยวรถ)
+            '7/8"': { weight: 22.5, casing: 91, truck6Crane: 0, truck6Full: 0, truck10Crane: null, truck10Full: 0, estimated: true },
             '1"': { weight: 25, casing: 97, truck6Crane: 175, truck6Full: 200, truck10Crane: null, truck10Full: 498 },
             '1-1/4"': { weight: 32, casing: 106, truck6Crane: 132, truck6Full: 156, truck10Crane: null, truck10Full: 415 },
             '1-1/2"': { weight: 36.3, casing: 112, truck6Crane: 112, truck6Full: 137, truck10Crane: null, truck10Full: 373 },
+            '1-5/8"': { weight: 41, casing: 97, truck6Crane: 0, truck6Full: 0, truck10Crane: null, truck10Full: 0, estimated: true },
             '2"': { weight: 45.6, casing: 124, truck6Crane: 98, truck6Full: 109, truck10Crane: 125, truck10Full: 301 },
             '2-1/2"': { weight: 65.7, casing: 137, truck6Crane: 70, truck6Full: 76, truck10Crane: 108, truck10Full: 213 },
             '3"': { weight: 85.7, casing: 167, truck6Crane: 55, truck6Full: 58, truck10Crane: 81, truck10Full: 163 },
@@ -2648,9 +2651,85 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             Object.keys(DEFAULT_PIPE_SPECS).forEach(sz => {
                 if (!hiddenDefaultSizes.includes(sz)) PIPE_SPECS[sz] = DEFAULT_PIPE_SPECS[sz];
             });
-            Object.keys(customPipeSpecs).forEach(sz => { PIPE_SPECS[sz] = customPipeSpecs[sz]; });
+            Object.keys(customPipeSpecs).forEach(sz => {
+                const cu = customPipeSpecs[sz] || {}, df = DEFAULT_PIPE_SPECS[sz];
+                if (!df) { PIPE_SPECS[sz] = cu; return; }
+                // v11: ไซส์ที่ผู้ใช้เคยเพิ่มเองด้วยค่า 0 (ระบบเก่าสร้างให้อัตโนมัติ) ห้ามทับค่ามาตรฐาน — ช่องที่เป็น 0/ว่าง ใช้ค่ามาตรฐานแทน
+                const m = Object.assign({}, df, cu);
+                ['weight','casing','truck6Crane','truck6Full','truck10Crane','truck10Full'].forEach(k => { if (!(Number(cu[k]) > 0) && Number(df[k]) > 0) m[k] = df[k]; });
+                PIPE_SPECS[sz] = m;
+            });
         }
         rebuildPipeSpecs();
+
+        // v13: ตัวช่วยกลาง ให้ทุก Dashboard คิดเที่ยวรถ/QC ด้วยกติกาเดียวกัน
+        // QC: Passed = ผ่าน, Failed/ไม่ผ่าน/NG = ไม่ผ่าน, อื่นๆ (Pending/Rework/ว่าง) = ยังไม่ตัดสิน -> ไม่นับในอัตราผ่าน; อัตราคิดถ่วงน้ำหนักตามจำนวนเส้น
+        window.gkQcClass = function (qc) {
+            const q = String(qc == null ? '' : qc).trim().toLowerCase();
+            if (['passed', 'pass', 'ผ่าน', 'ผ่าน qc'].includes(q)) return 'pass';
+            if (['failed', 'fail', 'ไม่ผ่าน', 'ng'].includes(q)) return 'fail';
+            return 'unknown';
+        };
+        // เที่ยวรถ: รวมจำนวนตาม (โครงการ + ไซส์ + วันส่ง + สถานที่ส่ง) ก่อนแล้วค่อยปัดขึ้นต่อกลุ่ม (รถคันเดียวไปส่งโครงการเดียวกันวันเดียวกันได้หลายรายการ)
+        window.gkTripGroups = function (rows, capInfo, opts) {
+            opts = opts || {};
+            const qtyOf = opts.qtyOf || (i => Number(i && i.qty) || 0);
+            const sizeOf = opts.sizeOf || (i => normalizeSizeName(i && i.size) || '');
+            const dispOf = opts.dispatchOf || (i => (typeof getDispatchDate === 'function' ? getDispatchDate(i) : ''));
+            const map = new Map();
+            (rows || []).forEach(i => {
+                const q = qtyOf(i);
+                if (!(q > 0)) return;
+                const project = String((i && i.project) || 'ไม่ระบุ');
+                const size = sizeOf(i);
+                const key = [project, size, dispOf(i) || '', String((i && i.deliveryLocation) || '').trim()].join('\u0001');
+                let e = map.get(key);
+                if (!e) { const info = capInfo(i) || {}; const cap = Number(info.cap); e = { project, size, qty: 0, cap: cap > 0 ? cap : 0, info, trips: 0 }; map.set(key, e); }
+                e.qty += q;
+            });
+            const out = { groups: [], total: 0, unknownQty: 0 };
+            map.forEach(e => { if (e.cap > 0) { e.trips = Math.ceil(e.qty / e.cap); out.total += e.trips; } else out.unknownQty += e.qty; out.groups.push(e); });
+            return out;
+        };
+
+        // v12: ไซส์ใหม่ที่ไม่มี Master -> ประมาณค่าจากไซส์ข้างเคียง (interpolate) แล้วติดป้าย estimated ให้ตรวจ/แก้ในตัวจัดการขนาดท่อ
+        function gkSizeInch(name) {
+            const s = String(name == null ? '' : name).replace(/["\u201C\u201D\u2033]/g, '').trim();
+            let m;
+            if ((m = s.match(/^(\d+)\s*[- ]\s*(\d+)\/(\d+)$/))) return Number(m[1]) + Number(m[2]) / Number(m[3]);
+            if ((m = s.match(/^(\d+)\/(\d+)$/))) return Number(m[1]) / Number(m[2]);
+            if (/^\d+(?:\.\d+)?$/.test(s)) return Number(s);
+            return NaN;
+        }
+        function gkEstimatePipeSpec(name) {
+            const x = gkSizeInch(name);
+            if (!Number.isFinite(x) || x < 0.25 || x > 60) return null;
+            const pts = Object.keys(PIPE_SPECS).map(k => ({ x: gkSizeInch(k), w: Number(PIPE_SPECS[k].weight), c: Number(PIPE_SPECS[k].casing), e: !!PIPE_SPECS[k].estimated }))
+                .filter(p => Number.isFinite(p.x) && p.w > 0 && p.c > 0 && !p.e).sort((a, b) => a.x - b.x);
+            if (pts.length < 2) return null;
+            let lo = null, hi = null;
+            pts.forEach(p => { if (p.x <= x) lo = p; if (p.x >= x && !hi) hi = p; });
+            if (lo && hi && lo.x === hi.x) return { weight: lo.w, casing: lo.c };
+            if (!lo || !hi) { const pair = x < pts[0].x ? [pts[0], pts[1]] : [pts[pts.length - 2], pts[pts.length - 1]]; lo = pair[0]; hi = pair[1]; }
+            const t = (x - lo.x) / (hi.x - lo.x);
+            const w = lo.w + (hi.w - lo.w) * t, c = lo.c + (hi.c - lo.c) * t;
+            if (!(w > 0) || !(c > 0)) return null;
+            return { weight: Math.round(w * 10) / 10, casing: Math.round(c) };
+        }
+        window.gkEnsureSizeSpec = function (name) {
+            const key = normalizeSizeName(name);
+            if (!key) return false;
+            const cur = PIPE_SPECS[key];
+            if (cur && Number(cur.weight) > 0 && Number(cur.casing) > 0) return true;
+            const est = gkEstimatePipeSpec(key);
+            if (!est) return false;
+            customPipeSpecs[key] = Object.assign({ truck6Crane: 0, truck6Full: 0, truck10Crane: 0, truck10Full: 0 }, customPipeSpecs[key] || {}, { weight: est.weight, casing: est.casing, estimated: true });
+            hiddenDefaultSizes = hiddenDefaultSizes.filter(z => z !== key);
+            saveCustomPipeSpecs(); saveHiddenDefaultSizes(); rebuildPipeSpecs();
+            try { refreshAllSizeSelects(); } catch (_) {}
+            showToast(`ไซส์ ${key}: ใช้ค่าประมาณ น้ำหนัก ${est.weight} กก./เส้น, Casing ${est.casing} — กรุณาตรวจ/แก้ในตัวจัดการขนาดท่อ`);
+            return true;
+        };
 
         // เพิ่มไซส์ท่อใหม่เข้าระบบ (จะไปโผล่ในดรอปดาวน์ไซส์ท่อทุกจุดในแอปทันที)
         function addPipeSizeToSystem(sizeName, weight, casing) {
@@ -2694,11 +2773,11 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 sel.value = PIPE_SPECS[cur] ? cur : (cur === 'CUSTOM' ? 'CUSTOM' : sel.value);
             });
             const fgSel = document.getElementById('fg-add-size');
-            if (fgSel) { const cur = fgSel.value; fgSel.innerHTML = getSizeSelectOptionsHtml(); fgSel.value = PIPE_SPECS[cur] ? cur : ''; }
+            if (fgSel) { const cur = fgSel.value; fgSel.innerHTML = getSizeSelectOptionsHtml(); fgSel.value = PIPE_SPECS[cur] ? cur : (cur === 'CUSTOM' ? 'CUSTOM' : ''); }
             const rmSel = document.getElementById('rm-add-size');
-            if (rmSel) { const cur = rmSel.value; rmSel.innerHTML = getSizeSelectOptionsHtml(); rmSel.value = PIPE_SPECS[cur] ? cur : ''; }
+            if (rmSel) { const cur = rmSel.value; rmSel.innerHTML = getSizeSelectOptionsHtml(); rmSel.value = PIPE_SPECS[cur] ? cur : (cur === 'CUSTOM' ? 'CUSTOM' : ''); }
             const qSize = document.getElementById('quick-size');
-            if (qSize) { const cur = qSize.value; qSize.innerHTML = getSizeSelectOptionsHtml(); qSize.value = PIPE_SPECS[cur] ? cur : ''; }
+            if (qSize) { const cur = qSize.value; qSize.innerHTML = getSizeSelectOptionsHtml(); qSize.value = PIPE_SPECS[cur] ? cur : (cur === 'CUSTOM' ? 'CUSTOM' : ''); }
         }
 
         // [เก็บโค้ดเดิมไว้] พาเลตต์ 8 สีเดิม (ไม่ได้ใช้แล้ว เพราะ getProjectColor ด้านล่างแจกสีไม่ซ้ำแทน)
@@ -2907,7 +2986,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
         // truckTypeSetting: ประเภทรถที่ใช้คำนวณจำนวนเที่ยวรถ ทั้งแอป ค่าเริ่มต้น 'truck6Full' = พฤติกรรมเดิมทุกประการ ไม่กระทบตัวเลขที่เคยบันทึกไว้
         function getTruckTypeSetting() {
-            return localStorage.getItem('gekko_truck_type') || 'truck6Full';
+            return 'truck6Crane'; // v13: ทุกหน้าใช้ 6 ล้อเฮี๊ยบมาตรฐานเดียวกัน (เดิมค่าตั้งนี้กระทบแค่บางหน้า ทำให้เที่ยวรถแต่ละหน้าไม่ตรงกัน)
         }
         function setTruckTypeSetting(v) {
             localStorage.setItem('gekko_truck_type', v);
@@ -5482,7 +5561,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 const color = getProjectColor(item.project);
                 const isChecked = selectedIds.has(item.id);
 
-                tbody.innerHTML += `
+                tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                         <td class="p-3 text-center">
                             <input type="checkbox" onclick="toggleSelectItem(${item.id})" ${isChecked ? 'checked' : ''} class="rounded border-slate-300">
@@ -5531,7 +5610,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                             </div>
                         </td>
                     </tr>
-                `;
+                `);
             });
         }
 
@@ -5566,9 +5645,9 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                     </div>
                 `;
 
-                if (item.status === 'กำลังผลิต') { col1.innerHTML += cardHtml; c1++; }
-                else if (item.status === 'รอจัดส่ง') { col2.innerHTML += cardHtml; c2++; }
-                else { col3.innerHTML += cardHtml; c3++; }
+                if (item.status === 'กำลังผลิต') { col1.insertAdjacentHTML('beforeend', cardHtml); c1++; }
+                else if (item.status === 'รอจัดส่ง') { col2.insertAdjacentHTML('beforeend', cardHtml); c2++; }
+                else { col3.insertAdjacentHTML('beforeend', cardHtml); c3++; }
             });
 
             document.getElementById('kanban-count-1').innerText = c1;
@@ -5593,16 +5672,16 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
             rows.forEach(row => {
                 if (row.type === 'note') {
-                    tbody.innerHTML += `
+                    tbody.insertAdjacentHTML('beforeend', `
                         <tr class="bg-amber-50 dark:bg-amber-900/10">
                             <td class="p-2 border border-slate-200 dark:border-slate-800 text-center font-bold text-amber-700 dark:text-amber-400">${row.date}</td>
                             <td colspan="8" class="p-2 border border-slate-200 dark:border-slate-800 text-amber-700 dark:text-amber-400 font-semibold">📝 ${row.text}</td>
                         </tr>
-                    `;
+                    `);
                     return;
                 }
                 const item = row.item;
-                tbody.innerHTML += `
+                tbody.insertAdjacentHTML('beforeend', `
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                         <td class="p-2 border border-slate-200 dark:border-slate-800 text-center font-bold text-slate-700 dark:text-slate-300">${item.date || '-'}</td>
                         <td class="p-2 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-white">${item.project}</td>
@@ -5614,7 +5693,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         <td class="p-2 border border-slate-200 dark:border-slate-800 text-center font-bold text-purple-600">${item.otQty || 0}</td>
                         <td class="p-2 border border-slate-200 dark:border-slate-800 text-center font-black text-slate-900 dark:text-white">${item.qty}</td>
                     </tr>
-                `;
+                `);
             });
         }
 
@@ -6634,9 +6713,16 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
         function submitNewPipeSize() {
             const name = normalizeSizeName(document.getElementById('new-size-name').value);
-            if (name && PIPE_SPECS[name]) { showToast(`ไซส์ "${name}" มีอยู่ในระบบแล้ว`, 'error'); return; }
             const weight = document.getElementById('new-size-weight').value;
             const casing = document.getElementById('new-size-casing').value;
+            if (name && PIPE_SPECS[name]) {
+                const ex = PIPE_SPECS[name];
+                if (Number(ex.weight) > 0 && Number(ex.casing) > 0 && !ex.estimated) { showToast(`ไซส์ "${name}" มีอยู่ในระบบแล้ว (แก้ค่าได้ในรายการด้านล่าง)`, 'error'); return; }
+                if (!(Number(weight) > 0) || !(Number(casing) > 0)) { showToast('กรุณากรอกน้ำหนักและ Casing (มากกว่า 0) เพื่อแก้ค่าของไซส์นี้', 'error'); return; }
+                saveSizeSpecEdit(name, weight, casing);
+                document.getElementById('new-size-name').value = ''; document.getElementById('new-size-weight').value = ''; document.getElementById('new-size-casing').value = '';
+                return;
+            }
             const ok = addPipeSizeToSystem(name, weight, casing);
             if (ok) {
                 document.getElementById('new-size-name').value = '';
@@ -6646,16 +6732,44 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             }
         }
 
+        function saveSizeSpecEdit(sz, weight, casing) {
+            const w = Number(weight), c = Number(casing);
+            if (!(w > 0) || !(c > 0)) { showToast('น้ำหนักและ Casing ต้องมากกว่า 0', 'error'); return false; }
+            const base = Object.assign({ truck6Crane: 0, truck6Full: 0, truck10Crane: 0, truck10Full: 0 }, customPipeSpecs[sz] || {});
+            base.weight = w; base.casing = c; delete base.estimated;
+            customPipeSpecs[sz] = base;
+            hiddenDefaultSizes = hiddenDefaultSizes.filter(z => z !== sz);
+            saveCustomPipeSpecs(); saveHiddenDefaultSizes(); rebuildPipeSpecs();
+            try { refreshAllSizeSelects(); } catch (_) {}
+            renderSizeManagerList();
+            showToast(`บันทึกค่าไซส์ ${sz} แล้ว (น้ำหนัก ${w}, Casing ${c})`);
+            return true;
+        }
+        function saveSizeRow(btn) {
+            const row = btn.closest('[data-sz]'); if (!row) return;
+            saveSizeSpecEdit(decodeURIComponent(row.getAttribute('data-sz')), row.querySelector('.sz-w').value, row.querySelector('.sz-c').value);
+        }
+
         function renderSizeManagerList() {
             const list = document.getElementById('size-manager-list');
             if (!list) return;
             const sizes = Object.keys(PIPE_SPECS);
-            list.innerHTML = sizes.map(sz => {
+            list.innerHTML = sizes.sort((a, b) => sizeSortValue(a) - sizeSortValue(b) || String(a).localeCompare(String(b), 'th')).map(sz => {
                 const isCustom = !!customPipeSpecs[sz];
+                const sp = PIPE_SPECS[sz] || {};
+                const bad = !(Number(sp.weight) > 0 && Number(sp.casing) > 0);
+                const tag = bad ? '<span class="text-[9px] font-bold text-rose-500">(ยังไม่มีค่า)</span>' : (sp.estimated ? '<span class="text-[9px] font-bold text-amber-600">(ค่าประมาณ ตรวจสอบ)</span>' : (isCustom ? '<span class="text-[9px] font-normal text-theme-600 dark:text-theme-500">(เพิ่มเอง)</span>' : ''));
+                const enc = encodeURIComponent(sz);
+                const inp = 'w-16 text-[11px] px-1 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white';
                 return `
-                    <div class="flex justify-between items-center p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${sz} ${isCustom ? '<span class="text-[9px] font-normal text-theme-600 dark:text-theme-500">(เพิ่มเอง)</span>' : ''}</span>
-                        <button onclick="removePipeSizeFromSystem('${sz.replace(/'/g, "\\'")}')" class="text-xs text-rose-500 hover:text-rose-700 font-bold">ลบ</button>
+                    <div class="flex flex-wrap justify-between items-center gap-1 p-2 rounded-lg bg-slate-50 dark:bg-slate-950 border ${bad ? 'border-rose-400' : (sp.estimated ? 'border-amber-400' : 'border-slate-200 dark:border-slate-800')}" data-sz="${enc}">
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">${String(sz).replace(/</g, '&lt;')} ${tag}</span>
+                        <span class="flex items-center gap-1">
+                            <input type="number" step="0.1" min="0" class="${inp} sz-w" value="${Number(sp.weight) > 0 ? sp.weight : ''}" placeholder="กก./เส้น" title="น้ำหนัก กก./เส้น">
+                            <input type="number" step="1" min="0" class="${inp} sz-c" value="${Number(sp.casing) > 0 ? sp.casing : ''}" placeholder="Casing" title="Casing">
+                            <button onclick="saveSizeRow(this)" class="text-xs text-emerald-600 hover:text-emerald-800 font-bold">บันทึก</button>
+                            <button onclick="removePipeSizeFromSystem(decodeURIComponent('${enc}'))" class="text-xs text-rose-500 hover:text-rose-700 font-bold">ลบ</button>
+                        </span>
                     </div>
                 `;
             }).join('') || '<p class="text-[10px] text-slate-400">ยังไม่มีไซส์ท่อในระบบ</p>';
@@ -7828,7 +7942,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             db.forEach(i=>{
                 if(i.status!=='ส่งมอบแล้ว' && i.date && new Date(i.date+'T23:59:59')<now) alerts.push({level:'danger',txt:`ส่งล่าช้า: ${i.project} / ${i.size} (${i.qty} ท่อน)`});
                 if((i.qc||'Passed')!=='Passed') alerts.push({level:'warning',txt:`QC ไม่ผ่าน/รอตรวจ: ${i.project} / ${i.size}`});
-                if(i.status==='กำลังผลิต' && i.date){ const d=(new Date(i.date)-now)/86400000; if(d>=0&&d<=2) alerts.push({level:'warning',txt:`ใกล้ถึงกำหนดส่ง: ${i.project} / เหลือ ${Math.ceil(d)} วัน`}); }
+                if(i.status==='กำลังผลิต' && i.date){ const d=Math.round((new Date(i.date+'T00:00:00')-new Date(localDateKey()+'T00:00:00'))/86400000); if(d>=0&&d<=2) alerts.push({level:'warning',txt:`ใกล้ถึงกำหนดส่ง: ${i.project} / ${d===0?'วันนี้':'เหลือ '+d+' วัน'}`}); }
             });
             document.getElementById('tower-alert-count').textContent=alerts.length;
             document.getElementById('tower-alert-list').innerHTML=alerts.slice(0,8).map(a=>`<div class="flex items-center gap-2 p-2.5 rounded-xl ${a.level==='danger'?'bg-rose-50 dark:bg-rose-950/20 border-rose-200':'bg-amber-50 dark:bg-amber-950/20 border-amber-200'} border"><span>${a.level==='danger'?'🔴':'🟠'}</span><span class="text-xs">${a.txt}</span></div>`).join('') || '<div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold">✅ ยังไม่พบ Alert จากข้อมูลปัจจุบัน</div>';
@@ -8009,15 +8123,16 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
       const qty=items.reduce((a,i)=>a+SD.qty(i.qty),0);
       const morning=items.reduce((a,i)=>a+SD.num(i.morningQty),0), afternoon=items.reduce((a,i)=>a+SD.num(i.afternoonQty),0), ot=items.reduce((a,i)=>a+SD.num(i.otQty),0);
       let weightKnown=0, weightUnknown=0, trips=0, tripUnknown=0;
-      items.forEach(i=>{ const w=SD.strictWeight(i); if(w===null) weightUnknown+=SD.qty(i.qty); else weightKnown+=w; const t=SD.strictTruck(i); if(t===null) tripUnknown+=SD.qty(i.qty); else trips+=t; });
-      const passItems=items.filter(i=>i.qc==='Passed'), failItems=items.filter(i=>i.qc && i.qc!=='Passed'), pass=passItems.length, fail=failItems.length, unknownQc=items.length-pass-fail; const passQty=passItems.reduce((a,i)=>a+SD.qty(i.qty),0), failQty=failItems.reduce((a,i)=>a+SD.qty(i.qty),0), unknownQcQty=items.filter(i=>!i.qc).reduce((a,i)=>a+SD.qty(i.qty),0);
+      items.forEach(i=>{ const w=SD.strictWeight(i); if(w===null) weightUnknown+=SD.qty(i.qty); else weightKnown+=w; const t=SD.strictTruck(i); if(t===null) tripUnknown+=SD.qty(i.qty); });
+      const passItems=items.filter(i=>gkQcClass(i.qc)==='pass'), failItems=items.filter(i=>gkQcClass(i.qc)==='fail'), pass=passItems.length, fail=failItems.length, unknownQc=items.length-pass-fail; const passQty=passItems.reduce((a,i)=>a+SD.qty(i.qty),0), failQty=failItems.reduce((a,i)=>a+SD.qty(i.qty),0), unknownQcQty=items.filter(i=>gkQcClass(i.qc)==='unknown').reduce((a,i)=>a+SD.qty(i.qty),0);
       const overdue=items.filter(i=>i.status!=='ส่งมอบแล้ว' && SD.getDispatch(i) && SD.getDispatch(i)<SD.today()).length;
       const due2=items.filter(i=>i.status!=='ส่งมอบแล้ว' && SD.getDispatch(i) && SD.getDispatch(i)>=SD.today()&&SD.getDispatch(i)<=SD.addDays(SD.today(),2)).length;
       const missingDispatch=items.filter(i=>i.status==='รอจัดส่ง' && !SD.getDispatch(i)).length;
       const dueProduction=items.filter(i=>i.status==='กำลังผลิต' && SD.dateKey(i.date) && i.date<=SD.addDays(SD.today(),2) && i.date>=SD.today()).length;
-      const projectMap={}; items.forEach(i=>{const p=i.project||'ไม่ระบุ'; if(!projectMap[p])projectMap[p]={project:p,qty:0,weightKg:0,weightUnknownQty:0,trips:0,tripUnknownQty:0,rows:0,status:{'กำลังผลิต':0,'รอจัดส่ง':0,'ส่งมอบแล้ว':0},qcPass:0,qcFail:0,qcUnknown:0,ot:0,dispatchOpen:0,overdue:0}; const x=projectMap[p]; x.qty+=SD.qty(i.qty); x.rows++; x.ot+=SD.num(i.otQty); const w=SD.strictWeight(i); if(w===null)x.weightUnknownQty+=SD.qty(i.qty); else x.weightKg+=w; const tr=SD.strictTruck(i); if(tr===null)x.tripUnknownQty+=SD.qty(i.qty); else x.trips+=tr; x.status[i.status]=(x.status[i.status]||0)+1; if(i.qc==='Passed')x.qcPass++; else if(i.qc)x.qcFail++; else x.qcUnknown++; const dd=SD.getDispatch(i); if(i.status!=='ส่งมอบแล้ว'&&dd)x.dispatchOpen+=1; if(i.status!=='ส่งมอบแล้ว'&&dd&&dd<SD.today())x.overdue++; });
+      const projectMap={}; items.forEach(i=>{const p=i.project||'ไม่ระบุ'; if(!projectMap[p])projectMap[p]={project:p,qty:0,weightKg:0,weightUnknownQty:0,trips:0,tripUnknownQty:0,rows:0,status:{'กำลังผลิต':0,'รอจัดส่ง':0,'ส่งมอบแล้ว':0},qcPass:0,qcFail:0,qcUnknown:0,ot:0,dispatchOpen:0,overdue:0}; const x=projectMap[p]; x.qty+=SD.qty(i.qty); x.rows++; x.ot+=SD.num(i.otQty); const w=SD.strictWeight(i); if(w===null)x.weightUnknownQty+=SD.qty(i.qty); else x.weightKg+=w; const tr=SD.strictTruck(i); if(tr===null)x.tripUnknownQty+=SD.qty(i.qty); x.status[i.status]=(x.status[i.status]||0)+1; {const k=gkQcClass(i.qc); if(k==='pass')x.qcPass++; else if(k==='fail')x.qcFail++; else x.qcUnknown++;} const dd=SD.getDispatch(i); if(i.status!=='ส่งมอบแล้ว'&&dd)x.dispatchOpen+=1; if(i.status!=='ส่งมอบแล้ว'&&dd&&dd<SD.today())x.overdue++; });
       const projects=Object.values(projectMap).sort((a,b)=>b.qty-a.qty);
-      const sizeMap={}; items.forEach(i=>{const s=i.size||'ไม่ระบุ'; const x=sizeMap[s] ||= {size:s,qty:0,weightKg:0,weightUnknownQty:0,trips:0,tripUnknownQty:0,jacket:{},cap:(SD.safeSpec(s)?.[SD.truckType()]||(SD.truckType()==='truck10Crane'?SD.safeSpec(s)?.truck6Crane:null))??null}; x.qty+=SD.qty(i.qty); const w=SD.strictWeight(i); if(w===null)x.weightUnknownQty+=SD.qty(i.qty); else x.weightKg+=w; const tr=SD.strictTruck(i); if(tr===null)x.tripUnknownQty+=SD.qty(i.qty); else x.trips+=tr; const j=i.jacket||'ไม่ระบุ'; x.jacket[j]=(x.jacket[j]||0)+SD.qty(i.qty); });
+      const sizeMap={}; items.forEach(i=>{const s=i.size||'ไม่ระบุ'; const x=sizeMap[s] ||= {size:s,qty:0,weightKg:0,weightUnknownQty:0,trips:0,tripUnknownQty:0,jacket:{},cap:(SD.safeSpec(s)?.[SD.truckType()]||(SD.truckType()==='truck10Crane'?SD.safeSpec(s)?.truck6Crane:null))??null}; x.qty+=SD.qty(i.qty); const w=SD.strictWeight(i); if(w===null)x.weightUnknownQty+=SD.qty(i.qty); else x.weightKg+=w; const tr=SD.strictTruck(i); if(tr===null)x.tripUnknownQty+=SD.qty(i.qty); const j=i.jacket||'ไม่ระบุ'; x.jacket[j]=(x.jacket[j]||0)+SD.qty(i.qty); });
+      {const tg=gkTripGroups(items,i=>{const spec=SD.safeSpec(i.size);let c=spec?.[SD.truckType()];if(SD.truckType()==='truck10Crane'&&!(Number(c)>0))c=spec?.truck6Crane;return{cap:SD.hasNum(c)&&Number(c)>0?Number(c):0}},{qtyOf:i=>SD.qty(i.qty),sizeOf:i=>i.size||'ไม่ระบุ',dispatchOf:i=>SD.getDispatch(i)||''});trips=tg.total;tg.groups.forEach(e=>{if(!(e.cap>0))return;if(projectMap[e.project])projectMap[e.project].trips+=e.trips;if(sizeMap[e.size])sizeMap[e.size].trips+=e.trips})}
       const dayMap={}; const ensureDay=k=>dayMap[k] ||= {date:k,production:0,dispatch:0,received:0,rows:0}; items.forEach(i=>{ const pd=SD.dateKey(i.date); const dd=SD.getDispatch(i); const rd=SD.dateKey(i.receivedDate); if(pd&&SD.dateInFilter({date:pd},filter)){ensureDay(pd).production+=SD.qty(i.qty);ensureDay(pd).rows++;} if(dd&&SD.dateInFilter({date:dd},filter)){ensureDay(dd).dispatch+=SD.qty(i.qty);ensureDay(dd).rows++;} if(rd&&SD.dateInFilter({date:rd},filter))ensureDay(rd).received+=SD.qty(i.qty); });
       const days=Object.values(dayMap).sort((a,b)=>a.date.localeCompare(b.date));
       const logDateMatch=x=>filter.period==='all'||(SD.dateKey(x?.date)?SD.dateInFilter({date:x.date},filter):false);
@@ -8028,7 +8143,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
       const sets=data.settings||{}; const rates={laborPerHour:SD.num(sets.laborPerHour),otPerHour:SD.num(sets.otPerHour),electricPerHour:SD.num(sets.electricPerHour),chemCostPerKg:SD.num(sets.chemCostPerKg),chemKgPerPipe:SD.num(sets.chemKgPerPipe),truckCost:SD.num(sets.truckCost),targetPerHour:SD.num(sets.targetPerHour),targetTotal:SD.num(sets.targetTotal)};
       const laborCost=rates.laborPerHour>0?normalH*rates.laborPerHour:null, otCost=rates.otPerHour>0?otH*rates.otPerHour:null, electricCost=rates.electricPerHour>0?(runtime+downtime)*rates.electricPerHour:null, chemKg=(rates.chemKgPerPipe>0?qty*rates.chemKgPerPipe:null), chemCost=(rates.chemKgPerPipe>0&&rates.chemCostPerKg>0?qty*rates.chemKgPerPipe*rates.chemCostPerKg:null), logisticsCost=(rates.truckCost>0&&tripUnknown===0?trips*rates.truckCost:null);
       const totalCost=[laborCost,otCost,electricCost,chemCost,logisticsCost].every(v=>v!==null)?[laborCost,otCost,electricCost,chemCost,logisticsCost].reduce((a,v)=>a+v,0):null;
-      const qcPassRate=items.length?pass/items.length*100:null;
+      const qcPassRate=(passQty+failQty)>0?passQty/(passQty+failQty)*100:null;
       const availability=(runtime+downtime)>0?runtime/(runtime+downtime)*100:null;
       const performance=(runtime>0&&rates.targetPerHour>0)?Math.min(actual/(runtime*rates.targetPerHour)*100,100):null;
       const quality=(items.length>0)?qcPassRate:null;
@@ -8315,9 +8430,9 @@ const lx=Math.log(x),ly=Math.log(lo[1]),lx1=Math.log(lo[0]),lx2=Math.log(hi[0]),
  if(explicit&&!legacyExplicit){const d=dash(explicitRaw)||dash(explicit);if(d){const base=currentByCode[explicit]||currentByCode[explicitRaw]||{};return {entry:Object.assign({},base,d,{thicknessMm:d.thicknessMm!=null?d.thicknessMm:(base.thicknessMm??null)}),match:'exact',source:'bom-dashboard'};}if(currentByCode[explicit])return {entry:currentByCode[explicit],match:'exact',source:'front-master-fallback'};if(SDX_BOM_BY_CODE[explicit])return {entry:SDX_BOM_BY_CODE[explicit],match:'exact',source:'front-master-fallback'};}
  const k=`${SDX.jacket(i?.jacket)}|${SDX.normalizeSize(i?.size)}`;if(currentSelected[k]){const s=currentSelected[k],d=dash(s.code);return d?{entry:Object.assign({},s,d,{thicknessMm:d.thicknessMm!=null?d.thicknessMm:(s.thicknessMm??null)}),match:'reference',source:'bom-dashboard'}:{entry:s,match:'reference',source:'front-master-fallback'};}
  const old=SDX.bomForLegacy(i);if(!old)return null;const d=old.entry&&dash(old.entry.code);return d?{entry:Object.assign({},old.entry,d,{thicknessMm:d.thicknessMm!=null?d.thicknessMm:(old.entry.thicknessMm??null)}),match:old.match,source:'bom-dashboard'}:{entry:old.entry,match:old.match,source:'front-master-fallback'};}, compute(f){const data=SDX.getData();const rawItems=data.db.filter(i=>SDX.match(i,f)&&SDX.search(i,f));const safePack=(window.__GEKKO_SAFE_DUPES&&typeof window.__GEKKO_SAFE_DUPES.uniqueProduction==='function')?window.__GEKKO_SAFE_DUPES.uniqueProduction(rawItems):{rows:rawItems,duplicateCount:0};const items=safePack.rows;const qty=items.reduce((a,i)=>a+SDX.qtyStrict(i.qty),0);const morning=items.reduce((a,i)=>a+Math.max(0,SDX.num(i.morningQty)),0),afternoon=items.reduce((a,i)=>a+Math.max(0,SDX.num(i.afternoonQty)),0),ot=items.reduce((a,i)=>a+Math.max(0,SDX.num(i.otQty)),0);
-let weightKg=0,weightUnknownQty=0,weightEstKg=0,weightEstQty=0,trips=0,tripUnknownQty=0;const tripBySize={},weightBySize={};items.forEach(i=>{const q=SDX.qtyStrict(i.qty);const tr=SDX.truckRow(i);const ew=SDX.estimateWeight(i);if(tr?.weightKg>0){weightKg+=tr.weightKg*q;weightBySize[SDX.normalizeSize(i.size)]=(weightBySize[SDX.normalizeSize(i.size)]||0)+tr.weightKg*q}else if(ew?.estimated){weightEstKg+=ew.value*q;weightEstQty+=q}else weightUnknownQty+=q;if(tr?.truck6Crane>0){const t=Math.ceil(q/tr.truck6Crane);trips+=t;const k=SDX.normalizeSize(i.size);tripBySize[k]=(tripBySize[k]||0)+t}else tripUnknownQty+=q});
-const pass=items.filter(i=>String(i.qc||'').toLowerCase()==='passed').length,fail=items.filter(i=>i.qc&&String(i.qc).toLowerCase()!=='passed').length,unknownQc=items.length-pass-fail;const passQty=items.filter(i=>String(i.qc||'').toLowerCase()==='passed').reduce((a,i)=>a+SDX.qtyStrict(i.qty),0);const overdue=items.filter(i=>i.status!=='ส่งมอบแล้ว'&&SDX.dispatch(i)&&SDX.dispatch(i)<SDX.today()).length,due3=items.filter(i=>i.status!=='ส่งมอบแล้ว'&&SDX.dispatch(i)&&SDX.dispatch(i)>=SDX.today()&&SDX.dispatch(i)<=SDX.addDays(SDX.today(),2)).length,missingDispatch=items.filter(i=>i.status==='รอจัดส่ง'&&!SDX.dispatch(i)).length;
-const projectMap={};const sizeMap={};items.forEach(i=>{const p=i.project||'ไม่ระบุ',s=SDX.normalizeSize(i.size)||'ไม่ระบุ',j=SDX.jacket(i.jacket)||'ไม่ระบุ';projectMap[p]??={project:p,qty:0,rows:0,trips:0,tripUnknown:0,weightKg:0,weightEstKg:0,weightUnknown:0,ot:0,overdue:0,missingDispatch:0,qcFail:0,qcUnknown:0};const x=projectMap[p];x.qty+=SDX.qtyStrict(i.qty);x.rows++;x.ot+=Math.max(0,SDX.num(i.otQty));const tr=SDX.truckRow(i),ew=SDX.estimateWeight(i);if(tr?.truck6Crane)x.trips+=Math.ceil(SDX.qtyStrict(i.qty)/tr.truck6Crane);else x.tripUnknown+=SDX.qtyStrict(i.qty);if(tr?.weightKg)x.weightKg+=tr.weightKg*SDX.qtyStrict(i.qty);else if(ew?.estimated)x.weightEstKg+=ew.value*SDX.qtyStrict(i.qty);else x.weightUnknown+=SDX.qtyStrict(i.qty);if(i.status!=='ส่งมอบแล้ว'&&SDX.dispatch(i)&&SDX.dispatch(i)<SDX.today())x.overdue++;if(i.status==='รอจัดส่ง'&&!SDX.dispatch(i))x.missingDispatch++;if(i.qc&&String(i.qc).toLowerCase()!=='passed')x.qcFail++;if(!i.qc)x.qcUnknown++;sizeMap[s]??={size:s,qty:0,weightKg:0,weightEstKg:0,weightUnknown:0,trips:0,tripUnknown:0,jackets:{}};const z=sizeMap[s];z.qty+=SDX.qtyStrict(i.qty);if(tr?.weightKg)z.weightKg+=tr.weightKg*SDX.qtyStrict(i.qty);else if(ew?.estimated)z.weightEstKg+=ew.value*SDX.qtyStrict(i.qty);else z.weightUnknown+=SDX.qtyStrict(i.qty);if(tr?.truck6Crane)z.trips+=Math.ceil(SDX.qtyStrict(i.qty)/tr.truck6Crane);else z.tripUnknown+=SDX.qtyStrict(i.qty);z.jackets[j]=(z.jackets[j]||0)+SDX.qtyStrict(i.qty)});
+let weightKg=0,weightUnknownQty=0,weightEstKg=0,weightEstQty=0,trips=0,tripUnknownQty=0;const tripBySize={},weightBySize={};items.forEach(i=>{const q=SDX.qtyStrict(i.qty);const tr=SDX.truckRow(i);const ew=SDX.estimateWeight(i);if(tr?.weightKg>0){weightKg+=tr.weightKg*q;weightBySize[SDX.normalizeSize(i.size)]=(weightBySize[SDX.normalizeSize(i.size)]||0)+tr.weightKg*q}else if(ew?.estimated){weightEstKg+=ew.value*q;weightEstQty+=q}else weightUnknownQty+=q;if(!(tr?.truck6Crane>0))tripUnknownQty+=q});{const tg=gkTripGroups(items,i=>({cap:Number(SDX.truckRow(i)?.truck6Crane)||0}),{qtyOf:i=>SDX.qtyStrict(i.qty),sizeOf:i=>SDX.normalizeSize(i.size),dispatchOf:i=>SDX.dispatch(i)||''});trips=tg.total;tg.groups.forEach(e=>{if(e.cap>0)tripBySize[e.size]=(tripBySize[e.size]||0)+e.trips})}
+const pass=items.filter(i=>gkQcClass(i.qc)==='pass').length,fail=items.filter(i=>gkQcClass(i.qc)==='fail').length,unknownQc=items.length-pass-fail;const passQty=items.filter(i=>gkQcClass(i.qc)==='pass').reduce((a,i)=>a+SDX.qtyStrict(i.qty),0),failQty=items.filter(i=>gkQcClass(i.qc)==='fail').reduce((a,i)=>a+SDX.qtyStrict(i.qty),0);const overdue=items.filter(i=>i.status!=='ส่งมอบแล้ว'&&SDX.dispatch(i)&&SDX.dispatch(i)<SDX.today()).length,due3=items.filter(i=>i.status!=='ส่งมอบแล้ว'&&SDX.dispatch(i)&&SDX.dispatch(i)>=SDX.today()&&SDX.dispatch(i)<=SDX.addDays(SDX.today(),2)).length,missingDispatch=items.filter(i=>i.status==='รอจัดส่ง'&&!SDX.dispatch(i)).length;
+const projectMap={};const sizeMap={};items.forEach(i=>{const p=i.project||'ไม่ระบุ',s=SDX.normalizeSize(i.size)||'ไม่ระบุ',j=SDX.jacket(i.jacket)||'ไม่ระบุ';projectMap[p]??={project:p,qty:0,rows:0,trips:0,tripUnknown:0,weightKg:0,weightEstKg:0,weightUnknown:0,ot:0,overdue:0,missingDispatch:0,qcFail:0,qcUnknown:0};const x=projectMap[p];x.qty+=SDX.qtyStrict(i.qty);x.rows++;x.ot+=Math.max(0,SDX.num(i.otQty));const tr=SDX.truckRow(i),ew=SDX.estimateWeight(i);if(!tr?.truck6Crane)x.tripUnknown+=SDX.qtyStrict(i.qty);if(tr?.weightKg)x.weightKg+=tr.weightKg*SDX.qtyStrict(i.qty);else if(ew?.estimated)x.weightEstKg+=ew.value*SDX.qtyStrict(i.qty);else x.weightUnknown+=SDX.qtyStrict(i.qty);if(i.status!=='ส่งมอบแล้ว'&&SDX.dispatch(i)&&SDX.dispatch(i)<SDX.today())x.overdue++;if(i.status==='รอจัดส่ง'&&!SDX.dispatch(i))x.missingDispatch++;{const k=gkQcClass(i.qc);if(k==='fail')x.qcFail++;else if(k==='unknown')x.qcUnknown++}sizeMap[s]??={size:s,qty:0,weightKg:0,weightEstKg:0,weightUnknown:0,trips:0,tripUnknown:0,jackets:{}};const z=sizeMap[s];z.qty+=SDX.qtyStrict(i.qty);if(tr?.weightKg)z.weightKg+=tr.weightKg*SDX.qtyStrict(i.qty);else if(ew?.estimated)z.weightEstKg+=ew.value*SDX.qtyStrict(i.qty);else z.weightUnknown+=SDX.qtyStrict(i.qty);if(!tr?.truck6Crane)z.tripUnknown+=SDX.qtyStrict(i.qty);z.jackets[j]=(z.jackets[j]||0)+SDX.qtyStrict(i.qty)});{const tg=gkTripGroups(items,i=>({cap:Number(SDX.truckRow(i)?.truck6Crane)||0}),{qtyOf:i=>SDX.qtyStrict(i.qty),sizeOf:i=>SDX.normalizeSize(i.size)||'ไม่ระบุ',dispatchOf:i=>SDX.dispatch(i)||''});tg.groups.forEach(e=>{if(!(e.cap>0))return;if(projectMap[e.project])projectMap[e.project].trips+=e.trips;if(sizeMap[e.size])sizeMap[e.size].trips+=e.trips})}
 const projects=Object.values(projectMap).sort((a,b)=>b.qty-a.qty),sizeRows=Object.values(sizeMap).sort((a,b)=>b.qty-a.qty);
 const chem={poly:0,iso:0,total:0,matchedQty:0,exactQty:0,referenceQty:0,unmatchedQty:0,rows:[],materials:{},thicknessMismatchQty:0,dashboardQty:0,fallbackQty:0,pendingMaterials:{}};items.forEach(i=>{const q=SDX.qtyStrict(i.qty),bm=SDX.bomFor(i);if(bm&&Number.isFinite(bm.entry.polyolKgPerPipe)&&Number.isFinite(bm.entry.isoKgPerPipe)){const b=bm.entry,poly=q*b.polyolKgPerPipe,iso=q*b.isoKgPerPipe,orderTh=Number(String(i.thick||'').replace(/[^0-9.]/g,''))||null,diff=orderTh&&b.thicknessMm?Math.abs(orderTh-b.thicknessMm):null;chem.poly+=poly;chem.iso+=iso;chem.total+=poly+iso;chem.matchedQty+=q;if(bm.match==='exact')chem.exactQty+=q;else chem.referenceQty+=q;if(bm.source==='bom-dashboard')chem.dashboardQty+=q;else chem.fallbackQty+=q;if(diff!==null&&diff>1)chem.thicknessMismatchQty+=q;chem.rows.push({project:i.project,size:SDX.normalizeSize(i.size),jacket:SDX.jacket(i.jacket),qty:q,code:b.code,poly,iso,total:poly+iso,bomStatus:bm.match,bomSource:bm.source==='bom-dashboard'?(window.__GEKKO_BOM_DASHBOARD_VERSION||'BOM Dashboard'): 'Front Master fallback',orderThicknessMm:orderTh,sourceThicknessMm:b.thicknessMm,thicknessDiffMm:diff,sourceCasingMm:b.casingMm,sourcePipeOdMm:b.pipeOdMm});(Array.isArray(b.materials)?b.materials:Object.entries(b.materials||{}).map(([material,rate])=>({material,rate}))).forEach(m=>{if(m.rate==null||String(m.material||'').includes('?')||(Array.isArray(b.sourcePendingMaterials)&&b.sourcePendingMaterials.includes(m.material)))chem.pendingMaterials[m.material]=true;chem.materials[m.material]=(chem.materials[m.material]||0)+SDX.num(m.rate)*q})}else chem.unmatchedQty+=q});
 const dayMap={};const ensure=k=>dayMap[k]??={date:k,production:0,dispatch:0,received:0,notes:[]};items.forEach(i=>{const pd=SDX.dateKey(i.date),dd=SDX.dispatch(i),rd=SDX.dateKey(i.receivedDate);if(pd)ensure(pd).production+=SDX.qtyStrict(i.qty);if(dd)ensure(dd).dispatch+=SDX.qtyStrict(i.qty);if(rd)ensure(rd).received+=SDX.qtyStrict(i.qty)});Object.entries(data.notes||{}).forEach(([k,v])=>{if(SDX.dateIn({date:k},f))ensure(k).notes.push(String(v))});const days=Object.values(dayMap).sort((a,b)=>a.date.localeCompare(b.date));
@@ -8325,7 +8440,7 @@ const dt=data.dt.filter(x=>SDX.dateIn(x,f)),mp=data.mp.filter(x=>SDX.dateIn(x,f)
 const issues=[];items.forEach(i=>{const q=Number(i.qty);if(!i.project||!i.size||!(q>0))issues.push({kind:'data',text:`ข้อมูลหลักไม่ครบ/จำนวนไม่ถูกต้อง: ${i.project||'ไม่ระบุโครงการ'} • ${i.size||'ไม่ระบุไซส์'}`});if(q<0)issues.push({kind:'data',text:`จำนวนติดลบ: ${i.project||'ไม่ระบุ'} • ${i.size||'ไม่ระบุ'}`});const shiftSum=Math.max(0,SDX.num(i.morningQty))+Math.max(0,SDX.num(i.afternoonQty))+Math.max(0,SDX.num(i.otQty));if(shiftSum>0&&Math.abs(shiftSum-q)>0.0001)issues.push({kind:'shift',text:`ยอดกะไม่ตรงยอดรวม: ${i.project||'ไม่ระบุ'} • ${i.size||'ไม่ระบุ'} (${SDX.fmt(shiftSum)} ≠ ${SDX.fmt(q)})`});if(i.receivedDate&&i.date&&i.receivedDate>=i.date)issues.push({kind:'date',text:`วันรับท่อไม่ก่อนวันผลิต: ${i.project||'ไม่ระบุ'} • ${i.size||'ไม่ระบุ'}`});if(SDX.dispatch(i)&&i.date&&SDX.dispatch(i)<i.date)issues.push({kind:'date',text:`วันส่งก่อนวันผลิต: ${i.project||'ไม่ระบุ'} • ${i.size||'ไม่ระบุ'}`});if(i.status==='กำลังผลิต'&&i.date&&i.date<SDX.today())issues.push({kind:'aging',text:`ยังเป็น “กำลังผลิต” แต่วันผลิตผ่านไปแล้ว: ${i.project||'ไม่ระบุ'} • ${i.size||'ไม่ระบุ'}`});if(i.status==='รอจัดส่ง'&&!SDX.dispatch(i))issues.push({kind:'dispatch',text:`รอจัดส่งแต่ยังไม่มีวันส่ง: ${i.project||'ไม่ระบุ'} • ${i.size||'ไม่ระบุ'}`});if(!SDX.truckRow(i)?.truck6Crane)issues.push({kind:'truck',text:`ไม่มีความจุรถ 6 ล้อเฮี๊ยบใน Master: ${i.size||'ไม่ระบุ'}`});if(!SDX.truckRow(i)?.weightKg)issues.push({kind:'weight',text:`ไม่มีน้ำหนัก FG ใน Master: ${i.size||'ไม่ระบุ'} (มี/ไม่มีประมาณการแสดงแยก)`});if(!SDX.bomFor(i))issues.push({kind:'bom',text:`ไม่มี BOM เคมีที่จับคู่ได้: ${SDX.jacket(i.jacket)||'ไม่ระบุ'} • ${SDX.normalizeSize(i.size)||'ไม่ระบุ'}`});if(i.qc&&String(i.qc).toLowerCase()!=='passed')issues.push({kind:'qc',text:`QC ต้องติดตาม: ${i.project||'ไม่ระบุ'} • ${i.size||'ไม่ระบุ'} (${i.qc})`});});
 const sigMap=new Map(),dupKeys=[];rawItems.forEach(i=>{const k=[i.project,SDX.normalizeSize(i.size),SDX.jacket(i.jacket),SDX.qtyStrict(i.qty),i.date,SDX.dispatch(i),i.receivedDate].join('|');if(sigMap.has(k))dupKeys.push(k);else sigMap.set(k,i.id)});const rmSeen=new Map(),dupRm=[];data.rm.filter(i=>SDX.dateIn(i,f)).forEach(i=>{const k=[i.project,SDX.normalizeSize(i.size),SDX.jacket(i.jacket),SDX.pos(i.originalQty??i.qty),i.receivedDate].join('|');if(rmSeen.has(k))dupRm.push(k);else rmSeen.set(k,i.id)});
 const rates=data.settings||{};const costs={labor:normalH*SDX.pos(rates.laborPerHour),ot:otH*SDX.pos(rates.otPerHour),electric:(runtime+downtime)*SDX.pos(rates.electricPerHour),chem:chem.total*SDX.pos(rates.chemCostPerKg),logistics:SDX.pos(rates.truckCost)>0&&tripUnknownQty===0?trips*SDX.pos(rates.truckCost):null};const costKnown=Object.values(costs).filter(v=>v!==null&&v>0).reduce((a,v)=>a+v,0);
-const qcPassRate=items.length?pass/items.length*100:null;const bomCoverage=qty?chem.matchedQty/qty*100:null;const bomReferenceCoverage=qty?chem.matchedQty/qty*100:null;const bomExactCoverage=qty?chem.exactQty/qty*100:null;return {items,qty,morning,afternoon,ot,weightKg,weightUnknownQty,weightEstKg,weightEstQty,trips,tripUnknownQty,tripBySize,weightBySize,projects,sizeRows,pass,fail,unknownQc,passQty,overdue,due3,missingDispatch,chem,days,dt,mp,downtime,runtime,actual,normalH,otH,issues,duplicateProduction:safePack.duplicateCount,duplicateRM:dupRm.length,settings:rates,qcPassRate,bomCoverage:bomReferenceCoverage,bomExactCoverage,costs,costKnown,projectCount:projects.length};}
+const qcPassRate=(passQty+failQty)>0?passQty/(passQty+failQty)*100:null;const bomCoverage=qty?chem.matchedQty/qty*100:null;const bomReferenceCoverage=qty?chem.matchedQty/qty*100:null;const bomExactCoverage=qty?chem.exactQty/qty*100:null;return {items,qty,morning,afternoon,ot,weightKg,weightUnknownQty,weightEstKg,weightEstQty,trips,tripUnknownQty,tripBySize,weightBySize,projects,sizeRows,pass,fail,unknownQc,passQty,overdue,due3,missingDispatch,chem,days,dt,mp,downtime,runtime,actual,normalH,otH,issues,duplicateProduction:safePack.duplicateCount,duplicateRM:dupRm.length,settings:rates,qcPassRate,bomCoverage:bomReferenceCoverage,bomExactCoverage,costs,costKnown,projectCount:projects.length};}
 };
 function fUI(){return SDX_STATE.filter={period:document.getElementById('sdx-period')?.value||'all',project:document.getElementById('sdx-project')?.value||'__ALL__',jacket:document.getElementById('sdx-jacket')?.value||'__ALL__',search:(document.getElementById('sdx-search')?.value||'').trim()}}
 function populateFilters(){const p=document.getElementById('sdx-project'),j=document.getElementById('sdx-jacket');if(!p||!j)return;const db0=SDX.getData().db;const ps=[...new Set(db0.map(x=>x.project).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'th'));const js=[...new Set(db0.map(x=>SDX.jacket(x.jacket)).filter(Boolean))].sort();const pcur=SDX_STATE.filter.project,jcur=SDX_STATE.filter.jacket;p.innerHTML='<option value="__ALL__">ทุกโครงการ</option>'+ps.map(x=>`<option value="${SDX.esc(x)}">${SDX.esc(x)}</option>`).join('');j.innerHTML='<option value="__ALL__">ทุก Jacket</option>'+js.map(x=>`<option value="${SDX.esc(x)}">${SDX.esc(x)}</option>`).join('');p.value=ps.includes(pcur)?pcur:'__ALL__';j.value=js.includes(jcur)?jcur:'__ALL__'}
@@ -8578,7 +8693,7 @@ function baseRows(){
   const rows = Array.isArray(bridged) ? bridged : readArray('gekko_production_db');
   return rows.filter(i=>itemInPeriod(i)&&(state.project==='__ALL__'||i?.project===state.project)&&(!state.search||searchable(i).includes(state.search.toLowerCase())))
 }
-function calc(){const rows=baseRows(),M=master();let total=0,weight=0,weightUnknown=0,trips=0,tripUnknown=0,chem=0,chemUnknown=0,pass=0,fail=0,unknown=0,ot=0;const projects={},sizes={},days={},issues=[];rows.forEach(i=>{const q=qty(i.qty);total+=q;ot+=qty(i.otQty);if(i.qc==='Passed')pass++;else if(i.qc)fail++;else unknown++;const s=spec(i.size);if(s&&num(s.weightKg)>0)weight+=num(s.weightKg)*q;else weightUnknown+=q;const cap=s&&num(s.truck6Crane)>0?num(s.truck6Crane):0;if(cap)trips+=Math.ceil(q/cap);else tripUnknown+=q;const b=bomFor(i.size,i.jacket);if(b&&num(b.totalChemicalKgPerPipe)>0)chem+=num(b.totalChemicalKgPerPipe)*q;else chemUnknown+=q;const p=i.project||'ไม่ระบุ';projects[p]??={qty:0,weight:0,weightUnknown:0,trips:0,tripUnknown:0,chem:0,chemUnknown:0,rows:0,ot:0};const x=projects[p];x.qty+=q;x.rows++;x.ot+=qty(i.otQty);if(s&&num(s.weightKg)>0)x.weight+=num(s.weightKg)*q;else x.weightUnknown+=q;if(cap)x.trips+=Math.ceil(q/cap);else x.tripUnknown+=q;if(b)x.chem+=num(b.totalChemicalKgPerPipe)*q;else x.chemUnknown+=q;const sk=normalizeSize(i.size);sizes[sk]??={size:sk,qty:0,weight:0,weightUnknown:0,trips:0,tripUnknown:0,jacket:{}};sizes[sk].qty+=q;if(s&&num(s.weightKg)>0)sizes[sk].weight+=num(s.weightKg)*q;else sizes[sk].weightUnknown+=q;if(cap)sizes[sk].trips+=Math.ceil(q/cap);else sizes[sk].tripUnknown+=q;const jk=i.jacket||'ไม่ระบุ';sizes[sk].jacket[jk]=(sizes[sk].jacket[jk]||0)+q;const dd=dispatch(i);if(i.status==='รอจัดส่ง'&&!dd)issues.push(`รอจัดส่งแต่ไม่มีวันส่ง: ${p} / ${i.size}`);if(s&&q>0&&i.receivedDate&&i.date&&i.receivedDate>=i.date)issues.push(`วันรับท่อไม่ก่อนวันผลิต: ${p} / ${i.size}`);if(!s&&q>0)issues.push(`ไม่มี Master รถ/น้ำหนัก: ${p} / ${i.size}`);if(!bomFor(i.size,i.jacket)&&q>0)issues.push(`ไม่มี BOM คู่ ${i.jacket||'ไม่ระบุ'} / ${i.size||'ไม่ระบุ'}`);if(i.qc&&i.qc!=='Passed')issues.push(`QC ต้องติดตาม: ${p} / ${i.size} (${i.qc})`);[i.date,dd,i.receivedDate].filter(Boolean).forEach(k=>{if(days[k]===undefined)days[k]={date:k,production:0,dispatch:0,received:0};if(k===i.date)days[k].production+=q;if(k===dd)days[k].dispatch+=q;if(k===i.receivedDate)days[k].received+=q})});const duplicateSignatures=new Set(),seen=new Set();rows.forEach(i=>{const k=[i.project,normalizeSize(i.size),jacketKey(i.jacket),qty(i.qty),i.date,dispatch(i),i.receivedDate].join('|');if(seen.has(k))duplicateSignatures.add(k);else seen.add(k)});return{rows,total,weight,weightUnknown,trips,tripUnknown,chem,chemUnknown,pass,fail,unknown,qcRate:rows.length?pass/rows.length*100:null,ot,projects:Object.values(projects).sort((a,b)=>b.qty-a.qty),sizes:Object.values(sizes).sort((a,b)=>b.qty-a.qty),days:Object.values(days).sort((a,b)=>a.date.localeCompare(b.date)),issues:Array.from(new Set(issues)),duplicateCount:duplicateSignatures.size}}
+function calc(){const rows=baseRows(),M=master();let total=0,weight=0,weightUnknown=0,trips=0,tripUnknown=0,chem=0,chemUnknown=0,pass=0,fail=0,unknown=0,ot=0,passQ=0,failQ=0;const projects={},sizes={},days={},issues=[];rows.forEach(i=>{const q=qty(i.qty);total+=q;ot+=qty(i.otQty);{const k=gkQcClass(i.qc);if(k==='pass'){pass++;passQ+=q}else if(k==='fail'){fail++;failQ+=q}else unknown++}const s=spec(i.size);if(s&&num(s.weightKg)>0)weight+=num(s.weightKg)*q;else weightUnknown+=q;const cap=s&&num(s.truck6Crane)>0?num(s.truck6Crane):0;if(!cap)tripUnknown+=q;const b=bomFor(i.size,i.jacket);if(b&&num(b.totalChemicalKgPerPipe)>0)chem+=num(b.totalChemicalKgPerPipe)*q;else chemUnknown+=q;const p=i.project||'ไม่ระบุ';projects[p]??={qty:0,weight:0,weightUnknown:0,trips:0,tripUnknown:0,chem:0,chemUnknown:0,rows:0,ot:0};const x=projects[p];x.qty+=q;x.rows++;x.ot+=qty(i.otQty);if(s&&num(s.weightKg)>0)x.weight+=num(s.weightKg)*q;else x.weightUnknown+=q;if(!cap)x.tripUnknown+=q;if(b)x.chem+=num(b.totalChemicalKgPerPipe)*q;else x.chemUnknown+=q;const sk=normalizeSize(i.size);sizes[sk]??={size:sk,qty:0,weight:0,weightUnknown:0,trips:0,tripUnknown:0,jacket:{}};sizes[sk].qty+=q;if(s&&num(s.weightKg)>0)sizes[sk].weight+=num(s.weightKg)*q;else sizes[sk].weightUnknown+=q;if(!cap)sizes[sk].tripUnknown+=q;const jk=i.jacket||'ไม่ระบุ';sizes[sk].jacket[jk]=(sizes[sk].jacket[jk]||0)+q;const dd=dispatch(i);if(i.status==='รอจัดส่ง'&&!dd)issues.push(`รอจัดส่งแต่ไม่มีวันส่ง: ${p} / ${i.size}`);if(s&&q>0&&i.receivedDate&&i.date&&i.receivedDate>=i.date)issues.push(`วันรับท่อไม่ก่อนวันผลิต: ${p} / ${i.size}`);if(!s&&q>0)issues.push(`ไม่มี Master รถ/น้ำหนัก: ${p} / ${i.size}`);if(!bomFor(i.size,i.jacket)&&q>0)issues.push(`ไม่มี BOM คู่ ${i.jacket||'ไม่ระบุ'} / ${i.size||'ไม่ระบุ'}`);if(i.qc&&i.qc!=='Passed')issues.push(`QC ต้องติดตาม: ${p} / ${i.size} (${i.qc})`);[i.date,dd,i.receivedDate].filter(Boolean).forEach(k=>{if(days[k]===undefined)days[k]={date:k,production:0,dispatch:0,received:0};if(k===i.date)days[k].production+=q;if(k===dd)days[k].dispatch+=q;if(k===i.receivedDate)days[k].received+=q})});{const tg=gkTripGroups(rows,i=>{const s=spec(i.size);return{cap:s&&num(s.truck6Crane)>0?num(s.truck6Crane):0}},{qtyOf:i=>qty(i.qty),sizeOf:i=>normalizeSize(i.size),dispatchOf:i=>dispatch(i)||''});trips=tg.total;tg.groups.forEach(e=>{if(!(e.cap>0))return;if(projects[e.project])projects[e.project].trips+=e.trips;if(sizes[e.size])sizes[e.size].trips+=e.trips})}const duplicateSignatures=new Set(),seen=new Set();rows.forEach(i=>{const k=[i.project,normalizeSize(i.size),jacketKey(i.jacket),qty(i.qty),i.date,dispatch(i),i.receivedDate].join('|');if(seen.has(k))duplicateSignatures.add(k);else seen.add(k)});return{rows,total,weight,weightUnknown,trips,tripUnknown,chem,chemUnknown,pass,fail,unknown,qcRate:(passQ+failQ)>0?passQ/(passQ+failQ)*100:null,passQ,failQ,ot,projects:Object.values(projects).sort((a,b)=>b.qty-a.qty),sizes:Object.values(sizes).sort((a,b)=>b.qty-a.qty),days:Object.values(days).sort((a,b)=>a.date.localeCompare(b.date)),issues:Array.from(new Set(issues)),duplicateCount:duplicateSignatures.size}}
 function populate(){const sel=document.getElementById('gdx-project');if(!sel)return;const names=[...new Set((Array.isArray(window.__GEKKO_DATA?.db)?window.__GEKKO_DATA.db:[]).map(i=>i?.project).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'th'));const cur=state.project;sel.innerHTML='<option value="__ALL__">ทุกโครงการ</option>'+names.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');sel.value=names.includes(cur)?cur:'__ALL__'}
 function topBar(){const m=calc();const due3=m.rows.filter(i=>i.status!=='ส่งมอบแล้ว'&&dispatch(i)&&dispatch(i)>=today()&&dispatch(i)<=addDays(today(),2)).length;const overdue=m.rows.filter(i=>i.status!=='ส่งมอบแล้ว'&&dispatch(i)&&dispatch(i)<today()).length;return `<div class="gdx-kpis"><div class="gdx-kpi blue"><div class="l">ผลิตรวม</div><div class="v">${fmt(m.total)}</div><div class="s">ท่อน</div></div><div class="gdx-kpi blue"><div class="l">น้ำหนักยืนยัน</div><div class="v">${fmt(m.weight/1000,2)}</div><div class="s">ตัน</div></div><div class="gdx-kpi purple"><div class="l">รถ 6 ล้อเฮี๊ยบ</div><div class="v">${fmt(m.trips)}</div><div class="s">เที่ยวที่คำนวณได้</div></div><div class="gdx-kpi ${m.tripUnknown?'amber':'green'}"><div class="l">รถคำนวณไม่ได้</div><div class="v">${fmt(m.tripUnknown)}</div><div class="s">ท่อน</div></div><div class="gdx-kpi ${m.chemUnknown?'amber':'green'}"><div class="l">เคมีจาก BOM</div><div class="v">${fmt(m.chem,0)}</div><div class="s">kg • ${fmt(m.chemUnknown)} ท่อนยังไม่มี BOM</div></div><div class="gdx-kpi ${overdue?'red':'green'}"><div class="l">งานเลยกำหนด</div><div class="v">${fmt(overdue)}</div><div class="s">รายการ</div></div><div class="gdx-kpi ${due3?'amber':'green'}"><div class="l">ครบกำหนด 3 วัน</div><div class="v">${fmt(due3)}</div><div class="s">รายการ</div></div></div>`}
 function render(){state.period=document.getElementById('gdx-period')?.value||state.period;state.project=document.getElementById('gdx-project')?.value||state.project;state.search=(document.getElementById('gdx-search')?.value||'').trim();populate();if(document.getElementById('gdx-project'))document.getElementById('gdx-project').value=state.project;const m=calc();const rows=m.rows;const notes=(()=>{try{return Object.entries(notesData()).filter(([d,v])=>v&&itemInPeriod({date:d})).slice(-10).reverse()}catch(_){return []}})();const projectRows=m.projects.map(p=>`<tr><td><strong>${esc(p.project||'')}</strong></td><td class="r">${fmt(p.qty)}</td><td class="r">${fmt(p.weight/1000,2)}</td><td class="r">${fmt(p.trips)}</td><td class="r">${fmt(p.tripUnknown)}</td><td class="r">${fmt(p.chem,0)}</td><td class="r">${fmt(p.ot)}</td></tr>`).join('')||`<tr><td colspan="7"><div class="gdx-empty">ไม่มีข้อมูลตามตัวกรอง</div></td></tr>`;const sizeRows=m.sizes.map(x=>`<tr><td><strong>${esc(x.size)}</strong></td><td class="r">${fmt(x.qty)}</td><td class="r">${fmt(x.weight/1000,2)}</td><td class="r">${fmt(x.weightUnknown)}</td><td class="r">${fmt(x.trips)}</td><td class="r">${fmt(x.tripUnknown)}</td><td>${Object.entries(x.jacket).map(([j,q])=>`${esc(j)} ${fmt(q)}`).join(' • ')}</td></tr>`).join('')||`<tr><td colspan="7"><div class="gdx-empty">ไม่มีข้อมูล</div></td></tr>`;const dayRows=m.days.slice(-14).map(d=>`<tr><td>${esc(d.date)}</td><td class="r">${fmt(d.received)}</td><td class="r">${fmt(d.production)}</td><td class="r">${fmt(d.dispatch)}</td><td class="r">${fmt(d.received+d.production+d.dispatch)}</td></tr>`).join('')||`<tr><td colspan="5"><div class="gdx-empty">ไม่มีวันที่ในช่วงข้อมูล</div></td></tr>`;const issues=m.issues.slice(0,30).map(x=>`<div class="gdx-row">⚠️ ${esc(x)}</div>`).join('')||`<div class="gdx-row">🟢 ไม่พบประเด็น validation ตามกติกาปัจจุบัน</div>`;const noteHtml=notes.map(([d,v])=>`<div class="gdx-note"><strong>${esc(d)}</strong> — ${esc(v)}</div>`).join('')||`<div class="gdx-empty">ยังไม่มีโน้ตในช่วงข้อมูล</div>`;document.getElementById('gdx-live').textContent=`● LIVE • ${fmt(rows.length)} รายการ`;document.getElementById('gdx-body').innerHTML=topBar()+`<div class="gdx-grid gdx-2"><div class="gdx-card"><div class="gdx-cardhead"><div><div class="gdx-cardtitle">📊 ภาพรวมตามโครงการ</div><div class="gdx-cardsub">ตัวเลขอ้างอิงจากรายการผลิตที่มีอยู่จริง</div></div><span class="gdx-badge">${fmt(m.projects.length)} โครงการ</span></div><div class="gdx-tablewrap"><table class="gdx-table"><thead><tr><th>โครงการ</th><th class="r">จำนวน</th><th class="r">น้ำหนัก (ตัน)</th><th class="r">รถ 6 ล้อ</th><th class="r">รถไม่ทราบ</th><th class="r">เคมี BOM (kg)</th><th class="r">OT (ท่อน)</th></tr></thead><tbody>${projectRows}</tbody></table></div></div><div class="gdx-card"><div class="gdx-cardhead"><div><div class="gdx-cardtitle">🚚 Logistics Truth</div><div class="gdx-cardsub">รถหลัก = รถบรรทุก 6 ล้อเฮี๊ยบ</div></div><span class="gdx-badge good">MASTER</span></div><div class="gdx-call"><strong>ความจุรถใช้ค่า Master รายขนาด</strong><br>สูตรต่อรายการ: ปัดขึ้น(จำนวนท่อ ÷ ความจุ/เที่ยว)<br>เที่ยวที่คำนวณได้ <strong>${fmt(m.trips)}</strong> • ยังไม่มีข้อมูลความจุ <strong>${fmt(m.tripUnknown)}</strong> ท่อน<br><span class="gdx-muted">น้ำหนักยืนยัน ${fmt(m.weight/1000,2)} ตัน • น้ำหนักที่ไม่มี Master ${fmt(m.weightUnknown)} ท่อน</span></div></div></div>`+`<div class="gdx-grid gdx-2"><div class="gdx-card"><div class="gdx-cardhead"><div><div class="gdx-cardtitle">📐 รายละเอียดตามขนาดท่อ</div><div class="gdx-cardsub">ใช้ตรวจจำนวนเที่ยวและน้ำหนักรายไซส์</div></div></div><div class="gdx-tablewrap"><table class="gdx-table"><thead><tr><th>SIZE</th><th class="r">จำนวน</th><th class="r">น้ำหนัก (ตัน)</th><th class="r">ไม่มีน้ำหนัก</th><th class="r">รถ 6 ล้อ</th><th class="r">รถไม่ทราบ</th><th>Jacket</th></tr></thead><tbody>${sizeRows}</tbody></table></div></div><div class="gdx-card"><div class="gdx-cardhead"><div><div class="gdx-cardtitle">🧪 Chemical BOM</div><div class="gdx-cardsub">ใช้เฉพาะคู่ Size + Jacket ที่พบใน BOM Master</div></div><span class="gdx-badge ${m.chemUnknown?'warn':'good'}">${m.chemUnknown?'PARTIAL':'FULL'}</span></div><div class="gdx-call"><strong>รวมจาก BOM ที่จับคู่ได้ ${fmt(m.chem,0)} kg</strong><br>ยังไม่มี BOM เฉพาะคู่สำหรับ <strong>${fmt(m.chemUnknown)}</strong> ท่อน<br><span class="gdx-muted">ระบบไม่แทนค่าด้วย 4.2 kg/ท่อน และไม่แปลงเป็นถัง 200 L เอง</span></div><div style="height:8px"></div><div class="gdx-list">${Object.entries(master().chemBOM||{}).slice(0,8).map(([k,b])=>`<div class="gdx-row"><strong>${esc(k)}</strong> • ISO ${fmt(b.isoKgPerPipe,2)} kg/ท่อน • Polyol ${fmt(b.polyolKgPerPipe,2)} kg/ท่อน • Total ${fmt(b.totalChemicalKgPerPipe,2)} kg/ท่อน</div>`).join('')}</div></div></div>`+`<div class="gdx-grid gdx-2"><div class="gdx-card"><div class="gdx-cardhead"><div><div class="gdx-cardtitle">📅 ภาระงานตามวัน</div><div class="gdx-cardsub">รับ → ผลิต → ส่ง</div></div></div><div class="gdx-tablewrap"><table class="gdx-table"><thead><tr><th>วันที่</th><th class="r">รับ</th><th class="r">ผลิต</th><th class="r">ส่ง</th><th class="r">รวมกิจกรรม</th></tr></thead><tbody>${dayRows}</tbody></table></div></div><div class="gdx-card"><div class="gdx-cardhead"><div><div class="gdx-cardtitle">📝 โน้ตประจำวัน</div><div class="gdx-cardsub">อ่านจาก Notes เดิม ไม่สร้างรายการใหม่</div></div></div><div>${noteHtml}</div></div></div>`+`<div class="gdx-grid gdx-3"><div class="gdx-card"><div class="gdx-cardhead"><div class="gdx-cardtitle">✅ QC / คุณภาพข้อมูล</div><span class="gdx-badge ${m.unknown?'warn':'good'}">${m.qcRate===null?'—':fmt(m.qcRate,1)+'%'}</span></div><div class="gdx-call">Passed ${fmt(m.pass)} รายการ • Not Passed ${fmt(m.fail)} • ไม่ระบุผล ${fmt(m.unknown)}<br><span class="gdx-muted">อัตรานี้นับเป็น “จำนวนรายการ” ไม่ใช่ % ของท่อน</span></div></div><div class="gdx-card"><div class="gdx-cardhead"><div class="gdx-cardtitle">🛡️ Data Integrity</div><span class="gdx-badge ${m.duplicateCount?'warn':'good'}">${m.duplicateCount?'CHECK':'CLEAN'}</span></div><div class="gdx-call">พบ Signature ซ้ำ ${fmt(m.duplicateCount)} ชุด<br><span class="gdx-muted">ระบบไม่ลบอัตโนมัติ เพราะรายการเหมือนกันอาจเกิดขึ้นจริง</span></div></div><div class="gdx-card"><div class="gdx-cardhead"><div class="gdx-cardtitle">🤖 AI Status</div><span class="gdx-badge good">LOCAL</span></div><div class="gdx-call">AI วิเคราะห์จากหลักฐานใน Dashboard ได้ทันทีโดยไม่ต้องมี API<br><span class="gdx-muted">เมื่อเชื่อม AI ภายนอกภายหลัง จะส่งเฉพาะ Evidence Pack</span></div></div></div>`+`<div class="gdx-grid gdx-2"><div class="gdx-card"><div class="gdx-cardhead"><div><div class="gdx-cardtitle">🔎 ประเด็นที่ต้องตรวจ</div><div class="gdx-cardsub">ไม่แก้ข้อมูลให้เอง</div></div></div><div class="gdx-list">${issues}</div></div><div class="gdx-card"><div class="gdx-cardhead"><div><div class="gdx-cardtitle">🧠 AI Copilot</div><div class="gdx-cardsub">Rule-based analysis จากข้อมูลปัจจุบัน</div></div></div><div id="gdx-ai-result" class="gdx-call">กด “AI ช่วยวิเคราะห์” เพื่อให้ระบบสรุปงานที่ต้องจับตา</div></div></div><div class="gdx-foot">รถ 6 ล้อเฮี๊ยบและ BOM ใช้ Master ที่มีอยู่ • ตัวเลขที่ไม่มีหลักฐานแสดงเป็น “ไม่ทราบ/ไม่สามารถคำนวณ” • Smart Dashboard เป็นชั้นอ่านข้อมูล ไม่สร้าง Production / RM / FG</div>`}
@@ -8788,7 +8903,7 @@ function gqBomSetAck(key,on){const m=gqBomAckMap();if(on)m[key]={t:Date.now()};e
 function gqToggleBomAck(key,on){gqBomSetAck(key,on);if(typeof gqRender==='function')gqRender()}
 function gqAckAllEstimated(){const items=(GQ_STATE.model&&GQ_STATE.model.items)||[];const keys=new Set();items.forEach(it=>{if(gqQty(it)>0&&gqBomResolve(it).status==='estimated')keys.add(gqBomAckKey(it))});if(!keys.size)return;if(!confirm('อนุญาตให้ใช้ BOM ประมาณการ '+keys.size+' ชุด (Jacket|ไซส์) ไปก่อนใช่หรือไม่?\n\nตัวเลขเคมียังคำนวณตามเดิม แต่จะไม่ขึ้นเป็นแจ้งเตือน และยกเลิกได้ทีละแถว'))return;keys.forEach(k=>gqBomSetAck(k,true));gqRender()}
 function gqDuplicateCount(arr,rm=false){const m=new Map();for(const it of arr){const key=rm?[it.project,it.size,it.jacket,it.originalQty??it.qty,it.receivedDate].join('|'):[it.project,it.size,it.jacket,it.qty,it.morningQty,it.afternoonQty,it.otQty,it.date,it.receivedDate,gqDispatch(it),it.deliveryLocation].join('|');m.set(key,(m.get(key)||0)+1)}return[...m.values()].filter(x=>x>1).reduce((a,x)=>a+x-1,0)}
-function gqModel(filter){const D=gqFiltered();const items=(filter&&filter.onlyWaiting)?D.items.filter(it=>it&&it.status==='รอจัดส่ง'):(filter&&filter.excludeDelivered)?D.items.filter(it=>it&&it.status!=='ส่งมอบแล้ว'):D.items;let qty=0,weightKnown=0,weightEst=0,trips=0,planningTrips=0,tripUnknownQty=0,chemExact=0,chemPlanning=0,poly=0,iso=0,chemEstQty=0,chemAckQty=0,_ack=gqBomAckMap(),chemAmbQty=0,bomMissingQty=0,passed=0,failed=0,unknownQc=0,ot=0;const issues=[];const bySize={},byProject={};const tripUnknownItems=[],chemAmbItems=[],chemEstItems=[],bomMissingItems=[],unknownQcItems=[];for(const it of items){const q=gqQty(it);if(q<0){issues.push({type:'negativeQty',item:it,msg:`จำนวนติดลบ ${q} ท่อน`});continue}qty+=q;const w=gqWeightResolve(it.size);if(w.source==='verified')weightKnown+=w.kg*q;else if(w.source==='estimated')weightEst+=w.kg*q;else issues.push({type:'weightMissing',item:it,msg:`ไม่มีน้ำหนักสำหรับ ${it.size}`});const cap=gqCapResolve(it.size,'truck6Crane');const notDelivered=it.status!=='ส่งมอบแล้ว';if(notDelivered){if(Number.isFinite(cap.cap)&&cap.cap>0){if(cap.source==='verified')trips+=Math.ceil(q/cap.cap);planningTrips+=Math.ceil(q/cap.cap)}else{tripUnknownQty+=q;tripUnknownItems.push(it);}}const bom=gqBomResolve(it);if(bom.status==='exact')chemExact+=q*(bom.totalChemicalKgPerPipe||0);if(bom.status==='planning')chemPlanning+=q*(bom.totalChemicalKgPerPipe||0);if(bom.status==='estimated'){chemPlanning+=q*(bom.totalChemicalKgPerPipe||0);if(_ack[gqBomAckKey(it)]){chemAckQty+=q}else{chemEstQty+=q;chemEstItems.push(it);}}if(bom.status==='missing'){bomMissingQty+=q;bomMissingItems.push(it);}poly+=q*(Number(bom.polyolKgPerPipe)||0);iso+=q*(Number(bom.isoKgPerPipe)||0);if(bom.ambiguity){chemAmbQty+=q;chemAmbItems.push(it);}const qc=String(it.qc||'').trim();if(qc==='Passed')passed+=q;else if(qc && ['Pass','ผ่าน','ผ่าน QC'].includes(qc))passed+=q;else if(['Failed','Fail','ไม่ผ่าน','NG'].includes(qc))failed+=q;else{unknownQc+=q;unknownQcItems.push(it);}ot+=Number(it.otQty)||0;if(Math.abs((Number(it.morningQty)||0)+(Number(it.afternoonQty)||0)+(Number(it.otQty)||0)-q)>0.0001)issues.push({type:'shiftMismatch',item:it,msg:`ยอดกะไม่เท่ากับยอดรวม (${(Number(it.morningQty)||0)+(Number(it.afternoonQty)||0)+(Number(it.otQty)||0)} ≠ ${q})`});const dates=gqEventDates(it);if(it.receivedDate&&it.date&&gqDate(it.receivedDate)>gqDate(it.date))issues.push({type:'dateOrder',item:it,msg:'วันที่รับท่ออยู่หลังวันที่ผลิต'});if(it.date&&gqDispatch(it)&&gqDate(it.date)>gqDispatch(it))issues.push({type:'dateOrder',item:it,msg:'วันที่ผลิตอยู่หลังวันส่ง'});const sk=gqNormalizeSize(it.size);bySize[sk]??={qty:0,weightKg:0,estWeightKg:0,trips:0,cap:gqCapResolve(sk,'truck6Crane'),jacket:new Set()};bySize[sk].qty+=q;if(w.source==='verified')bySize[sk].weightKg+=w.kg*q;else if(w.source==='estimated')bySize[sk].estWeightKg+=w.kg*q;if(notDelivered&&cap.cap)bySize[sk].trips+=Math.ceil(q/cap.cap);bySize[sk].jacket.add(it.jacket||'ไม่ระบุ');const p=String(it.project||'ไม่ระบุ');byProject[p]??={qty:0,items:0,status:{'กำลังผลิต':0,'รอจัดส่ง':0,'ส่งมอบแล้ว':0,other:0},weightKg:0,trips:0};byProject[p].qty+=q;byProject[p].items++;if(byProject[p].status[it.status]!==undefined)byProject[p].status[it.status]+=q;else byProject[p].status.other+=q;if(w.kg)byProject[p].weightKg+=w.kg*q;if(notDelivered&&cap.cap)byProject[p].trips+=Math.ceil(q/cap.cap)}const exactQcQty=passed, qcKnown=passed+failed, qcRate=qcKnown>0?passed/qcKnown*100:null;const duplicateProduction=Number(D.duplicateProduction)||0;const duplicateRM=gqDuplicateCount(D.rm,true);if(duplicateProduction)issues.push({type:'duplicateProduction',msg:`พบรายการผลิตซ้ำ ${duplicateProduction} รายการ`});if(duplicateRM)issues.push({type:'duplicateRM',msg:`พบรายการ RM ซ้ำ ${duplicateRM} รายการ`});const today=gqToday(),due3Items=items.filter(it=>{const d=gqDispatch(it)||gqDate(it.date);if(!d)return false;const x=new Date(d+'T00:00:00'),t=new Date(today+'T00:00:00'),e=new Date(t);e.setDate(e.getDate()+2);return x>=t&&x<=e}),due3=due3Items.length,overdueItems=items.filter(it=>{const d=gqDispatch(it);return d&&d<today&&it.status!=='ส่งมอบแล้ว'}),overdue=overdueItems.length,missingDispatchItems=items.filter(it=>it.status==='รอจัดส่ง'&&!gqDispatch(it)),missingDispatch=missingDispatchItems.length;return{...D,qty,weightKnown,weightEst,trips,planningTrips,tripUnknownQty,tripUnknownItems,chemExact,chemPlanning,chemEstQty,chemEstItems,chemAckQty,poly,iso,chemAmbQty,chemAmbItems,bomMissingQty,bomMissingItems,passed,failed,unknownQc,unknownQcItems,qcRate,due3,due3Items,overdue,overdueItems,missingDispatch,missingDispatchItems,duplicateProduction,duplicateRM,issues,bySize,byProject,exactQcQty,notes:D.notes,filter}}
+function gqModel(filter){const D=gqFiltered();const items=(filter&&filter.onlyWaiting)?D.items.filter(it=>it&&it.status==='รอจัดส่ง'):(filter&&filter.excludeDelivered)?D.items.filter(it=>it&&it.status!=='ส่งมอบแล้ว'):D.items;let qty=0,weightKnown=0,weightEst=0,trips=0,planningTrips=0,tripUnknownQty=0,chemExact=0,chemPlanning=0,poly=0,iso=0,chemEstQty=0,chemAckQty=0,_ack=gqBomAckMap(),chemAmbQty=0,bomMissingQty=0,passed=0,failed=0,unknownQc=0,ot=0;const issues=[];const bySize={},byProject={};const tripUnknownItems=[],chemAmbItems=[],chemEstItems=[],bomMissingItems=[],unknownQcItems=[];for(const it of items){const q=gqQty(it);if(q<0){issues.push({type:'negativeQty',item:it,msg:`จำนวนติดลบ ${q} ท่อน`});continue}qty+=q;const w=gqWeightResolve(it.size);if(w.source==='verified')weightKnown+=w.kg*q;else if(w.source==='estimated')weightEst+=w.kg*q;else issues.push({type:'weightMissing',item:it,msg:`ไม่มีน้ำหนักสำหรับ ${it.size}`});const cap=gqCapResolve(it.size,'truck6Crane');const notDelivered=it.status!=='ส่งมอบแล้ว';if(notDelivered){if(!(Number.isFinite(cap.cap)&&cap.cap>0)){tripUnknownQty+=q;tripUnknownItems.push(it);}}const bom=gqBomResolve(it);if(bom.status==='exact')chemExact+=q*(bom.totalChemicalKgPerPipe||0);if(bom.status==='planning')chemPlanning+=q*(bom.totalChemicalKgPerPipe||0);if(bom.status==='estimated'){chemPlanning+=q*(bom.totalChemicalKgPerPipe||0);if(_ack[gqBomAckKey(it)]){chemAckQty+=q}else{chemEstQty+=q;chemEstItems.push(it);}}if(bom.status==='missing'){bomMissingQty+=q;bomMissingItems.push(it);}poly+=q*(Number(bom.polyolKgPerPipe)||0);iso+=q*(Number(bom.isoKgPerPipe)||0);if(bom.ambiguity){chemAmbQty+=q;chemAmbItems.push(it);}const qc=String(it.qc||'').trim();if(qc==='Passed')passed+=q;else if(qc && ['Pass','ผ่าน','ผ่าน QC'].includes(qc))passed+=q;else if(['Failed','Fail','ไม่ผ่าน','NG'].includes(qc))failed+=q;else{unknownQc+=q;unknownQcItems.push(it);}ot+=Number(it.otQty)||0;if(Math.abs((Number(it.morningQty)||0)+(Number(it.afternoonQty)||0)+(Number(it.otQty)||0)-q)>0.0001)issues.push({type:'shiftMismatch',item:it,msg:`ยอดกะไม่เท่ากับยอดรวม (${(Number(it.morningQty)||0)+(Number(it.afternoonQty)||0)+(Number(it.otQty)||0)} ≠ ${q})`});const dates=gqEventDates(it);if(it.receivedDate&&it.date&&gqDate(it.receivedDate)>gqDate(it.date))issues.push({type:'dateOrder',item:it,msg:'วันที่รับท่ออยู่หลังวันที่ผลิต'});if(it.date&&gqDispatch(it)&&gqDate(it.date)>gqDispatch(it))issues.push({type:'dateOrder',item:it,msg:'วันที่ผลิตอยู่หลังวันส่ง'});const sk=gqNormalizeSize(it.size);bySize[sk]??={qty:0,weightKg:0,estWeightKg:0,trips:0,cap:gqCapResolve(sk,'truck6Crane'),jacket:new Set()};bySize[sk].qty+=q;if(w.source==='verified')bySize[sk].weightKg+=w.kg*q;else if(w.source==='estimated')bySize[sk].estWeightKg+=w.kg*q;bySize[sk].jacket.add(it.jacket||'ไม่ระบุ');const p=String(it.project||'ไม่ระบุ');byProject[p]??={qty:0,items:0,status:{'กำลังผลิต':0,'รอจัดส่ง':0,'ส่งมอบแล้ว':0,other:0},weightKg:0,trips:0};byProject[p].qty+=q;byProject[p].items++;if(byProject[p].status[it.status]!==undefined)byProject[p].status[it.status]+=q;else byProject[p].status.other+=q;if(w.kg)byProject[p].weightKg+=w.kg*q;}{const tg=gkTripGroups(items.filter(it=>it.status!=='ส่งมอบแล้ว'),it=>{const c=gqCapResolve(it.size,'truck6Crane');return{cap:Number.isFinite(c.cap)?c.cap:0,verified:c.source==='verified'}},{qtyOf:it=>{const v=gqQty(it);return v>0?v:0},sizeOf:it=>gqNormalizeSize(it.size),dispatchOf:it=>gqDispatch(it)||''});tg.groups.forEach(e=>{if(!(e.cap>0))return;planningTrips+=e.trips;if(e.info.verified)trips+=e.trips;if(bySize[e.size])bySize[e.size].trips+=e.trips;if(byProject[e.project])byProject[e.project].trips+=e.trips})}const exactQcQty=passed, qcKnown=passed+failed, qcRate=qcKnown>0?passed/qcKnown*100:null;const duplicateProduction=Number(D.duplicateProduction)||0;const duplicateRM=gqDuplicateCount(D.rm,true);if(duplicateProduction)issues.push({type:'duplicateProduction',msg:`พบรายการผลิตซ้ำ ${duplicateProduction} รายการ`});if(duplicateRM)issues.push({type:'duplicateRM',msg:`พบรายการ RM ซ้ำ ${duplicateRM} รายการ`});const today=gqToday(),due3Items=items.filter(it=>{const d=gqDispatch(it)||gqDate(it.date);if(!d)return false;const x=new Date(d+'T00:00:00'),t=new Date(today+'T00:00:00'),e=new Date(t);e.setDate(e.getDate()+2);return x>=t&&x<=e}),due3=due3Items.length,overdueItems=items.filter(it=>{const d=gqDispatch(it);return d&&d<today&&it.status!=='ส่งมอบแล้ว'}),overdue=overdueItems.length,missingDispatchItems=items.filter(it=>it.status==='รอจัดส่ง'&&!gqDispatch(it)),missingDispatch=missingDispatchItems.length;return{...D,qty,weightKnown,weightEst,trips,planningTrips,tripUnknownQty,tripUnknownItems,chemExact,chemPlanning,chemEstQty,chemEstItems,chemAckQty,poly,iso,chemAmbQty,chemAmbItems,bomMissingQty,bomMissingItems,passed,failed,unknownQc,unknownQcItems,qcRate,due3,due3Items,overdue,overdueItems,missingDispatch,missingDispatchItems,duplicateProduction,duplicateRM,issues,bySize,byProject,exactQcQty,notes:D.notes,filter}}
 function gqCard(label,val,note,cls=''){return `<div class="gq-card gq-kpi ${cls}"><div class="gq-label">${label}</div><div class="gq-value">${val}</div><div class="gq-note">${note||''}</div></div>`}
 function gqRenderOverview(m){const issues=m.issues.length;const sourceWeight=m.weightKnown?`${gqFmt(m.weightKnown/1000,2)} ตัน`:'—';const estWeight=m.weightEst?`${gqFmt(m.weightEst/1000,2)} ตัน`:'0';const drum=m.poly>0?Math.ceil(m.poly/GQ_MASTER.chemical.classification.drumPolyKg):0;const ai=gqFindings(m);document.getElementById('gq-overview').innerHTML=`<div class="gq-grid gq-kpi-grid">${gqCard('ยอดผลิตในตัวกรอง',gqFmt(m.qty,0),`${Object.keys(m.byProject).length} โครงการ`,'info')}${gqCard('น้ำหนัก Master',sourceWeight,m.weightEst?`+ ประมาณการ ${estWeight}`:'ใช้ข้อมูลน้ำหนักยืนยันทั้งหมด','good')}${gqCard('รถ 6 ล้อเฮี๊ยบ (ทางการ)',gqFmt(m.trips,0)+' เที่ยว',m.tripUnknownQty?`ยังไม่ทราบความจุ ${gqFmt(m.tripUnknownQty,0)} ท่อน`:'ใช้ capacity จาก Master 19 ขนาด','good')}${gqCard('ISO ตาม BOM',gqFmt(m.iso,0)+' kg',`≈ ${gqFmt(m.iso/m.qty||0,2)} kg/ท่อน`,'info')}${gqCard('POLY ตาม BOM',gqFmt(m.poly,0)+' kg',`ซื้อเชิงแผน ≥ ${gqFmt(drum,0)} ถัง (210 kg/ถัง)`,'info')}${gqCard('ISO + POLY',gqFmt(m.iso+m.poly,0)+' kg',m.bomMissingQty?`ยังมี ${gqFmt(m.bomMissingQty,0)} ท่อนที่ไม่มี BOM`:m.chemEstQty?`มีประมาณการ ${gqFmt(m.chemEstQty,0)} ท่อน`:m.chemAckQty?`ใช้ประมาณการที่อนุญาตแล้ว ${gqFmt(m.chemAckQty,0)} ท่อน`:'BOM planning ครบ','info')}${gqCard('QC Pass Rate',m.qcRate===null?'—':m.qcRate.toFixed(1)+'%',`Passed ${gqFmt(m.passed,0)} • Failed ${gqFmt(m.failed,0)} • Unknown ${gqFmt(m.unknownQc,0)}`,(m.qcRate===null?'warn':m.qcRate>=98?'good':m.qcRate>=95?'warn':'bad'))}${gqCard('Data Quality',issues+' จุด',`${m.duplicateProduction+m.duplicateRM} duplicate • ${m.bomMissingQty?gqFmt(m.bomMissingQty,0)+' ท่อน BOM missing':'BOM ไม่หาย'}`,issues?'bad':'good')}</div><div style="height:10px"></div><div class="gq-grid gq-two"><div class="gq-card"><div class="gq-head"><div><div class="gq-h2">🎯 จุดที่ควรจัดการก่อน</div><div class="gq-caption">Rule-based AI ใช้ข้อมูลจริงจากตัวกรองปัจจุบัน</div></div><span class="gq-chip info">AI READY</span></div><div class="gq-list">${ai.slice(0,6).map(x=>`<div class="gq-alert${x.action?' gq-alert-clickable':''}"${x.action?` onclick="${x.action}" title="กดเพื่อไปยังจุดที่เกี่ยวข้อง" role="button" tabindex="0"`:''}><div class="ico">${gqEsc(x.icon)}</div><div><strong>${gqEsc(x.title)}</strong><br><span>${gqEsc(x.body)}</span>${x.action?`<br><span class="gq-link-hint">${gqEsc(x.actionLabel||'ไปดู →')}</span>`:''}</div></div>`).join('')||'<div class="gq-empty">ไม่พบประเด็นเร่งด่วนตามกติกาปัจจุบัน</div>'}</div></div><div class="gq-card"><div class="gq-head"><div><div class="gq-h2">📌 สถานะงานและกำลังส่ง</div><div class="gq-caption">ปริมาณท่อนตามสถานะ</div></div></div><div class="gq-mini-grid"><div class="gq-mini"><div class="n">${gqFmt(m.due3,0)}</div><div class="t">ครบกำหนดใน 3 วัน</div></div><div class="gq-mini"><div class="n">${gqFmt(m.overdue,0)}</div><div class="t">เลยกำหนดส่ง</div></div><div class="gq-mini"><div class="n">${gqFmt(m.missingDispatch,0)}</div><div class="t">รอส่งแต่ไม่มีวันส่ง</div></div><div class="gq-mini"><div class="n">${gqFmt(m.tripUnknownQty,0)}</div><div class="t">ท่อนที่ยังไม่ทราบความจุรถ</div></div></div></div></div>`}
 function gqRenderProduction(m){const rows=Object.entries(m.byProject).sort((a,b)=>b[1].qty-a[1].qty);document.getElementById('gq-production').innerHTML=`<div class="gq-card"><div class="gq-head"><div><div class="gq-h2">🏭 ภาพรวมการผลิตรายโครงการ</div><div class="gq-caption">ใช้ยอดจากรายการในตัวกรอง ไม่สร้างข้อมูลใหม่</div></div><span class="gq-chip info">${rows.length} โครงการ</span></div><div class="gq-table-wrap"><table class="gq-table"><thead><tr><th>โครงการ</th><th class="r">ยอด</th><th class="r">น้ำหนัก</th><th class="r">รถ 6 ล้อ</th><th class="r">กำลังผลิต</th><th class="r">รอจัดส่ง</th><th class="r">ส่งมอบแล้ว</th></tr></thead><tbody>${rows.map(([p,x])=>`<tr><td><strong>${gqEsc(p)}</strong><div class="gq-muted">${x.items} รายการ</div></td><td class="r"><strong>${gqFmt(x.qty,0)}</strong></td><td class="r">${gqFmt(x.weightKg/1000,2)} t</td><td class="r">${gqFmt(x.trips,0)}</td><td class="r">${gqFmt(x.status['กำลังผลิต'],0)}</td><td class="r">${gqFmt(x.status['รอจัดส่ง'],0)}</td><td class="r">${gqFmt(x.status['ส่งมอบแล้ว'],0)}</td></tr>`).join('')||`<tr><td colspan="7"><div class="gq-empty">ไม่พบข้อมูลตามตัวกรอง</div></td></tr>`}</tbody></table></div></div>`}
@@ -8896,7 +9011,7 @@ window.openSummaryDashboardModal=function(){gqOpen()};window.closeSummaryModal=f
 if(!localStorage.getItem('gekko_truck_type'))localStorage.setItem('gekko_truck_type','truck6Crane');
 // Accuracy patch for main KPI display: no legacy 4.2 kg blanket and no legacy 6-wheel-full default.
 window.getUnitWeight=function(size){return gqWeightResolve(size).kg||0};window.gqBomResolveForCost=function(it){try{return gqBomResolve(it)}catch(_){return null}};window.gqWeightResolveForAlerts=function(size){try{return gqWeightResolve(size)}catch(_){return{kg:null,source:'missing',basis:'resolver error'}}};
-window.getTruckCapacity=function(size){const type=localStorage.getItem('gekko_truck_type')||'truck6Crane';const r=gqCapResolve(size,type);return Number.isFinite(r.cap)&&r.cap>0?r.cap:0};
+window.getTruckCapacity=function(size){const type='truck6Crane';const r=gqCapResolve(size,type);return Number.isFinite(r.cap)&&r.cap>0?r.cap:0};
 window.updateKPIs=function(){try{
   /* KPI cards: main figures = "รอจัดส่ง" only. Secondary figures = all production history.
      Truck card intentionally keeps the latest working calculation unchanged (m = not delivered). */
@@ -12047,8 +12162,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
         if(dd&&dd<today) overdue++;
         if(dd&&dd>=today&&dd<=addDays(today,2)) due3++;
         if(it.status==='รอจัดส่ง'&&!dd) missingDispatch++;
-        const cap=truckCap(it.size);
-        if(cap>0) plannedTrips+=Math.ceil(q/cap); else tripUnknownQty+=q;
+        if(!(truckCap(it.size)>0)) tripUnknownQty+=q;
       }
       const qc=String(it.qc||'').trim().toLowerCase();
       if(['passed','pass','ผ่าน','ผ่าน qc'].includes(qc)||(!qc)) {if(qc)qcPassed+=q; else qcUnknown+=q}
@@ -12056,6 +12170,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
       if(it.status!=='ส่งมอบแล้ว'){ const p=String(it.project||'ไม่ระบุ');projectMap[p]=(projectMap[p]||0)+q; }
       try{const resolver=typeof window.gqWeightResolveForAlerts==='function'?window.gqWeightResolveForAlerts:(typeof window.gqWeightResolve==='function'?window.gqWeightResolve:null);if(resolver){const w=resolver(it.size);if(w?.source==='verified')weightKg+=n(w.kg)*q;else weightUnknownQty+=q}else if(typeof PIPE_SPECS!=='undefined'&&PIPE_SPECS[it.size]?.weight>0)weightKg+=n(PIPE_SPECS[it.size].weight)*q;else weightUnknownQty+=q}catch(_){weightUnknownQty+=q}
     }
+    {const tg=gkTripGroups(rows.filter(it=>it&&it.status!=='ส่งมอบแล้ว'),it=>({cap:truckCap(it.size)}),{qtyOf:it=>n(it&&it.qty),dispatchOf:getDispatch});plannedTrips=tg.total}
     const dt=[];try{dt.push(...(Array.isArray(window.__GEKKO_DATA?.downtimeLogs)?window.__GEKKO_DATA.downtimeLogs:[]))}catch(_){}
     if(!dt.length){try{const x=JSON.parse(localStorage.getItem('gekko_downtime_logs')||'[]');if(Array.isArray(x))dt.push(...x)}catch(_){}
     }
@@ -15999,7 +16114,7 @@ function logDiff(){const cur=new Map(D().map(i=>[String(i.id),i]));cur.forEach((
 snap.forEach((js,id)=>{if(!cur.has(id)){const o=JSON.parse(js);addLog('ลบ',id,o.project,`${o.size} ${o.jacket} ${o.qty}`)}});snap=new Map([...cur].map(([id,i])=>[id,JSON.stringify(i)]))}
 const _s=window.saveDB;if(typeof _s==='function')window.saveDB=function(){const r=_s.apply(this,arguments);try{logDiff();buildEst()}catch(e){console.warn(e)}return r};
 /* ---- Backup ---- */
-function backupNow(){const o={};Object.keys(localStorage).filter(k=>/^(gekko|gk_)/.test(k)).forEach(k=>o[k]=localStorage.getItem(k));const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(o));a.download='GEKKO_Backup_'+today()+'.json';a.click();localStorage.setItem('gk_last_backup',String(Date.now()))}
+function backupNow(){if(typeof window.exportJSON==='function'){try{window.exportJSON();localStorage.setItem('gk_last_backup',String(Date.now()));return}catch(e){console.warn(e)}}const o={};Object.keys(localStorage).filter(k=>/^(gekko|gk_)/.test(k)).forEach(k=>o[k]=localStorage.getItem(k));const a=document.createElement('a');a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(o));a.download='GEKKO_Backup_'+today()+'.json';a.click();localStorage.setItem('gk_last_backup',String(Date.now()))}
 /* ---- Delivery note / QR ---- */
 const sizeInfo=i=>(window.__GEKKO_GQ_MASTER.truck.bySize||{})[gqNormalizeSize(i.size)]||{};
 function dueItems(d){return D().filter(i=>i.status==='รอจัดส่ง'&&(getDispatchDate(i)||'')===d)}
@@ -18411,7 +18526,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
     let s = null;
     try { if (typeof PIPE_SPECS !== 'undefined' && PIPE_SPECS) s = PIPE_SPECS[key] || PIPE_SPECS[String(name || '').trim()] || null; } catch (_) {}
     try { if (!s && typeof DEFAULT_PIPE_SPECS !== 'undefined' && DEFAULT_PIPE_SPECS) s = DEFAULT_PIPE_SPECS[key] || null; } catch (_) {}
-    const weight = Number(s && s.weight), casing = Number(s && s.casing);
+    let weight = Number(s && s.weight), casing = Number(s && s.casing);
+    if (!(weight > 0 && casing > 0) && key && typeof window.gkEnsureSizeSpec === 'function' && window.gkEnsureSizeSpec(key)) {
+      s = PIPE_SPECS[key]; weight = Number(s && s.weight); casing = Number(s && s.casing);
+    }
     return s && Number.isFinite(weight) && weight > 0 && Number.isFinite(casing) && casing > 0 ? {key, spec:s} : null;
   }
   function nonNegativeInteger(el){
@@ -18599,7 +18717,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
     let spec = null;
     try { if (typeof PIPE_SPECS !== 'undefined' && PIPE_SPECS) spec = PIPE_SPECS[key] || PIPE_SPECS[String(value || '').trim()] || null; } catch (_) {}
     try { if (!spec && typeof DEFAULT_PIPE_SPECS !== 'undefined' && DEFAULT_PIPE_SPECS) spec = DEFAULT_PIPE_SPECS[key] || null; } catch (_) {}
-    const weight = Number(spec && spec.weight), casing = Number(spec && spec.casing);
+    let weight = Number(spec && spec.weight), casing = Number(spec && spec.casing);
+    if (!(weight > 0 && casing > 0) && typeof window.gkEnsureSizeSpec === 'function' && window.gkEnsureSizeSpec(key)) {
+      spec = PIPE_SPECS[key]; weight = Number(spec && spec.weight); casing = Number(spec && spec.casing);
+    }
     return !!spec && Number.isFinite(weight) && weight > 0 && Number.isFinite(casing) && casing > 0;
   }
   function blockedReadOnly() {
@@ -18649,8 +18770,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
       const sel = document.getElementById('fg-add-size');
       if (!sel) { toast('ไม่พบช่องเลือกไซส์ในฟอร์มรับ FG'); return; }
       if (sel.value === 'CUSTOM') {
-        toast('กรุณาเพิ่มไซส์พร้อมน้ำหนักและความหนา Casing ในตัวจัดการขนาดท่อก่อน แล้วเลือกไซส์จากรายการ');
-        return;
+        // v12: ถามไซส์ตรงนี้เลย แล้วประมาณค่าให้อัตโนมัติ (แก้ค่าจริงได้ในตัวจัดการขนาดท่อ) แทนการบล็อกให้ไปเพิ่มก่อน
+        const typed = String(window.prompt('ระบุขนาดท่อ (เช่น 28")', '') || '').trim();
+        if (!typed) return;
+        const key = normalizedSize(typed);
+        if (!validPipeMaster(key)) {
+          toast(`ไซส์ ${typed} ประมาณค่าให้อัตโนมัติไม่ได้ (ต้องเป็นนิ้ว เช่น 28" หรือ 1-5/8") กรุณาเพิ่มพร้อมน้ำหนักและ Casing ในตัวจัดการขนาดท่อ`);
+          return;
+        }
+        const oldPrompt = window.prompt;
+        window.prompt = function () { window.prompt = oldPrompt; return key; };
+        try { return originalSaveAddFGItem.apply(this, arguments); } finally { window.prompt = oldPrompt; }
       }
       if (!validPipeMaster(sel.value)) {
         toast(`ไม่สามารถรับ FG ไซส์ ${sel.value || '(ว่าง)'} ได้ เพราะไม่มี Master น้ำหนักและความหนา Casing ที่ถูกต้อง`);
@@ -18838,14 +18968,21 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
      วิธีแก้: ถ้าตำแหน่งที่ชี้อยู่ "มีปุ่ม/ช่องกรอกอยู่ข้างใต้" ให้คลิกทะลุปุ่มลอยไปหาของข้างใต้ (ปุ่มลอยจางลงเป็นสัญญาณ)
      ถ้าข้างใต้ว่าง ปุ่มลอยกดได้ตามปกติ ไม่แตะโค้ด/ลอจิกเดิมของปุ่มลอย */
   const IDS = ['ip-fab', 'ip-status-badge', 'gkp-btn'];
-  const INTERACTIVE = 'button,a[href],input:not([type="hidden"]),select,textarea,label,summary,[onclick],[role="button"]';
+  const CONTROL = 'button,a[href],input:not([type="hidden"]),select,textarea,label,summary,[role="button"]';
+  const MAX_CLICKABLE_AREA = 16000;   // [onclick] ที่ใหญ่กว่านี้ (การ์ด/แถว/พื้นที่ทั้งก้อน) ไม่นับ ปุ่มลอยต้องกดได้เสมอ
 
   function fabEls(){ return IDS.map(function(i){ return document.getElementById(i); }).filter(Boolean); }
   function inFab(el){ return fabEls().some(function(f){ return f === el || f.contains(el); }); }
   function inside(f, x, y){ const r = f.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; }
   function interactiveAncestor(el){
     for (let n = el; n && n !== document.body && n !== document.documentElement; n = n.parentElement) {
-      try { if (n.matches(INTERACTIVE)) return n; } catch (_) {}
+      try {
+        if (n.matches(CONTROL)) return n;
+        if (n.hasAttribute('onclick')) {
+          const r = n.getBoundingClientRect();
+          if (r.width * r.height <= MAX_CLICKABLE_AREA) return n;
+        }
+      } catch (_) {}
     }
     return null;
   }
@@ -18980,6 +19117,347 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.getElem
     ensureHooks();
     try { window.renderActiveView(); } catch (_) {}
     setInterval(function(){ ensureHooks(); normalizeAll(); }, 700);
+  })();
+})();
+</script>
+
+<!-- ================= GEKKO V98 QUICK DATE RANGE + RM WAREHOUSE FILTER UX (ADDITIVE) =================
+     1) ปุ่มลัดเลือกช่วงวันที่ (วันนี้/7 วันล่าสุด/เดือนนี้/เดือนก่อน ฯลฯ) กดครั้งเดียวเติมวันเริ่ม-สิ้นสุดให้เอง ใช้ได้ทุกหน้า
+     2) คลัง RM: แก้บัคช่องค้นหา/Jacket/ติ๊กซ่อนของตัวเอง ทำให้ตัวกรองด้านบนหลุด (เดิมรายการเด้งกลับมาทั้งหมด)
+     3) คลัง RM: แถบสรุป แสดง X จาก Y รายการ, ยอดรับเข้า/คงเหลือ, บอกว่ามีกี่รายการถูกซ่อนด้วยตัวกรองด้านบน พร้อมปุ่มแสดงทั้งหมด -->
+<style id="gekko-v98-style">
+#gk-v98-quick-range{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
+#gk-v98-quick-range .gk-v98-lbl{font-size:10px;font-weight:800;color:#64748b;margin-right:2px}
+.gk-v98-chip{font-size:11px;font-weight:700;line-height:1;padding:6px 11px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;color:#334155;cursor:pointer;transition:background .15s,border-color .15s}
+.gk-v98-chip:hover{border-color:#f59e0b}
+.gk-v98-chip.on{background:#f59e0b;border-color:#f59e0b;color:#1e293b}
+html.dark .gk-v98-chip{background:#0f172a;border-color:#334155;color:#cbd5e1}
+html.dark .gk-v98-chip.on{background:#f59e0b;border-color:#f59e0b;color:#0f172a}
+#gk-v98-rm-info{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px;padding:8px 10px;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc;font-size:11px;color:#334155}
+html.dark #gk-v98-rm-info{background:#020617;border-color:#1e293b;color:#cbd5e1}
+#gk-v98-rm-info b{font-weight:800}
+#gk-v98-rm-info .gk-v98-warn{color:#b45309;font-weight:700}
+html.dark #gk-v98-rm-info .gk-v98-warn{color:#fbbf24}
+#gk-v98-rm-info .gk-v98-sp{flex:1 1 auto}
+</style>
+<script id="gekko-v98-quick-range-rm">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V98) return;
+
+  /* ---------- วันที่ (เวลาท้องถิ่น ไม่ใช้ UTC กันวันเลื่อน) ---------- */
+  function fmt(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function addDays(d, n){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); return x; }
+  const PRESETS = [
+    { k: 'today',     t: 'วันนี้',          r: function(n){ return [fmt(n), fmt(n)]; } },
+    { k: 'yesterday', t: 'เมื่อวาน',        r: function(n){ const y = addDays(n, -1); return [fmt(y), fmt(y)]; } },
+    { k: 'last7',     t: '7 วันล่าสุด',     r: function(n){ return [fmt(addDays(n, -6)), fmt(n)]; } },
+    { k: 'last30',    t: '30 วันล่าสุด',    r: function(n){ return [fmt(addDays(n, -29)), fmt(n)]; } },
+    { k: 'week',      t: 'สัปดาห์นี้',      r: function(n){ const off = (n.getDay() + 6) % 7; const m = addDays(n, -off); return [fmt(m), fmt(addDays(m, 6))]; } },
+    { k: 'month',     t: 'เดือนนี้',        r: function(n){ return [fmt(new Date(n.getFullYear(), n.getMonth(), 1)), fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0))]; } },
+    { k: 'lastmonth', t: 'เดือนก่อน',       r: function(n){ return [fmt(new Date(n.getFullYear(), n.getMonth() - 1, 1)), fmt(new Date(n.getFullYear(), n.getMonth(), 0))]; } },
+    { k: 'next7',     t: '7 วันข้างหน้า',   r: function(n){ return [fmt(n), fmt(addDays(n, 6))]; } },
+    { k: 'all',       t: 'ทั้งหมด',         r: function(){ return ['', '']; } }
+  ];
+
+  function el(id){ return document.getElementById(id); }
+
+  function applyRange(from, to){
+    const f = el('gk-v85-date-from'), t = el('gk-v85-date-to');
+    if (!f || !t) return;
+    f.value = from; t.value = to;
+    [f, t].forEach(function(x){ x.dispatchEvent(new Event('change', { bubbles: true })); });
+    try { renderActiveView(); } catch (_) {}
+    refreshChips();
+  }
+
+  function buildChips(){
+    const from = el('gk-v85-date-from');
+    if (!from || el('gk-v98-quick-range')) return !!el('gk-v98-quick-range');
+    const lab = from.closest('label') || from.parentElement;
+    const grid = lab && lab.parentElement;
+    if (!grid || !grid.parentElement) return false;
+    const row = document.createElement('div');
+    row.id = 'gk-v98-quick-range';
+    row.innerHTML = '<span class="gk-v98-lbl">⚡ เลือกช่วงวันที่เร็ว:</span>' + PRESETS.map(function(p){
+      return '<button type="button" class="gk-v98-chip" data-k="' + p.k + '">' + p.t + '</button>';
+    }).join('');
+    row.addEventListener('click', function(e){
+      const b = e.target.closest('.gk-v98-chip'); if (!b) return;
+      const p = PRESETS.find(function(x){ return x.k === b.dataset.k; }); if (!p) return;
+      const r = p.r(new Date());
+      applyRange(r[0], r[1]);
+    });
+    grid.parentElement.insertBefore(row, grid);
+    return true;
+  }
+
+  function refreshChips(){
+    const row = el('gk-v98-quick-range'); if (!row) return;
+    const f = (el('gk-v85-date-from') || {}).value || '', t = (el('gk-v85-date-to') || {}).value || '';
+    const now = new Date();
+    row.querySelectorAll('.gk-v98-chip').forEach(function(b){
+      const p = PRESETS.find(function(x){ return x.k === b.dataset.k; });
+      const r = p.r(now);
+      b.classList.toggle('on', r[0] === f && r[1] === t);
+    });
+  }
+
+  /* ---------- คลัง RM ---------- */
+  function ensureRmInfo(){
+    const cont = el('rm-warehouse-view-container'); if (!cont) return null;
+    let box = el('gk-v98-rm-info');
+    if (!box) {
+      box = document.createElement('div'); box.id = 'gk-v98-rm-info';
+      cont.insertBefore(box, cont.firstChild);
+      box.addEventListener('click', function(e){
+        const b = e.target.closest('button[data-act]'); if (!b) return;
+        const act = b.dataset.act;
+        if (act === 'clear-top') { const c = el('gk-v85-filter-clear'); if (c) c.click(); }
+        if (act === 'only-left') { const c = el('rm-filter-hide-empty'); if (c) { c.checked = !c.checked; c.dispatchEvent(new Event('change', { bubbles: true })); } }
+        if (act === 'clear-rm') {
+          const q = el('rm-filter-text'), j = el('rm-filter-jacket'), h = el('rm-filter-hide-empty');
+          if (q) q.value = ''; if (j) j.value = ''; if (h) h.checked = false;
+          try { renderRMWarehouse(); } catch (_) {}
+        }
+      });
+    }
+    return box;
+  }
+
+  function nf(n){ return Number(n || 0).toLocaleString('th-TH'); }
+  function updateRmInfo(){
+    const V = window.GekkoV85; if (!V) return;
+    const box = ensureRmInfo(); if (!box) return;
+    const cont = el('rm-warehouse-view-container');
+    if (!cont || cont.classList.contains('hidden')) return;
+    let all = [];
+    try { all = V.getRM(); } catch (_) {}
+    const q = ((el('rm-filter-text') || {}).value || '').trim().toLowerCase();
+    const fj = (el('rm-filter-jacket') || {}).value || '';
+    const hideEmpty = !!(el('rm-filter-hide-empty') || {}).checked;
+    const topPass = all.filter(function(r){ try { return V.matchRM(r); } catch (_) { return true; } });
+    const shown = topPass.filter(function(r){
+      if (fj && (r.jacket || 'ไม่ระบุ') !== fj) return false;
+      if (hideEmpty && Number(r.remainingQty != null ? r.remainingQty : (r.qty || 0)) <= 0) return false;
+      if (q && (String(r.project || '') + ' ' + (r.size || '') + ' ' + (r.thick || '') + ' ' + (r.jacket || '')).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+    let recv = 0, left = 0;
+    shown.forEach(function(r){ recv += Number(r.originalQty != null ? r.originalQty : (r.qty || 0)); left += Number(r.remainingQty != null ? r.remainingQty : (r.qty || 0)); });
+    const hiddenTop = all.length - topPass.length;
+    const statusNote = ((el('filter-status') || {}).value || '') ? '<span class="gk-v98-warn">ตัวกรอง "สถานะงาน" ไม่มีผลกับคลัง RM</span>' : '';
+    box.innerHTML =
+      '<span>แสดง <b>' + nf(shown.length) + '</b> จาก ' + nf(all.length) + ' รายการ • รับเข้า <b>' + nf(recv) + '</b> • คงเหลือ <b>' + nf(left) + '</b> ท่อน</span>'
+      + (hiddenTop > 0 ? '<span class="gk-v98-warn">ซ่อนโดยตัวกรองด้านบน ' + nf(hiddenTop) + ' รายการ</span><button type="button" class="gk-v98-chip" data-act="clear-top">แสดงทั้งหมด</button>' : '')
+      + statusNote
+      + '<span class="gk-v98-sp"></span>'
+      + '<button type="button" class="gk-v98-chip' + (hideEmpty ? ' on' : '') + '" data-act="only-left">เฉพาะที่มีคงเหลือ</button>'
+      + ((q || fj || hideEmpty) ? '<button type="button" class="gk-v98-chip" data-act="clear-rm">ล้างตัวกรองคลัง RM</button>' : '');
+  }
+
+  /* แก้บัค: renderRMWarehouse ถูกเรียกตรงจากช่องค้นหา/Jacket/ติ๊กซ่อน ทำให้ข้ามตัวกรองด้านบน
+     ห่อให้กรองด้วยตัวกรองด้านบนเสมอ (กรองซ้ำได้ ผลเท่าเดิม) แล้วคืนค่าเดิมทันที */
+  function wrapRender(){
+    const prev = window.renderRMWarehouse;
+    if (typeof prev !== 'function' || prev.__v98) return;
+    const w = function(){
+      const V = window.GekkoV85;
+      const out = (function(self, args){
+        if (!V || typeof rmRecords === 'undefined' || typeof db === 'undefined') return prev.apply(self, args);
+        const oRM = rmRecords, oDb = db;
+        try {
+          rmRecords = oRM.filter(function(r){ return V.matchRM(r); });
+          db = oDb.filter(function(x){ return V.matchProduction(x, 'rm-warehouse'); });
+          return prev.apply(self, args);
+        } finally { rmRecords = oRM; db = oDb; }
+      })(this, arguments);
+      Promise.resolve().then(updateRmInfo);
+      return out;
+    };
+    w.__v98 = true;
+    window.renderRMWarehouse = w;
+  }
+
+  function wrapMeta(){
+    const V = window.GekkoV85;
+    if (!V || typeof V.updateMeta !== 'function' || V.updateMeta.__v98) return;
+    const prev = V.updateMeta;
+    const w = function(){ const r = prev.apply(this, arguments); try { buildChips(); refreshChips(); updateRmInfo(); } catch (e) { console.warn('V98:', e); } return r; };
+    w.__v98 = true; V.updateMeta = w;
+  }
+
+  let tries = 0;
+  (function boot(){
+    tries++;
+    const ready = window.GekkoV85 && typeof window.renderRMWarehouse === 'function' && el('gk-v85-date-from') && el('rm-warehouse-view-container');
+    if (!ready) { if (tries < 80) setTimeout(boot, 300); return; }
+    window.__GEKKO_V98 = true;
+    buildChips(); wrapRender(); wrapMeta(); refreshChips();
+    setInterval(function(){ wrapRender(); wrapMeta(); buildChips(); }, 800);   // แพตช์อื่นอาจแทนที่ฟังก์ชันภายหลัง จึงตรวจซ้ำ
+    try { window.GekkoV85.updateMeta(); } catch (_) {}
+  })();
+})();
+</script>
+
+<!-- ================= GEKKO V99 FILTER LOGIC FIXES + SHIPPING DAY NAV (ADDITIVE) =================
+     1) ตัวกรอง Jacket: ALUZ ถูกนับรวมเป็น ALU (เลือก ALU แล้วเห็น ALUZ ปนมา และไม่มี ALUZ ให้เลือก) -> แยกเป็นคนละชนิดตามจริง
+     2) ช่องส่งท่อ: เปลี่ยนวันที่/กด "วันนี้" แล้วตัวกรองด้านบนหลุด (เรียก renderShipping ตรงโดยไม่ผ่านตัวกรอง) -> แก้ให้ผ่านตัวกรองเสมอ
+     3) ช่องส่งท่อ: เพิ่มปุ่ม ◀ ▶ เลื่อนวันทีละวัน + แสดงวันในสัปดาห์/วันนี้-พรุ่งนี้ -->
+<script id="gekko-v99-filter-fixes-ship-nav">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V99) return;
+
+  const DOW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+  const MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  function el(id){ return document.getElementById(id); }
+  function key(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function parse(k){ const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(k || ''); return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null; }
+
+  /* ---------- 1) Jacket: ALUZ ไม่ใช่ ALU ---------- */
+  function fixJacket(){
+    const V = window.GekkoV85;
+    if (!V || typeof V.jacket !== 'function' || V.jacket.__v99) return false;
+    const prev = V.jacket;
+    const w = function(v){
+      const s = String(v == null ? '' : v).trim().toUpperCase();
+      if (s.indexOf('ALUZ') !== -1) return 'ALUZ';
+      return prev(v);
+    };
+    w.__v99 = true; V.jacket = w;
+    try { if (typeof V.populate === 'function') V.populate(); } catch (_) {}
+    return true;
+  }
+
+  /* ---------- 2) render ตรงต้องผ่านตัวกรองด้านบนเสมอ ---------- */
+  function wrapDirect(name, mode){
+    const prev = window[name];
+    if (typeof prev !== 'function' || prev.__v99) return;
+    const w = function(data){
+      const V = window.GekkoV85;
+      if (data === undefined && V && typeof db !== 'undefined' && typeof V.matchProduction === 'function') {
+        try { data = db.filter(function(x){ return V.matchProduction(x, mode); }); } catch (_) { data = undefined; }
+      }
+      const r = prev.call(this, data);
+      if (name === 'renderShipping') { try { updateDayLabel(); } catch (_) {} }
+      return r;
+    };
+    w.__v99 = true; window[name] = w;
+  }
+
+  /* ---------- 3) ปุ่มเลื่อนวัน ช่องส่งท่อ ---------- */
+  function relLabel(k){
+    const d = parse(k); if (!d) return '';
+    const t = parse(key(new Date()));
+    const diff = Math.round((d - t) / 86400000);
+    const rel = diff === 0 ? ' • วันนี้' : diff === 1 ? ' • พรุ่งนี้' : diff === -1 ? ' • เมื่อวาน' : '';
+    return DOW[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] + rel;
+  }
+  function updateDayLabel(){
+    const dp = el('ship-date-picker'), lb = el('gk-v99-ship-day'); if (!dp || !lb) return;
+    lb.textContent = relLabel(dp.value);
+  }
+  function shiftDay(n){
+    const dp = el('ship-date-picker'); if (!dp) return;
+    const base = parse(dp.value) || parse(key(new Date()));
+    base.setDate(base.getDate() + n);
+    dp.value = key(base);
+    dp.dispatchEvent(new Event('change', { bubbles: true }));
+    updateDayLabel();
+  }
+  function buildNav(){
+    const dp = el('ship-date-picker');
+    if (!dp || el('gk-v99-ship-prev')) return !!el('gk-v99-ship-prev');
+    const mk = function(id, txt, title, n){
+      const b = document.createElement('button');
+      b.type = 'button'; b.id = id; b.textContent = txt; b.title = title;
+      b.className = 'gk-v98-chip';
+      b.addEventListener('click', function(){ shiftDay(n); });
+      return b;
+    };
+    const prev = mk('gk-v99-ship-prev', '◀', 'วันก่อนหน้า', -1);
+    const next = mk('gk-v99-ship-next', '▶', 'วันถัดไป', 1);
+    const lab = document.createElement('span');
+    lab.id = 'gk-v99-ship-day'; lab.style.cssText = 'font-size:11px;font-weight:700;color:#64748b;white-space:nowrap';
+    dp.parentElement.insertBefore(prev, dp);
+    dp.parentElement.insertBefore(next, dp.nextSibling);
+    dp.parentElement.insertBefore(lab, next.nextSibling);
+    dp.addEventListener('change', updateDayLabel);
+    updateDayLabel();
+    return true;
+  }
+
+  let tries = 0;
+  (function boot(){
+    tries++;
+    const ready = window.GekkoV85 && typeof window.renderShipping === 'function' && el('ship-date-picker');
+    if (!ready) { if (tries < 80) setTimeout(boot, 300); return; }
+    window.__GEKKO_V99 = true;
+    fixJacket(); wrapDirect('renderShipping', 'shipping'); wrapDirect('renderFGWarehouse', 'fg-warehouse'); buildNav();
+    setInterval(function(){ fixJacket(); wrapDirect('renderShipping', 'shipping'); wrapDirect('renderFGWarehouse', 'fg-warehouse'); buildNav(); updateDayLabel(); }, 800);
+  })();
+})();
+</script>
+
+<!-- ================= GEKKO V100 BACKUP COMPATIBILITY (ADDITIVE) =================
+     ปุ่มสำรองในแผง "🧰 เครื่องมือ" เดิมสร้างไฟล์ดัมพ์ localStorage ดิบ (gekko_*/gk_*) ซึ่งปุ่ม "📂 นำเข้า" อ่านไม่ได้
+     (ขึ้น "ไฟล์ JSON ไม่ถูกต้อง") -> ทำให้ปุ่มนำเข้าอ่านไฟล์แบบดิบนั้นได้ด้วย (แปลงเป็นรูปแบบเดียวกับปุ่ม 💾 สำรองในเมนู) -->
+<script id="gekko-v100-backup-compat">
+(function(){
+  'use strict';
+  if (window.__GEKKO_V100) return;
+  const MAP = {
+    production: 'gekko_production_db', rmRecords: 'gekko_rm_records', projectsList: 'gekko_projects_list',
+    calendarNotes: 'gekko_calendar_notes', customPipeSpecs: 'gekko_custom_pipe_specs', hiddenDefaultSizes: 'gekko_hidden_default_sizes',
+    projectsArchived: 'gekko_projects_archived', projectColorMap: 'gekko_project_color_map',
+    factorySettings: 'gekko_factory_settings', downtimeLogs: 'gekko_downtime_logs', manpowerLogs: 'gekko_manpower_logs'
+  };
+  function convertRaw(raw){
+    const out = { version: 3, exportedAt: new Date().toISOString() };
+    Object.keys(MAP).forEach(function(k){
+      const v = raw[MAP[k]];
+      if (typeof v !== 'string') return;
+      try { out[k] = JSON.parse(v); } catch (_) {}
+    });
+    return out;
+  }
+  function wrap(){
+    const prev = window.importJSON;
+    if (typeof prev !== 'function' || prev.__v100) return false;
+    const w = function(event){
+      const input = event && event.target;
+      const file = input && input.files && input.files[0];
+      if (!file) return prev.apply(this, arguments);
+      const reader = new FileReader();
+      reader.onload = function(e){
+        let imported = null;
+        try { imported = JSON.parse(e.target.result); } catch (_) {}
+        const isRaw = imported && typeof imported === 'object' && !Array.isArray(imported) && typeof imported.gekko_production_db === 'string' && !Array.isArray(imported.production);
+        if (!isRaw) { try { prev.call(window, event); } catch (err) { console.warn(err); } return; }
+        const conv = convertRaw(imported);
+        if (!Array.isArray(conv.production)) {
+          try { window.showToast && window.showToast('ไฟล์สำรองนี้อ่านข้อมูลผลิตไม่ได้', 'error'); } catch (_) {}
+          try { input.value = ''; } catch (_) {}
+          return;
+        }
+        const blob = new File([JSON.stringify(conv)], 'gekko-converted.json', { type: 'application/json' });
+        const fake = { target: { files: [blob], set value(v) { try { input.value = ''; } catch (_) {} }, get value() { return ''; } } };
+        try { prev.call(window, fake); } catch (err) { console.warn(err); }
+      };
+      reader.readAsText(file);
+    };
+    w.__v100 = true;
+    window.importJSON = w;
+    return true;
+  }
+  let tries = 0;
+  (function boot(){
+    tries++;
+    if (typeof window.importJSON !== 'function') { if (tries < 60) setTimeout(boot, 300); return; }
+    window.__GEKKO_V100 = true;
+    wrap();
+    setInterval(wrap, 1000);   // กันแพตช์อื่นแทนที่ importJSON ภายหลัง
   })();
 })();
 </script>
