@@ -1522,6 +1522,7 @@ window.__GEKKO_BOM_DASHBOARD_RESOLVE = function (code) {
                     <span>โน้ตประจำวัน (พิมพ์อิสระ เช่น ส่งคนไปช่วยหน้างาน, ลาหยุด, ฯลฯ)</span>
                 </h4>
                 <textarea id="day-note-text" rows="2" placeholder="พิมพ์บันทึกสำหรับวันนี้..." class="w-full text-xs bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800 rounded-lg p-2 dark:text-white"></textarea>
+                <div id="gk-note-photos" class="mt-2" data-date=""></div>
                 <div class="flex justify-end">
                     <button type="button" onclick="saveDayNote()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm">💾 บันทึกโน้ต</button>
                 </div>
@@ -5224,6 +5225,7 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
             document.getElementById('quick-target-date').value = dateKey;
             const noteEl = document.getElementById('day-note-text');
             if (noteEl) noteEl.value = calendarNotes[dateKey] || '';
+            if (typeof window.gkNotePhotosRenderModal === 'function') window.gkNotePhotosRenderModal(dateKey);
             
             renderDayDetailItemsList(dateKey);
 
@@ -5765,9 +5767,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                         <div class="text-[9px] text-emerald-600/80 dark:text-emerald-400/80">กดวันที่เพื่อแก้วันส่ง → ย้ายอัตโนมัติ</div>
                     </div>`;
                 }
+                if (typeof window.gkNotePhotoBadge === 'function') badgeHtml += window.gkNotePhotoBadge(dateKey);
                 if (dayNote) {
                     badgeHtml += `<div class="mt-1 px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800">
-                        <div class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold leading-snug break-words">📝 ${dayNote}</div>
+                        <div class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold leading-snug break-words">📝 ${String(dayNote).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
                     </div>`;
                 }
 
@@ -6821,9 +6824,10 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
                 const dayNote = calendarNotes[dateKey] || '';
 
                 let badgeHtml = '';
+                if (typeof window.gkNotePhotoBadge === 'function') badgeHtml += window.gkNotePhotoBadge(dateKey);
                 if (dayNote) {
                     badgeHtml += `<div class="mt-1 px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800">
-                        <div class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold leading-snug break-words">📝 ${dayNote}</div>
+                        <div class="text-[10px] text-amber-700 dark:text-amber-400 font-semibold leading-snug break-words">📝 ${String(dayNote).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
                     </div>`;
                 }
                 if (rmItems.length > 0) badgeHtml += `<div class="mt-1 px-2 py-1 rounded-lg bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60"><div class="text-[10px] text-sky-700 dark:text-sky-400 font-bold">📥 RM รับเข้า ${rmItems.length} รายการ</div></div>`;
@@ -7444,12 +7448,14 @@ html.dark .sd-btn{background:#0f172a;color:#e2e8f0;border-color:#334155}.sd-btn.
 
             function timelineNoteChip(dateKey) {
                 const note = calendarNotes[dateKey];
-                if (!note) return '';
-                const safeNote = escapeTimelineText(note).replace(/\r?\n/g, '<br>');
+                const photoHtml = (typeof window.gkNotePhotosStrip === 'function') ? window.gkNotePhotosStrip(dateKey) : '';
+                if (!note && !photoHtml) return '';
+                const safeNote = note ? escapeTimelineText(note).replace(/\r?\n/g, '<br>') : '';
                 return `
                     <div onclick="event.stopPropagation(); openDayDetailModal('${dateKey}')" class="px-2 py-1.5 rounded-lg mb-1 cursor-pointer bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800 hover:opacity-90 transition">
                         <div class="text-[10px] font-black text-amber-800 dark:text-amber-300 leading-snug">📝 โน้ต</div>
-                        <div class="text-[10px] font-semibold text-amber-700 dark:text-amber-400 leading-snug break-words whitespace-normal">${safeNote}</div>
+                        ${safeNote ? `<div class="text-[10px] font-semibold text-amber-700 dark:text-amber-400 leading-snug break-words whitespace-normal">${safeNote}</div>` : ''}
+                        ${photoHtml}
                     </div>
                 `;
             }
@@ -19460,6 +19466,340 @@ html.dark #gk-v98-rm-info .gk-v98-warn{color:#fbbf24}
     setInterval(wrap, 1000);   // กันแพตช์อื่นแทนที่ importJSON ภายหลัง
   })();
 })();
+</script>
+<style id="gk-v14-note-photos-style">
+  .gk-ph-strip{display:flex;gap:3px;align-items:center;margin-top:3px}
+  .gk-ph-thumb{width:34px;height:34px;object-fit:cover;border-radius:6px;border:1px solid #fbbf24;background:#fde68a;cursor:zoom-in;flex:0 0 auto}
+  .gk-ph-thumb.lg{width:64px;height:64px;border-radius:8px}
+  .gk-ph-thumb.gk-ph-missing{opacity:.45}
+  .gk-ph-more{font-size:10px;font-weight:800;color:#b45309;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;padding:2px 5px;cursor:pointer}
+  .gk-ph-item{position:relative;display:inline-block}
+  .gk-ph-del{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:999px;background:#e11d48;color:#fff;font-size:10px;font-weight:800;line-height:18px;text-align:center;border:0;cursor:pointer}
+  .gk-ph-add{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#b45309;border:1.5px dashed #f59e0b;border-radius:8px;padding:6px 10px;cursor:pointer;background:rgba(251,191,36,.12)}
+  .gk-ph-hint{font-size:9.5px;color:#94a3b8;margin-top:4px}
+  #gk-ph-lb{position:fixed;inset:0;z-index:100000;background:rgba(2,6,23,.92);display:flex;align-items:center;justify-content:center}
+  #gk-ph-lb img{max-width:92vw;max-height:84vh;border-radius:10px;object-fit:contain;background:#0f172a}
+  #gk-ph-lb .gk-lb-top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;color:#fff;font-weight:700;font-size:13px}
+  #gk-ph-lb .gk-lb-top button{background:#fff;color:#0f172a;border:0;border-radius:8px;padding:6px 12px;font-weight:800;cursor:pointer}
+  #gk-ph-lb .gk-lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:999px;width:44px;height:44px;font-size:28px;cursor:pointer}
+  #gk-ph-lb .gk-lb-nav.l{left:14px}#gk-ph-lb .gk-lb-nav.r{right:14px}
+</style>
+<script id="gk-v14-note-photos">
+(function () {
+  'use strict';
+  if (window.__gkNotePhotos) return;
+  window.__gkNotePhotos = true;
+
+  /* ===== 📷 รูปในโน้ตประจำวัน (v14) =====
+     ออกแบบให้เบาต่อ Firebase:
+     • รูปแต่ละใบ = 1 เอกสารใน collection "note_photos" (ย่อเหลือ ~100 KB) ไม่ยัดรวมกับโน้ต/แถวข้อมูล
+     • doc "meta/calendarNotePhotos" เก็บแค่รายการ id ต่อวัน (เล็กมาก) ใช้ onSnapshot ตัวเดียว
+     • ตัวรูปดึงมาเมื่อต้องแสดงเท่านั้น (getDoc ครั้งเดียวต่อเครื่อง) แล้วแคชใน IndexedDB
+     • ไม่มี Firebase / ยังออฟไลน์ = ยังแนบรูปได้ เก็บในเครื่อง แล้วอัปขึ้นให้เองเมื่อเชื่อมต่อ */
+  var LS_LIST = 'gekko_note_photo_list', LS_SYNCED = 'gekko_note_photo_synced', LS_DEL = 'gekko_note_photo_del';
+  var MAX_PER_DAY = 6, MAX_DIM = 960, TARGET = 120 * 1024, HARD = 300 * 1024, MEM_CAP = 60;
+
+  function jget(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v && typeof v === 'object' ? v : d; } catch (_) { return d; } }
+  function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } }
+  var list = jget(LS_LIST, {});
+  var synced = new Set(jget(LS_SYNCED, []));
+  var dels = jget(LS_DEL, []);
+  if (!Array.isArray(dels)) dels = [];
+  function saveList() { jset(LS_LIST, list); }
+  function saveSynced() { jset(LS_SYNCED, Array.from(synced)); }
+  function saveDels() { jset(LS_DEL, dels); }
+  function toast(m, t) { try { if (typeof showToast === 'function') showToast(m, t); } catch (_) {} }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  /* ---------- IndexedDB cache ---------- */
+  var idb = null;
+  var idbReady = new Promise(function (res) {
+    try {
+      var r = indexedDB.open('gekko_note_photos', 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore('photos', { keyPath: 'id' }); };
+      r.onsuccess = function () { idb = r.result; res(); };
+      r.onerror = function () { res(); };
+    } catch (_) { res(); }
+  });
+  function idbGet(id) {
+    return idbReady.then(function () {
+      return new Promise(function (res) {
+        if (!idb) return res(null);
+        try { var q = idb.transaction('photos').objectStore('photos').get(id); q.onsuccess = function () { res(q.result ? q.result.data : null); }; q.onerror = function () { res(null); }; } catch (_) { res(null); }
+      });
+    });
+  }
+  function idbPut(id, data, date) {
+    return idbReady.then(function () {
+      return new Promise(function (res) {
+        if (!idb) return res(false);
+        try { var tx = idb.transaction('photos', 'readwrite'); tx.objectStore('photos').put({ id: id, data: data, date: date || '' }); tx.oncomplete = function () { res(true); }; tx.onerror = function () { res(false); }; } catch (_) { res(false); }
+      });
+    });
+  }
+  function idbDel(id) {
+    return idbReady.then(function () {
+      return new Promise(function (res) {
+        if (!idb) return res(false);
+        try { var tx = idb.transaction('photos', 'readwrite'); tx.objectStore('photos').delete(id); tx.oncomplete = function () { res(true); }; tx.onerror = function () { res(false); }; } catch (_) { res(false); }
+      });
+    });
+  }
+
+  /* ---------- cloud ---------- */
+  function cloudOk() {
+    try { return !!(typeof cloudSyncEnabled !== 'undefined' && cloudSyncEnabled && typeof fb !== 'undefined' && fb && fb.db && fb.auth && fb.auth.currentUser); } catch (_) { return false; }
+  }
+  function canWrite() { try { return cloudOk() && !fb.auth.currentUser.isAnonymous && !window.__viewOnlyMode; } catch (_) { return false; } }
+
+  var mem = new Map();
+  function memSet(id, d) { mem.set(id, d); if (mem.size > MEM_CAP) mem.delete(mem.keys().next().value); }
+  var inflight = new Map();
+  function getPhoto(id) {
+    if (mem.has(id)) return Promise.resolve(mem.get(id));
+    if (inflight.has(id)) return inflight.get(id);
+    var p = (async function () {
+      var d = await idbGet(id);
+      if (!d && cloudOk()) {
+        try {
+          var s = await fb.getDoc(fb.doc(fb.db, 'note_photos', id));
+          if (s.exists()) {
+            var v = s.data() || {};
+            d = v.data || null;
+            if (d) { idbPut(id, d, v.date || ''); synced.add(id); saveSynced(); }
+          }
+        } catch (e) { console.warn('note photo fetch failed', e); }
+      }
+      if (d) memSet(id, d);
+      inflight.delete(id);
+      return d;
+    })();
+    inflight.set(id, p);
+    return p;
+  }
+
+  async function mutateRemoteList(date, fn) {
+    var ref = fb.doc(fb.db, 'meta', 'calendarNotePhotos');
+    await fb.runTransaction(fb.db, async function (tx) {
+      var s = await tx.get(ref);
+      var cur = s.exists() && s.data().photos ? s.data().photos : {};
+      var next = Object.assign({}, cur);
+      var arr = fn(Array.isArray(cur[date]) ? cur[date].slice() : []);
+      if (arr.length) next[date] = arr; else delete next[date];
+      tx.set(ref, { photos: next, updatedAt: Date.now() });
+    });
+  }
+  async function uploadPhoto(id, date) {
+    if (!canWrite()) return false;
+    try {
+      var data = mem.get(id) || await idbGet(id);
+      if (!data) return false;
+      await fb.setDoc(fb.doc(fb.db, 'note_photos', id), { data: data, date: date, createdAt: Date.now(), by: (fb.auth.currentUser.email || '') });
+      await mutateRemoteList(date, function (a) { return a.indexOf(id) >= 0 ? a : a.concat([id]); });
+      synced.add(id); saveSynced();
+      return true;
+    } catch (e) { console.warn('note photo upload failed (จะลองใหม่อัตโนมัติ)', e); return false; }
+  }
+  async function pushDelete(date, id) {
+    if (!canWrite()) return false;
+    try {
+      await mutateRemoteList(date, function (a) { return a.filter(function (x) { return x !== id; }); });
+      try { await fb.deleteDoc(fb.doc(fb.db, 'note_photos', id)); } catch (_) {}
+      synced.delete(id); saveSynced();
+      return true;
+    } catch (e) { console.warn('note photo delete sync failed', e); return false; }
+  }
+  var flushing = false;
+  async function flushPending() {
+    if (flushing || !canWrite()) return;
+    flushing = true;
+    try {
+      for (var i = dels.length - 1; i >= 0; i--) { if (await pushDelete(dels[i].d, dels[i].id)) { dels.splice(i, 1); saveDels(); } }
+      var dates = Object.keys(list);
+      for (var a = 0; a < dates.length; a++) {
+        var ids = list[dates[a]] || [];
+        for (var b = 0; b < ids.length; b++) { if (!synced.has(ids[b])) await uploadPhoto(ids[b], dates[a]); }
+      }
+    } finally { flushing = false; }
+  }
+  function isDeletedPending(id) { return dels.some(function (x) { return x.id === id; }); }
+  function mergeRemote(remote) {
+    var next = {};
+    var dates = new Set(Object.keys(remote).concat(Object.keys(list)));
+    dates.forEach(function (d) {
+      var r = Array.isArray(remote[d]) ? remote[d] : [];
+      var loc = Array.isArray(list[d]) ? list[d] : [];
+      var out = r.filter(function (id) { return !isDeletedPending(id); });
+      loc.forEach(function (id) { if (out.indexOf(id) < 0 && !synced.has(id)) out.push(id); }); // ของที่ยังไม่เคยอัปขึ้น = เก็บไว้
+      if (out.length) next[d] = out;
+    });
+    list = next; saveList();
+    rerenderSoon();
+    flushPending();
+  }
+  var attached = false;
+  function attach() {
+    if (attached || !cloudOk()) return;
+    attached = true;
+    try {
+      fb.onSnapshot(fb.doc(fb.db, 'meta', 'calendarNotePhotos'), function (snap) {
+        mergeRemote(snap.exists() && snap.data().photos ? snap.data().photos : {});
+      }, function (e) { console.warn('note photos listener', e); attached = false; });
+    } catch (e) { console.warn('note photos attach failed', e); attached = false; }
+  }
+  setInterval(function () { if (!attached && cloudOk()) attach(); else if (attached) flushPending(); }, 4000);
+
+  /* ---------- ย่อรูป ---------- */
+  function compress(file) {
+    return new Promise(function (resolve) {
+      var fr = new FileReader();
+      fr.onerror = function () { resolve(null); };
+      fr.onload = function () {
+        var img = new Image();
+        img.onerror = function () { resolve(null); };
+        img.onload = function () {
+          try {
+            var dim = MAX_DIM, q = 0.62, out = null;
+            for (var n = 0; n < 8; n++) {
+              var w = img.width, h = img.height, sc = Math.min(1, dim / Math.max(w, h));
+              w = Math.max(1, Math.round(w * sc)); h = Math.max(1, Math.round(h * sc));
+              var c = document.createElement('canvas'); c.width = w; c.height = h;
+              c.getContext('2d').drawImage(img, 0, 0, w, h);
+              out = c.toDataURL('image/jpeg', q);
+              if (out.length <= TARGET) break;
+              if (q > 0.45) q -= 0.08; else dim = Math.round(dim * 0.82);
+            }
+            resolve(out && out.length <= HARD ? out : null);
+          } catch (_) { resolve(null); }
+        };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  /* ---------- API ใช้โดยหน้าจอ ---------- */
+  window.gkNotePhotoCount = function (d) { return (list[d] || []).length; };
+  window.gkNotePhotosStrip = function (d) {
+    var ids = list[d] || [];
+    if (!ids.length) return '';
+    var show = ids.slice(0, 3);
+    return '<div class="gk-ph-strip" onclick="event.stopPropagation()">' +
+      show.map(function (id) { return '<img data-gk-photo="' + esc(id) + '" alt="รูปโน้ต" class="gk-ph-thumb" onclick="gkNotePhotoOpen(\'' + esc(d) + '\',\'' + esc(id) + '\')">'; }).join('') +
+      (ids.length > 3 ? '<span class="gk-ph-more" onclick="openDayDetailModal(\'' + esc(d) + '\')">+' + (ids.length - 3) + '</span>' : '') + '</div>';
+  };
+  window.gkNotePhotoBadge = function (d) {
+    var n = (list[d] || []).length;
+    return n ? '<div class="mt-1 px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800 text-[10px] font-bold text-amber-700 dark:text-amber-400">📷 ' + n + ' รูป</div>' : '';
+  };
+
+  window.gkNotePhotosRenderModal = function (d) {
+    var box = document.getElementById('gk-note-photos');
+    if (!box) return;
+    if (d) box.setAttribute('data-date', d); else d = box.getAttribute('data-date');
+    if (!d) return;
+    var ids = list[d] || [], ro = !!window.__viewOnlyMode;
+    var html = '<div class="flex flex-wrap gap-2 items-center">' +
+      ids.map(function (id) {
+        return '<div class="gk-ph-item"><img data-gk-photo="' + esc(id) + '" alt="รูปโน้ต" class="gk-ph-thumb lg" onclick="gkNotePhotoOpen(\'' + esc(d) + '\',\'' + esc(id) + '\')">' +
+          (ro ? '' : '<button type="button" class="gk-ph-del" title="ลบรูป" onclick="gkNotePhotoRemove(\'' + esc(d) + '\',\'' + esc(id) + '\')">✕</button>') + '</div>';
+      }).join('') +
+      ((ro || ids.length >= MAX_PER_DAY) ? '' : '<label class="gk-ph-add">📷 แนบรูป<input type="file" accept="image/*" multiple class="hidden" onchange="gkNotePhotoPick(this)"></label>') +
+      '</div><div class="gk-ph-hint">ย่อรูปอัตโนมัติ (~100 KB/รูป) • สูงสุด ' + MAX_PER_DAY + ' รูปต่อวัน • ' + (cloudOk() ? '☁️ ซิงค์ขึ้น Firebase' : 'เก็บในเครื่องนี้ (จะอัปขึ้นให้เองเมื่อออนไลน์)') + '</div>';
+    box.innerHTML = html;
+    hydrate(box);
+  };
+
+  window.gkNotePhotoPick = async function (input) {
+    var box = document.getElementById('gk-note-photos');
+    var d = box && box.getAttribute('data-date');
+    var files = Array.prototype.slice.call(input.files || []);
+    input.value = '';
+    if (!d || !files.length) return;
+    try { if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return; } catch (_) {}
+    var added = 0;
+    for (var i = 0; i < files.length; i++) {
+      if ((list[d] || []).length >= MAX_PER_DAY) { toast('แนบได้สูงสุด ' + MAX_PER_DAY + ' รูปต่อวัน', 'error'); break; }
+      var f = files[i];
+      if (!/^image\//.test(f.type)) { toast('ไฟล์ ' + f.name + ' ไม่ใช่รูปภาพ', 'error'); continue; }
+      if (f.size > 25 * 1024 * 1024) { toast('ไฟล์ ' + f.name + ' ใหญ่เกิน 25MB', 'error'); continue; }
+      var data = await compress(f);
+      if (!data) { toast('อ่าน/ย่อรูป ' + f.name + ' ไม่สำเร็จ', 'error'); continue; }
+      var id = newId();
+      memSet(id, data);
+      await idbPut(id, data, d);
+      list[d] = (list[d] || []).concat([id]);
+      saveList();
+      added++;
+      window.gkNotePhotosRenderModal(d);
+      uploadPhoto(id, d);
+    }
+    if (added) { toast('📷 แนบรูป ' + added + ' รูปแล้ว'); rerenderSoon(); }
+  };
+
+  window.gkNotePhotoRemove = async function (d, id) {
+    try { if (typeof blockIfViewOnly === 'function' && blockIfViewOnly()) return; } catch (_) {}
+    if (!confirm('ลบรูปนี้ออกจากโน้ตวันที่ ' + d + ' ?')) return;
+    list[d] = (list[d] || []).filter(function (x) { return x !== id; });
+    if (!list[d].length) delete list[d];
+    saveList(); mem.delete(id); idbDel(id);
+    window.gkNotePhotosRenderModal(d);
+    rerenderSoon();
+    if (synced.has(id) || cloudOk()) {
+      var ok = await pushDelete(d, id);
+      if (!ok && synced.has(id)) { dels.push({ d: d, id: id }); saveDels(); }
+    }
+  };
+
+  window.gkNotePhotoOpen = function (d, id) {
+    var ids = list[d] && list[d].length ? list[d] : [id];
+    var idx = Math.max(0, ids.indexOf(id));
+    var old = document.getElementById('gk-ph-lb'); if (old) old.remove();
+    var lb = document.createElement('div');
+    lb.id = 'gk-ph-lb';
+    lb.innerHTML = '<div class="gk-lb-top"><span id="gk-lb-cap"></span><button type="button" id="gk-lb-x">✕ ปิด</button></div><button type="button" class="gk-lb-nav l" id="gk-lb-p">‹</button><img id="gk-lb-img" alt=""><button type="button" class="gk-lb-nav r" id="gk-lb-n">›</button>';
+    document.body.appendChild(lb);
+    function show() {
+      var img = lb.querySelector('#gk-lb-img');
+      img.removeAttribute('src');
+      lb.querySelector('#gk-lb-cap').textContent = '📝 ' + d + '  (' + (idx + 1) + '/' + ids.length + ')';
+      lb.querySelector('#gk-lb-p').style.visibility = ids.length > 1 ? 'visible' : 'hidden';
+      lb.querySelector('#gk-lb-n').style.visibility = ids.length > 1 ? 'visible' : 'hidden';
+      getPhoto(ids[idx]).then(function (data) { if (data) img.src = data; else img.alt = 'โหลดรูปไม่สำเร็จ (ออฟไลน์?)'; });
+    }
+    function close() { lb.remove(); document.removeEventListener('keydown', onKey); }
+    function onKey(e) { if (e.key === 'Escape') close(); else if (e.key === 'ArrowLeft') { idx = (idx - 1 + ids.length) % ids.length; show(); } else if (e.key === 'ArrowRight') { idx = (idx + 1) % ids.length; show(); } }
+    lb.querySelector('#gk-lb-x').onclick = close;
+    lb.querySelector('#gk-lb-p').onclick = function (e) { e.stopPropagation(); idx = (idx - 1 + ids.length) % ids.length; show(); };
+    lb.querySelector('#gk-lb-n').onclick = function (e) { e.stopPropagation(); idx = (idx + 1) % ids.length; show(); };
+    lb.addEventListener('click', function (e) { if (e.target === lb) close(); });
+    document.addEventListener('keydown', onKey);
+    show();
+  };
+
+  /* ---------- โหลดรูปให้ <img data-gk-photo> ที่โผล่ในหน้า ---------- */
+  function hydrate(root) {
+    (root || document).querySelectorAll('img[data-gk-photo]:not([data-gk-done])').forEach(function (img) {
+      img.setAttribute('data-gk-done', '1');
+      getPhoto(img.getAttribute('data-gk-photo')).then(function (d) { if (d) img.src = d; else img.classList.add('gk-ph-missing'); });
+    });
+  }
+  var hydQueued = false;
+  function hydSoon() { if (hydQueued) return; hydQueued = true; requestAnimationFrame(function () { hydQueued = false; hydrate(document); }); }
+  try { new MutationObserver(function () { if (document.querySelector('img[data-gk-photo]:not([data-gk-done])')) hydSoon(); }).observe(document.body, { childList: true, subtree: true }); } catch (_) {}
+
+  var rrTimer = null;
+  function rerenderSoon() {
+    clearTimeout(rrTimer);
+    rrTimer = setTimeout(function () {
+      try { var box = document.getElementById('gk-note-photos'); var m = document.getElementById('day-detail-modal'); if (box && m && !m.classList.contains('hidden')) window.gkNotePhotosRenderModal(); } catch (_) {}
+      try { var tm = document.getElementById('timeline-modal'); if (tm && !tm.classList.contains('hidden') && typeof renderTimeline === 'function') renderTimeline(); } catch (_) {}
+      try { if (typeof renderGridCalendar === 'function') renderGridCalendar(); } catch (_) {}
+    }, 150);
+  }
+})();
+
 </script>
 </body>
 </html>
